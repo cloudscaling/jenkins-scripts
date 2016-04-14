@@ -1,5 +1,6 @@
 #!/bin/bash -e
-my_dir="$(dirname "$0")"
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
 
 #aws ec2 delete-security-group --group-name juju-amazon || /bin/true
 
