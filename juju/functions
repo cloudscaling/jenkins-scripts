@@ -1,0 +1,19 @@
+#!/bin/bash
+
+function wait_for_services() {
+  check_str=$1
+  local max_iter=${2:-30}
+  # waiting for services
+  local iter=0
+  while juju status | grep -P $check_str &>/dev/null
+  do
+    echo "Waiting for all service to be active - $iter/$max_iter"
+    if ((iter >= $max_iter)); then
+      echo "ERROR: Services didn't up."
+      juju status
+      return 1
+    fi
+    sleep 30
+    ((++iter))
+  done
+}

@@ -6,7 +6,7 @@ echo "--------------------------------------------------- Save LOGS ---"
 rm -rf logs
 mkdir logs
 juju status > logs/juju_status.log
-juju ssh 0 sudo cat /var/log/juju/all-machines.log > logs/all-machines.log
+juju ssh 0 sudo cat /var/log/juju/all-machines.log > logs/all-machines.log 2>/dev/null
 
 
 # try to save logs from cinder and nova nodes
@@ -23,9 +23,9 @@ function save_logs() {
     fi
     echo "  service: $srv"
     echo "  version info:"
-    juju ssh $mch "dpkg -s python-$srv | grep 'Version:'"
+    juju ssh $mch "dpkg -s python-$srv | grep 'Version:'" 2>/dev/null
 
-    juju ssh $mch "rm -f logs.* ; sudo tar -cf logs.tar /var/log/$srv /etc/$srv ; gzip logs.tar"
+    juju ssh $mch "rm -f logs.* ; sudo tar -cf logs.tar /var/log/$srv /etc/$srv ; gzip logs.tar" 2>/dev/null
     rm -f logs.tar.gz
     juju scp $mch:logs.tar.gz logs.tar.gz
     mkdir -p logs/$mch

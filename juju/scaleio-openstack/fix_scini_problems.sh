@@ -21,7 +21,7 @@ function wait_for_machines() {
       sleep 10
       ((++fail))
     done
-    juju ssh $machine uname -r
+    juju ssh $machine uname -r 2>/dev/null
   done
 }
 
@@ -29,8 +29,8 @@ function wait_for_machines() {
 wait_for_machines
 # change kernel and reboot
 for machine in $machine1 $machine2 ; do
-  juju ssh $machine "sudo apt-get install -fqy linux-image-4.2.0-30-generic linux-headers-4.2.0-30-generic"
-  juju ssh $machine "sudo reboot"
+  juju ssh $machine "sudo apt-get install -fqy linux-image-4.2.0-30-generic linux-headers-4.2.0-30-generic" 2>/dev/null
+  juju ssh $machine "sudo reboot" 2>/dev/null
 done
 # wait
 wait_for_machines

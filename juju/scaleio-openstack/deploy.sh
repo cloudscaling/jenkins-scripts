@@ -1,12 +1,16 @@
 #!/bin/bash -e
 
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
+
+source $my_dir/../functions
+
 juju deploy juju-gui --to 0
 juju expose juju-gui
 juju status
 
 cd juju-scaleio
 
-my_dir="$(dirname "$0")"
 # this script will change current bundle and it must be called here...
 #$my_dir/fix_scini_problems.sh
 
@@ -17,23 +21,10 @@ fi
 
 juju-deployer -c $BUNDLE
 
-function wait_for_services() {
-  # waiting for services
-  iter=0
-  while juju status | grep -P $1 &>/dev/null
-  do
-    echo "Waiting for all service to be active - $iter/12"
-    if ((iter >= 12)); then
-      echo "ERROR: Services didn't up."
-      juju status
-      exit 1
-    fi
-    sleep 30
-    ((++iter))
-  done
-}
-
-wait_for_services "executing|blocked|waiting"
+if ! err=$(wait_for_services "executing|blocked|waiting") ; then
+  echo $err
+  exit 1
+fi
 
 # fix security group 'juju-amazon'
 # TODO: another bug somewhere
@@ -44,7 +35,7 @@ aws ec2 authorize-security-group-ingress --group-name juju-amazon --protocol tcp
 # check for errors
 if juju status | grep "current" | grep error ; then
   echo "ERROR: Some services went to error state"
-  juju ssh 0 sudo grep Error /var/log/juju/all-machines.log
+  juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
   exit 1
 fi
 
