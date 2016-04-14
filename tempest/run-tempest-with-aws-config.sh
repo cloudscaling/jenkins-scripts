@@ -1,5 +1,5 @@
 #!/bin/bash
-my_dir="$(dirname "$0")"
+my_dir="$(dirname "$(readlink -e "$0")")"
 
 key=$(cat ~/.aws/config | grep aws_access_key_id | cut -d '=' -f 2)
 sed -i "s\^aws_access.*$\aws_access = $key\m" tempest/etc/tempest.conf
