@@ -1,4 +1,5 @@
 #!/bin/bash
+
 my_dir="$(dirname "$(readlink -e "$0")")"
 
 key=$(cat ~/.aws/config | grep aws_access_key_id | cut -d '=' -f 2)
