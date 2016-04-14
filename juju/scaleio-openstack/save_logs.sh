@@ -22,6 +22,9 @@ function save_logs() {
       continue
     fi
     echo "  service: $srv"
+    echo "  version info:"
+    juju ssh $mch "dpkg -s python-$service"
+    echo "  ----------------------------------------------------"
 
     juju ssh $mch "rm -f logs.* ; sudo tar -cf logs.tar /var/log/$srv /etc/$srv ; gzip logs.tar"
     rm -f logs.tar.gz
