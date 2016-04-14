@@ -14,7 +14,7 @@ while [ $($SSH 'pwd > /dev/null' ; echo $?) != 0 ]; do
 done
 
 echo -------------------------------------------------------------------------- $(date)
-$SSH "sudo apt-get update"
+$SSH "sudo apt-get -qq update"
 $SSH "sudo DEBIAN_FRONTEND=noninteractive apt-get -fqy -o Dpkg::Options::=\"--force-confnew\" upgrade"
 $SSH "sudo reboot"
 
@@ -32,7 +32,7 @@ $SSH "sudo mount /opt/stack"
 $SSH "sudo chown \$USER /opt/stack"
 
 $SSH "sudo sed -i 's/# deb/deb/g' /etc/apt/sources.list"
-$SSH "sudo apt-get update"
+$SSH "sudo apt-get -qq update"
 $SSH "sudo DEBIAN_FRONTEND=noninteractive apt-get -fqy install git ebtables bridge-utils"
 $SSH "git clone https://github.com/openstack-dev/devstack.git"
 
