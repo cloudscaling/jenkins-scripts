@@ -31,10 +31,10 @@ cd juju-scaleio
 echo "Deploy one MDM"
 juju deploy local:trusty/scaleio-mdm
 if wait_and_check ; then
-  echo "Scale MDM`s count to 3"
+  echo "Scale MDM's count to 3"
   juju service add-unit scaleio-mdm -n 2
   if wait_and_check ; then
-    echo "Scale MDM`s count to 5"
+    echo "Scale MDM's count to 5"
     juju service add-unit scaleio-mdm -n 2
   fi
 fi
