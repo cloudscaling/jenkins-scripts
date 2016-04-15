@@ -26,27 +26,27 @@ m5=$(juju add-machine --constraints "instance-type=i2.xlarge" | awk '{print $3}'
 echo "Machine create: $m5"
 
 juju deploy cs:trusty/cinder --to $m1
-juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-kilo" "overwrite=true"
+juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-liberty" "overwrite=true"
 juju expose cinder
 
 juju deploy cs:trusty/nova-cloud-controller --to $m5
-juju set nova-cloud-controller "console-access-protocol=novnc" "debug=true" "openstack-origin=cloud:trusty-kilo"
+juju set nova-cloud-controller "console-access-protocol=novnc" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose nova-cloud-controller
 
 juju deploy local:trusty/nova-compute --to $m1
 juju service add-unit nova-compute --to $m2
-juju set nova-compute "debug=true" "openstack-origin=cloud:trusty-kilo" "virt-type=qemu" "enable-resize=True" "enable-live-migration=True" "migration-auth-type=ssh" "libvirt-image-backend=sio"
+juju set nova-compute "debug=true" "openstack-origin=cloud:trusty-liberty" "virt-type=qemu" "enable-resize=True" "enable-live-migration=True" "migration-auth-type=ssh" "libvirt-image-backend=sio"
 
 juju deploy cs:trusty/glance --to $m3
-juju set glance "debug=true" "openstack-origin=cloud:trusty-kilo"
+juju set glance "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose glance
 
 juju deploy cs:trusty/keystone --to $m4
-juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-kilo"
+juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose keystone
 
 juju deploy cs:trusty/rabbitmq-server --to $m2
-juju set rabbitmq-server "source=cloud:trusty-kilo"
+juju set rabbitmq-server "source=cloud:trusty-liberty"
 
 juju deploy cs:trusty/mysql --to $m2
 
