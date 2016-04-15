@@ -17,3 +17,21 @@ function wait_for_services() {
     ((++iter))
   done
 }
+
+function wait_for_units_removd() {
+  check_str=$1
+  local max_iter=${2:-5}
+  # waiting for services
+  local iter=0
+  while juju status | grep "$check_str/" &>/dev/null
+  do
+    echo "Waiting for all units to be removed - $iter/$max_iter"
+    if ((iter >= $max_iter)); then
+      echo "ERROR: Units didn't removed."
+      juju status
+      return 1
+    fi
+    sleep 30
+    ((++iter))
+  done
+}

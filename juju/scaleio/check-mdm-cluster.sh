@@ -39,7 +39,13 @@ if wait_and_check ; then
   fi
 fi
 
-juju remove-service scaleio-mdm
-wait_and_check
+units=`juju status | grep scaleio-mdm/ | sed -e "s/://g"`
+for unit in units ; do
+  juju remove-unit $unit
+done
+wait_for_units_removd "scaleio-mdm"
+
+juju status
+
 
 if [ -n $errors ] ; then exit 1 ; fi
