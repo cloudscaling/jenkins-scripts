@@ -15,59 +15,88 @@ cd juju-scaleio
 #$my_dir/fix_scini_problems.sh
 
 m1=$(juju add-machine --constraints "instance-type=r3.large" | awk '{print $3}')
-echo "Machine create: $m1"
+echo "Machine created: $m1"
 m2=$(juju add-machine --constraints "instance-type=r3.large" | awk '{print $3}')
-echo "Machine create: $m2"
+echo "Machine created: $m2"
 m3=$(juju add-machine --constraints "instance-type=i2.xlarge" | awk '{print $3}')
-echo "Machine create: $m3"
+echo "Machine created: $m3"
 m4=$(juju add-machine --constraints "instance-type=i2.xlarge" | awk '{print $3}')
-echo "Machine create: $m4"
+echo "Machine created: $m4"
 m5=$(juju add-machine --constraints "instance-type=i2.xlarge" | awk '{print $3}')
-echo "Machine create: $m5"
+echo "Machine created: $m5"
 
+echo "Wait for machines"
+for mch in $m1 $m2 $m3 $m4 $m5 ; do
+  local iter=0
+  while ! juju status | grep "\"$mch\"" &>/dev/null ; do
+    echo "Waiting for machine $mch - $iter/12"
+    if ((iter >= 12)); then
+      echo "ERROR: Machines didn't up."
+      juju status
+      exit 1
+    fi
+    ((++iter))
+    sleep 10
+  done
+done
+echo "Post-Wait for machines for 30 seconds"
+sleep 30
+
+echo "Deploy cinder"
 juju deploy cs:trusty/cinder --to $m1
 juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-liberty" "overwrite=true"
 juju expose cinder
 
+echo "Deploy nova-api"
 juju deploy cs:trusty/nova-cloud-controller --to $m5
 juju set nova-cloud-controller "console-access-protocol=novnc" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose nova-cloud-controller
 
+echo "Deploy nova-compute"
 juju deploy local:trusty/nova-compute --to $m1
 juju service add-unit nova-compute --to $m2
 juju set nova-compute "debug=true" "openstack-origin=cloud:trusty-liberty" "virt-type=qemu" "enable-resize=True" "enable-live-migration=True" "migration-auth-type=ssh" "libvirt-image-backend=sio"
 
+echo "Deploy glance"
 juju deploy cs:trusty/glance --to $m3
 juju set glance "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose glance
 
+echo "Deploy keystone"
 juju deploy cs:trusty/keystone --to $m4
 juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose keystone
 
+echo "Deploy rabbit mq"
 juju deploy cs:trusty/rabbitmq-server --to $m2
 juju set rabbitmq-server "source=cloud:trusty-liberty"
 
+echo "Deploy mysql"
 juju deploy cs:trusty/mysql --to $m2
 
-
+echo "Deploy SDC"
 juju deploy local:trusty/scaleio-sdc --to $m1
 juju service add-unit scaleio-sdc --to $m2
 
+echo "Deploy subordinate to OpenStack"
 juju deploy local:trusty/scaleio-openstack
 
+echo "Deploy gateway"
 juju deploy local:trusty/scaleio-gw --to $m2
 
+echo "Deploy MDM"
 juju deploy local:trusty/scaleio-mdm --to $m3
 juju service add-unit scaleio-mdm --to $m4
 juju service add-unit scaleio-mdm --to $m5
 
+echo "Deploy SDS"
 juju deploy local:trusty/scaleio-sds --to $m3
 juju service add-unit scaleio-sds --to $m4
 juju service add-unit scaleio-sds --to $m5
 juju set scaleio-sds "device-paths=/dev/xvdb"
 
 
+echo "Add relations"
 juju add-relation "scaleio-sdc:scaleio-mdm" "scaleio-mdm:scaleio-mdm"
 juju add-relation "nova-compute:shared-db" "mysql:shared-db"
 juju add-relation "nova-cloud-controller:cinder-volume-service" "cinder:cinder-volume-service"
