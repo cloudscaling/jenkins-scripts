@@ -23,6 +23,10 @@ function wait_and_check() {
     errors+='F'
     return 2
   fi
+  echo "---------------------------------------------------------------------------"
+  echo "----------------------------------------------------------- juju status ---"
+  echo "---------------------------------------------------------------------------"
+  juju status
 }
 
 cd juju-scaleio
@@ -40,7 +44,7 @@ if wait_and_check ; then
 fi
 
 units=`juju status | grep scaleio-mdm/ | sed -e "s/://g"`
-for unit in units ; do
+for unit in $units ; do
   juju remove-unit $unit
 done
 wait_for_units_removd "scaleio-mdm"
