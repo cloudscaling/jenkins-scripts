@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
@@ -14,15 +14,15 @@ cd juju-scaleio
 # this script will change current bundle and it must be called here...
 #$my_dir/fix_scini_problems.sh
 
-m1=$(juju add-machine --constraints "instance-type=r3.large" | awk '{print $3}')
+m1=$(juju add-machine --constraints "instance-type=r3.large" 2>&1 | awk '{print $3}')
 echo "Machine created: $m1"
-m2=$(juju add-machine --constraints "instance-type=r3.large" | awk '{print $3}')
+m2=$(juju add-machine --constraints "instance-type=r3.large" 2>&1 | awk '{print $3}')
 echo "Machine created: $m2"
-m3=$(juju add-machine --constraints "instance-type=i2.xlarge" | awk '{print $3}')
+m3=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
 echo "Machine created: $m3"
-m4=$(juju add-machine --constraints "instance-type=i2.xlarge" | awk '{print $3}')
+m4=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
 echo "Machine created: $m4"
-m5=$(juju add-machine --constraints "instance-type=i2.xlarge" | awk '{print $3}')
+m5=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
 echo "Machine created: $m5"
 
 echo "Wait for machines"
