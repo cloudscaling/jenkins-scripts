@@ -14,9 +14,9 @@ cd juju-scaleio
 # this script will change current bundle and it must be called here...
 #$my_dir/fix_scini_problems.sh
 
-m1=$(juju add-machine --constraints "instance-type=r2.large" | awk '{print $3}')
+m1=$(juju add-machine --constraints "instance-type=r3.large" | awk '{print $3}')
 echo "Machine create: $m1"
-m2=$(juju add-machine --constraints "instance-type=r2.large" | awk '{print $3}')
+m2=$(juju add-machine --constraints "instance-type=r3.large" | awk '{print $3}')
 echo "Machine create: $m2"
 m3=$(juju add-machine --constraints "instance-type=i2.xlarge" | awk '{print $3}')
 echo "Machine create: $m3"
