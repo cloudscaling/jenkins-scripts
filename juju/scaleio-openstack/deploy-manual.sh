@@ -27,7 +27,7 @@ echo "Machine created: $m5"
 
 echo "Wait for machines"
 for mch in $m1 $m2 $m3 $m4 $m5 ; do
-  local iter=0
+  iter=0
   while ! juju status | grep "\"$mch\"" &>/dev/null ; do
     echo "Waiting for machine $mch - $iter/12"
     if ((iter >= 12)); then
