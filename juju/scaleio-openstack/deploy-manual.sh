@@ -121,10 +121,14 @@ juju add-relation "cinder:storage-backend" "scaleio-openstack:storage-backend"
 juju add-relation "nova-compute:ephemeral-backend" "scaleio-openstack:ephemeral-backend"
 
 
-if ! err=$(wait_for_services "executing|blocked|waiting") ; then
-  echo $err
+echo "Wait for services start: $(date)"
+if ! sout=$(wait_for_services "executing|blocked|waiting") ; then
+  echo $sout
   exit 1
+else
+  echo $sout
 fi
+echo "Wait for services end: $(date)"
 
 # fix security group 'juju-amazon'
 # TODO: another bug somewhere
