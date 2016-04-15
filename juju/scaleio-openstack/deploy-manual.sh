@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
@@ -31,7 +31,7 @@ for mch in $m1 $m2 $m3 $m4 $m5 ; do
   while ! juju status | grep "\"$mch\"" &>/dev/null ; do
     echo "Waiting for machine $mch - $iter/12"
     if ((iter >= 12)); then
-      echo "ERROR: Machines didn't up."
+      echo "ERROR: Machine $mch didn't up."
       juju status
       exit 1
     fi

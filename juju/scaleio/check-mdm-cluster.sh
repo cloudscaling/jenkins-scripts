@@ -40,6 +40,12 @@ if wait_and_check ; then
   if wait_and_check ; then
     echo "Scale MDM's count to 5"
     juju service add-unit scaleio-mdm -n 2
+    if wait_and_check ; then
+      echo "Scale MDM's count back to 3"
+      juju remove-unit scaleio-mdm/1
+      juju remove-unit scaleio-mdm/2
+      wait_and_check
+    fi
   fi
 fi
 
