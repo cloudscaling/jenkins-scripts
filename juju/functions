@@ -18,7 +18,7 @@ function wait_for_services() {
   done
 }
 
-function wait_for_units_removd() {
+function wait_for_units_removed() {
   check_str=$1
   local max_iter=${2:-5}
   # waiting for services
