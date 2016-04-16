@@ -1,10 +1,11 @@
 #!/bin/bash
 
-my_dir="$(dirname "$(readlink -e "$0")")"
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
 
 source '/var/lib/jenkins/google-cloud-sdk/path.bash.inc'
 
 cd tempest
-. $my_dir/run-tempest.sh
+timeout -s 9 2h $my_dir/run-tempest.sh
 
 exit $exit_status
