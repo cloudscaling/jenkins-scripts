@@ -37,6 +37,9 @@ function query_cluster() {
       master_mdm=$mch
     fi
   done
+  echo "---------------------------------------------------------------------------"
+  echo "-------------------------------------------------------- cluster status ---"
+  echo "---------------------------------------------------------------------------"
   echo "Master MDM found at $master_mdm"
   juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
 }
@@ -51,13 +54,16 @@ if wait_and_check ; then
   echo "Scale MDM's count to 3"
   juju service add-unit scaleio-mdm -n 2
   if wait_and_check ; then
+    query_cluster
     echo "Scale MDM's count to 5"
     juju service add-unit scaleio-mdm -n 2
     if wait_and_check ; then
+      query_cluster
       echo "Scale MDM's count back to 3"
       juju remove-unit scaleio-mdm/1
       juju remove-unit scaleio-mdm/2
       wait_and_check
+      query_cluster
     fi
   fi
 fi
