@@ -32,8 +32,7 @@ function wait_and_check() {
 function query_cluster() {
   master_mdm=''
   for mch in `juju status scaleio-mdm --format json | jq .machines | jq keys | tail -n +2 | head -n -1 | sed -e "s/[\",]//g"` ; do
-    juju ssh $mch sudo scli --query_cluster --approve_certificate 2>/dev/null 1>/dev/null
-    if [[ $? == 0 ]] ; then
+    if juju ssh $mch sudo scli --query_cluster --approve_certificate 2>/dev/null 1>/dev/null ; then
       master_mdm=$mch
     fi
   done
