@@ -32,7 +32,7 @@ function catch_errors() {
 $my_dir/create-instance-for-devstack-cloud.sh
 
 $my_dir/install-devstack.sh $my_dir/$localrc_file
-timeout -s 9 180m $my_dir/run-tempest-inside-devstack.sh $test_suite $concurrency
+timeout -s 9 3h $my_dir/run-tempest-inside-devstack.sh $test_suite $concurrency
 
 trap - ERR;
 $my_dir/save-logs-from-devstack.sh
