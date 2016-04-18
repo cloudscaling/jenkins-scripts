@@ -46,21 +46,32 @@ function query_cluster() {
 cd juju-scaleio
 
 # check one MDM
-echo "Deploy one MDM"
+echo "---------------------------------------------------------------------------"
+echo "-------------------------------------------------------- Deploy one MDM ---"
+echo "---------------------------------------------------------------------------"
 juju deploy local:trusty/scaleio-mdm
 if wait_and_check ; then
   query_cluster
-  echo "Scale MDM's count to 3"
+  echo "---------------------------------------------------------------------------"
+  echo "------------------------------------------------ Scale MDM's count to 3 ---"
+  echo "---------------------------------------------------------------------------"
   juju service add-unit scaleio-mdm -n 2
+  juju set scaleio-mdm cluster-mode=3
   if wait_and_check ; then
     query_cluster
-    echo "Scale MDM's count to 5"
+    echo "---------------------------------------------------------------------------"
+    echo "------------------------------------------------ Scale MDM's count to 5 ---"
+    echo "---------------------------------------------------------------------------"
     juju service add-unit scaleio-mdm -n 2
+    juju set scaleio-mdm cluster-mode=5
     if wait_and_check ; then
       query_cluster
-      echo "Scale MDM's count back to 3"
+      echo "---------------------------------------------------------------------------"
+      echo "------------------------------------------- Scale MDM's count back to 3 ---"
+      echo "---------------------------------------------------------------------------"
       juju remove-unit scaleio-mdm/1
       juju remove-unit scaleio-mdm/2
+      juju set scaleio-mdm cluster-mode=3
       wait_and_check
       query_cluster
     fi
