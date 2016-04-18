@@ -142,7 +142,7 @@ nova show $iname
 # all checks is done and we cant switch off traps
 set +e
 
-# here we try to list volumes in ScaleIO
+# here we try to list all infos from ScaleIO
 master_mdm=''
 for mch in `juju status scaleio-mdm --format json | jq .machines | jq keys | tail -n +2 | head -n -1 | sed -e "s/[\",]//g"` ; do
   echo "Machine: $mch"
