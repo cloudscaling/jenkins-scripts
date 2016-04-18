@@ -1,8 +1,5 @@
 #!/bin/bash
 
-my_file="$(readlink -e "$0")"
-my_dir="$(dirname $my_file)"
-
 test_suite=$1
 concurrency=${2:-1}
 
@@ -26,4 +23,4 @@ echo -------------------------------------------------------------------------- 
 
 suite=`basename "$(readlink -f .)"`
 $SSH "sudo pip install extras"
-$SSH "cd /opt/stack/tempest ; OS_TEST_TIMEOUR=500 testr last --subunit | subunit-1to2" | python $my_dir/../tempest/subunit2jenkins.py -o test_result.xml -s $suite
+$SSH "cd /opt/stack/tempest ; OS_TEST_TIMEOUR=500 testr last --subunit | subunit-1to2" | python $WORKSPACE/jenkins-scripts/tempest/subunit2jenkins.py -o test_result.xml -s $suite
