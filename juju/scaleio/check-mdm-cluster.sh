@@ -69,8 +69,8 @@ if wait_and_check ; then
       echo "---------------------------------------------------------------------------"
       echo "------------------------------------------- Scale MDM's count back to 3 ---"
       echo "---------------------------------------------------------------------------"
+      juju remove-unit scaleio-mdm/0
       juju remove-unit scaleio-mdm/1
-      juju remove-unit scaleio-mdm/2
       juju set scaleio-mdm cluster-mode=3
       wait_and_check
       query_cluster
