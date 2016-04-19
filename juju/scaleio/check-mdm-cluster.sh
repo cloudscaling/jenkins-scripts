@@ -11,6 +11,8 @@ touch errors
 errors=''
 
 function wait_and_check() {
+  # wait a little for start of changes
+  sleep 20
   if ! err=$(wait_for_services "executing|blocked|waiting|allocating") ; then
     echo $err
     errors+='F'
