@@ -86,6 +86,7 @@ juju deploy local:trusty/scaleio-gw --to $m2
 
 echo "Deploy MDM"
 juju deploy local:trusty/scaleio-mdm --to $m3
+juju set scaleio-mdm "cluster-mode=3"
 juju service add-unit scaleio-mdm --to $m4
 juju service add-unit scaleio-mdm --to $m5
 
