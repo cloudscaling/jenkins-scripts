@@ -5,9 +5,6 @@ my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
 
-rm -f errors
-touch errors
-
 errors=''
 
 function wait_and_check() {
@@ -37,7 +34,7 @@ function wait_and_check() {
   echo "Master MDM found at $master_mdm"
   juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
 
-  # TODO: run check-cluster.sh
+  $my_dir/check-cluster.sh "juju ssh" $master_mdm
 }
 
 cd juju-scaleio

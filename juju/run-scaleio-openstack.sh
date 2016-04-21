@@ -3,6 +3,11 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+source $my_dir/functions
+
+USERNAME="admin"
+PASSWORD="Default_password"
+
 #aws ec2 delete-security-group --group-name juju-amazon || /bin/true
 
 if ! juju bootstrap ; then
@@ -26,6 +31,12 @@ function catch_errors() {
 }
 
 $my_dir/scaleio-openstack/deploy.sh
+
+master_mdm=`get_master_mdm`
+
+$my_dir/scaleio/check-cluster.sh "juju ssh" $master_mdm
+$my_dir/scaleio/check-sds.sh "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdb/'
+$my_dir/scaleio/check-sdc.sh "juju ssh" $master_mdm $USERNAME $PASSWORD
 
 $my_dir/scaleio-openstack/check-openstack.sh
 
