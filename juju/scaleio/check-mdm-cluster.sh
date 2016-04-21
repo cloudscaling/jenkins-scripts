@@ -29,20 +29,15 @@ function wait_and_check() {
   echo "----------------------------------------------------------- juju status ---"
   echo "---------------------------------------------------------------------------"
   juju status
-}
 
-function query_cluster() {
-  master_mdm=''
-  for mch in `juju status scaleio-mdm --format json | jq .machines | jq keys | tail -n +2 | head -n -1 | sed -e "s/[\",]//g"` ; do
-    if juju ssh $mch sudo scli --query_cluster --approve_certificate 2>/dev/null 1>/dev/null ; then
-      master_mdm=$mch
-    fi
-  done
+  master_mdm=`get_master_mdm`
   echo "---------------------------------------------------------------------------"
   echo "-------------------------------------------------------- cluster status ---"
   echo "---------------------------------------------------------------------------"
   echo "Master MDM found at $master_mdm"
   juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
+
+  # TODO: run check-cluster.sh
 }
 
 cd juju-scaleio
@@ -53,21 +48,18 @@ echo "-------------------------------------------------------- Deploy one MDM --
 echo "---------------------------------------------------------------------------"
 juju deploy local:trusty/scaleio-mdm
 if wait_and_check ; then
-  query_cluster
   echo "---------------------------------------------------------------------------"
   echo "------------------------------------------------ Scale MDM's count to 3 ---"
   echo "---------------------------------------------------------------------------"
   juju service add-unit scaleio-mdm -n 2
   juju set scaleio-mdm cluster-mode=3
   if wait_and_check ; then
-    query_cluster
     echo "---------------------------------------------------------------------------"
     echo "------------------------------------------------ Scale MDM's count to 5 ---"
     echo "---------------------------------------------------------------------------"
     juju service add-unit scaleio-mdm -n 2
     juju set scaleio-mdm cluster-mode=5
     if wait_and_check ; then
-      query_cluster
       echo "---------------------------------------------------------------------------"
       echo "------------------------------------------- Scale MDM's count back to 3 ---"
       echo "---------------------------------------------------------------------------"
@@ -75,7 +67,6 @@ if wait_and_check ; then
       juju remove-unit scaleio-mdm/1
       juju set scaleio-mdm cluster-mode=3
       wait_and_check
-      query_cluster
     fi
   fi
 fi

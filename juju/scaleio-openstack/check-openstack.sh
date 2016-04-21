@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
+
+source $my_dir/../functions
+
 rm -f errors
 touch errors
 MAX_FAIL=30
@@ -143,14 +148,7 @@ nova show $iname
 set +e
 
 # here we try to list all infos from ScaleIO
-master_mdm=''
-for mch in `juju status scaleio-mdm --format json | jq .machines | jq keys | tail -n +2 | head -n -1 | sed -e "s/[\",]//g"` ; do
-  echo "Machine: $mch"
-  juju ssh $mch sudo scli --query_cluster --approve_certificate 2>/dev/null
-  if [[ $? == 0 ]] ; then
-    master_mdm=$mch
-  fi
-done
+master_mdm=`get_master_mdm`
 echo "Master MDM found at $master_mdm"
 if [ -n $master_mdm ] ; then
   juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate ; scli --query_all_volume --approve_certificate" 2>/dev/null

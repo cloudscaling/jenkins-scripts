@@ -27,7 +27,7 @@ function catch_errors() {
 
 $my_dir/scaleio-openstack/deploy.sh
 
-$my_dir/scaleio-openstack/check.sh
+$my_dir/scaleio-openstack/check-openstack.sh
 
 $my_dir/scaleio-openstack/save_logs.sh
 
