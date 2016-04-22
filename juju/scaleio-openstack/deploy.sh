@@ -22,12 +22,7 @@ fi
 juju-deployer -c $BUNDLE
 
 echo "Wait for services start: $(date)"
-if ! sout=$(wait_for_services "executing|blocked|waiting") ; then
-  echo $sout
-  exit 1
-else
-  echo $sout
-fi
+wait_for_services "executing|blocked|waiting"
 echo "Wait for services end: $(date)"
 
 # fix security group 'juju-amazon'
