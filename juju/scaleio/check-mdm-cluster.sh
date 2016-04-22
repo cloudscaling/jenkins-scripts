@@ -6,6 +6,7 @@ my_dir="$(dirname $my_file)"
 source $my_dir/../functions
 
 errors=''
+master_mdm=''
 
 function wait_and_check() {
   # wait a little for start of changes
@@ -63,8 +64,11 @@ if wait_and_check 1 ; then
       echo "---------------------------------------------------------------------------"
       echo "------------------------------------------- Scale MDM's count back to 3 ---"
       echo "---------------------------------------------------------------------------"
-      juju remove-unit scaleio-mdm/0
-      juju remove-unit scaleio-mdm/1
+      output=`juju ssh $master_mdm sudo scli --query_cluster --approve_certificate`
+      mdm1=`echo "$oo" | grep -A 1 "Master MDM" | grep "Name:" | awk '{print $2}' | sed "s/,//"`
+      mdm2=`echo "$oo" | grep -A 1 "Tie-Breakers" | grep "Name:" | awk '{print $2}' | sed "s/,//"`
+      juju remove-unit $mdm1
+      juju remove-unit $mdm2
       juju set scaleio-mdm cluster-mode=3
       wait_and_check 3
     fi
