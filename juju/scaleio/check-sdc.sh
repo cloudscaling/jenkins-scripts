@@ -5,25 +5,21 @@ NODE=$2
 USERNAME=$3
 PASSWORD=$4
 
-$SSH $NODE "scli --login --username $USERNAME --password $PASSWORD --approve_certificate" >/dev/null 2>/dev/null
-
 echo "---------------------------------------------------------------------------"
 echo "---------------------------------------------- check connection of SDCs ---"
 echo "---------------------------------------------------------------------------"
-# Check if scli --query_all_sdc works
-if [[ `$SSH $NODE 'scli --query_all_sdc --approve_certificate' 2>/dev/null ` ]] ; then
 
-  #Check if all SDC are connected
-  if [[ `$SSH $NODE 'scli --query_all_sdc --approve_certificate' 2>/dev/null | grep "SDC ID:" | grep -v "State: Connected"` ]] ; then
-    echo 'Failed: Not all sdc are connected'
-    $SSH $NODE scli --query_all_sdc --approve_certificate 2>/dev/null 
-    exit 1
-  else
-    echo "Success"
-  fi
-else
+if ! output=`$SSH $NODE "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sdc" 2>/dev/null` ; then
   echo 'ERROR: The command "scli --query_all_sdc --approve_certificate" failed'
-  $SSH $NODE scli --query_all_sdc --approve_certificate 2>/dev/null 
+  echo "$output"
   exit 1
 fi
 
+#Check if all SDS are connected
+if echo "$output" | grep "SDC ID" | grep -v "State: Connected" ; then
+  echo 'ERROR: Not all sdc are connected'
+  echo "$output"
+  exit 1
+fi
+
+echo "Success. All sdc are connected."
