@@ -65,9 +65,11 @@ if wait_and_check 1 ; then
       echo "------------------------------------------- Scale MDM's count back to 3 ---"
       echo "---------------------------------------------------------------------------"
       output=`juju ssh $master_mdm sudo scli --query_cluster --approve_certificate`
-      mdm1=`echo "$oo" | grep -A 1 "Master MDM" | grep "Name:" | awk '{print $2}' | sed "s/,//"`
-      mdm2=`echo "$oo" | grep -A 1 "Tie-Breakers" | grep "Name:" | awk '{print $2}' | sed "s/,//"`
+      mdm1=`echo "$output" | grep -A 1 "Master MDM" | grep "Name:" | awk '{print $2}' | sed "s/,//"`
+      mdm2=`echo "$output" | grep -A 1 "Tie-Breakers" | grep "Name:" | awk '{print $2}' | sed "s/,//"`
+      echo "Removing Master MDM: $mdm1"
       juju remove-unit $mdm1
+      echo "Removing Tie-Breaker: $mdm2"
       juju remove-unit $mdm2
       juju set scaleio-mdm cluster-mode=3
       wait_and_check 3
