@@ -16,14 +16,14 @@ if [[ `$SSH $NODE 'scli --query_all_sdc --approve_certificate' 2>/dev/null ` ]] 
   #Check if all SDC are connected
   if [[ `$SSH $NODE 'scli --query_all_sdc --approve_certificate' 2>/dev/null | grep "SDC ID:" | grep -v "State: Connected"` ]] ; then
     echo 'Failed: Not all sdc are connected'
-    $SSH $NODE 'scli --query_all_sdc --approve_certificate'
+    $SSH $NODE scli --query_all_sdc --approve_certificate 2>/dev/null 
     exit 1
   else
     echo "Success"
   fi
 else
-  echo 'ERROR: The command "scli --query_all_sdc --approve_certificate" failed' >> errors
-  $SSH $NODE 'scli --query_all_sdc --approve_certificate' >> errors
+  echo 'ERROR: The command "scli --query_all_sdc --approve_certificate" failed'
+  $SSH $NODE scli --query_all_sdc --approve_certificate 2>/dev/null 
   exit 1
 fi
 

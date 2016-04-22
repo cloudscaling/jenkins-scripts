@@ -20,14 +20,14 @@ if [[ `$SSH $NODE 'scli --query_all_sds --approve_certificate' 2>/dev/null ` ]] 
   #Check if all SDS are connected
   if [[ `$SSH $NODE 'scli --query_all_sds --approve_certificate' 2>/dev/null | grep "SDS ID" | grep -v "State: Connected"` ]] ; then
     echo 'Failed. Not all sds are connected' >> errors
-    $SSH $NODE 'scli --query_all_sds --approve_certificate'
+    $SSH $NODE scli --query_all_sds --approve_certificate 2>/dev/null 
     exit 1
   else
     echo "Success"
   fi
 else
   echo 'ERROR: The command "scli --query_all_sds --approve_certificate" failed' >> errors
-  $SSH $NODE 'scli --query_all_sds --approve_certificate'
+  $SSH $NODE scli --query_all_sds --approve_certificate 2>/dev/null 
   exit 1
 fi
 
@@ -48,7 +48,7 @@ for node_name in $($SSH $NODE 'scli --query_all_sds --approve_certificate' 2>/de
     echo "Failed. $node_name does not contain $DEVICE_PATH path" >> errors
   fi
   if [[ $node_errors != 0 ]] ; then
-     $SSH $NODE "scli --query_sds --sds_name $node_name " >> errors
+     $SSH $NODE scli --query_sds --sds_name $node_name 2>/dev/null   >> errors
   else
     echo 'Success'
   fi

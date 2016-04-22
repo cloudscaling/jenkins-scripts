@@ -34,7 +34,7 @@ function wait_and_check() {
   echo "Master MDM found at $master_mdm"
   juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
 
-  $my_dir/check-cluster.sh "juju ssh" $master_mdm
+  $my_dir/check-cluster.sh "juju ssh" $master_mdm $1
 }
 
 cd juju-scaleio
@@ -44,26 +44,26 @@ echo "--------------------------------------------------------------------------
 echo "-------------------------------------------------------- Deploy one MDM ---"
 echo "---------------------------------------------------------------------------"
 juju deploy local:trusty/scaleio-mdm
-if wait_and_check ; then
+if wait_and_check 1 ; then
   echo "---------------------------------------------------------------------------"
   echo "------------------------------------------------ Scale MDM's count to 3 ---"
   echo "---------------------------------------------------------------------------"
   juju service add-unit scaleio-mdm -n 2
   juju set scaleio-mdm cluster-mode=3
-  if wait_and_check ; then
+  if wait_and_check 3 ; then
     echo "---------------------------------------------------------------------------"
     echo "------------------------------------------------ Scale MDM's count to 5 ---"
     echo "---------------------------------------------------------------------------"
     juju service add-unit scaleio-mdm -n 2
     juju set scaleio-mdm cluster-mode=5
-    if wait_and_check ; then
+    if wait_and_check 5 ; then
       echo "---------------------------------------------------------------------------"
       echo "------------------------------------------- Scale MDM's count back to 3 ---"
       echo "---------------------------------------------------------------------------"
       juju remove-unit scaleio-mdm/0
       juju remove-unit scaleio-mdm/1
       juju set scaleio-mdm cluster-mode=3
-      wait_and_check
+      wait_and_check 3
     fi
   fi
 fi

@@ -19,7 +19,7 @@ echo "------------------------------------------ check controllers in cluster --
 echo "---------------------------------------------------------------------------"
 if [[ `$SSH $NODE scli --query_cluster  --approve_certificate 2>/dev/null | awk '/Active:/ {print($6)}' ` != "${controllers}/${controllers}," ]] ; then
   echo 'Failed. Not all controllers are in cluster or active'
-  $SSH $NODE scli --query_cluster --approve_certificate
+  $SSH $NODE scli --query_cluster --approve_certificate 2>/dev/null 
   exit 1
 else
   echo 'Success'
@@ -31,7 +31,7 @@ echo "-------------------------------------------- check state of the cluster --
 echo "---------------------------------------------------------------------------"
 if [[ `$SSH $NODE scli --query_cluster  --approve_certificate 2>/dev/null | awk '/State:/ {print($4)}' ` != "Normal," ]] ; then
   echo "Failed. State of the cluster isn't Normal"
-  $SSH $NODE scli --query_cluster --approve_certificate
+  $SSH $NODE scli --query_cluster --approve_certificate 2>/dev/null 
   exit 1
 else
   echo 'Success'
@@ -44,7 +44,7 @@ echo "--------------------------------------------------------------------------
 for status in `$SSH $NODE 'scli --query_cluster --approve_certificate' 2>/dev/null | grep "Status" | awk '{print $2}'` ; do
   if [[ "$status" != "Normal," ]] ; then
     echo "Failed. Not all controller statuses are Normal"
-    $SSH $NODE scli --query_cluster --approve_certificate
+    $SSH $NODE scli --query_cluster --approve_certificate 2>/dev/null 
     exit 1
   else
     echo 'Success'
