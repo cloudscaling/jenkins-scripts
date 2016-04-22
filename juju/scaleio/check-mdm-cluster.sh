@@ -19,6 +19,9 @@ function wait_and_check() {
   if juju status | grep "current" | grep error ; then
     echo "ERROR: Some services went to error state"
     juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
+    echo "---------------------------------------------------------------------------"
+    juju status
+    echo "---------------------------------------------------------------------------"
     errors+='F'
     return 2
   fi
@@ -72,6 +75,5 @@ juju remove-service scaleio-mdm
 wait_for_units_removed "scaleio-mdm"
 
 juju status
-
 
 if [ -n "$errors" ] ; then exit 1 ; fi

@@ -33,10 +33,10 @@ function catch_errors() {
 $my_dir/scaleio-openstack/deploy.sh
 
 master_mdm=`get_master_mdm`
-cluster_mode=$(juju get scaleio-mdm cluster-mode)
+cluster_mode=$(juju get scaleio-mdm | grep -A 4 scaleio-mdm | grep "value:" | awk '{print $2}')
 
 $my_dir/scaleio/check-cluster.sh "juju ssh" $master_mdm $cluster_mode
-$my_dir/scaleio/check-sds.sh "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdb/'
+$my_dir/scaleio/check-sds.sh "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdb'
 $my_dir/scaleio/check-sdc.sh "juju ssh" $master_mdm $USERNAME $PASSWORD
 
 $my_dir/scaleio-openstack/check-openstack.sh
