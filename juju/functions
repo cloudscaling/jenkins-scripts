@@ -46,3 +46,7 @@ function get_master_mdm() {
   done
   return 1
 }
+
+function get_cluster_mode() {
+  juju get scaleio-mdm | grep -A 5 cluster-mode | grep "value:" | head -1 | awk '{print $2}'
+}
