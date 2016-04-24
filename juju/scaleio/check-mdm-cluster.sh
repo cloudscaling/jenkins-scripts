@@ -63,9 +63,9 @@ function scale_down() {
 
   mode=5
   while (( "$#" )); do
-    $mname=$1
+    $mname="$1"
     shift
-    $mcount=$1
+    $mcount="$1"
     shift
 
     machines=`echo "$output" | grep -A 10 "$mname" | grep "Name:" | head -$mcount | awk '{print $2}' | sed "s/.*\([0-9]\),/\1/"`
