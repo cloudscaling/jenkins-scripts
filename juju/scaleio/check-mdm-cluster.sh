@@ -47,13 +47,16 @@ juju deploy local:trusty/scaleio-mdm
 wait_and_check 1
 
 function scale_up() {
-  count=${1:-2}
-  mode=`get_cluster_mode`
-  ((mode = mode + count))
+  # new cluster mode
+  mode=$1
+  # if we want to use spare units we will not add new units
+  new_units=$2
   echo "---------------------------------------------------------------------------"
   echo "----------------------------------------- Scale MDM's count up to $mode ---"
   echo "---------------------------------------------------------------------------"
-  juju service add-unit scaleio-mdm -n 2
+  if (( new_unts > 0 )) ; then
+    juju service add-unit scaleio-mdm -n $new_units
+  fi
   juju set scaleio-mdm cluster-mode=$mode
   wait_and_check $mode
 }
@@ -82,21 +85,25 @@ function scale_down() {
 }
 
 # to 3
-scale_up 2
+scale_up 3 2
 # to 5
-scale_up 2
+scale_up 5 2
 # to 3
-scale_down "Master MDM:" 1 "Slave MDMs:" 1
+scale_down "Master MDM:" 1 "Tie-Breakers:" 1
+# to 1
+scale_down "Master MDM:" 1
+# 1 spare unit left
+# to 5 (spare unit will be used)
+scale_up 5 3
 # to 1
 scale_down "Master MDM:" 1 "Slave MDMs:" 1
-# to 5
-scale_up 4
-# to 1
-scale_down "Master MDM:" 1 "Slave MDMs:" 2 "Tie-Breakers:" 1
+# 2 spare units should left
 # to 3
-scale_up 2
+scale_up 2 0
 # to 1
-scale_down "Master MDM:" 1 "Slave MDMs:" 1
+scale_down "Slave MDMs:" 1
+# 1 spare unit left should left
+juju ssh $master_mdm sudo scli --query_cluster --approve_certificate
 
 
 juju remove-service scaleio-mdm
