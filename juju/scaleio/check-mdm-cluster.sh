@@ -62,13 +62,14 @@ function scale_up() {
 }
 
 function scale_down() {
+  # new cluster mode
+  mode=$1
+
   echo "--------------------------------------------------------------------------- $(date)"
-  echo "------------------------------------------------ Scale MDM's count down ---"
+  echo "------------------------------------------- Scale MDM's count down to $mode ---"
   echo "---------------------------------------------------------------------------"
 
   output=`juju ssh '$master_mdm sudo scli --query_cluster --approve_certificate' 2>/dev/null`
-
-  mode=`get_cluster_mode`
   while (( "$#" )); do
     mname="$1"
     shift
@@ -80,7 +81,6 @@ function scale_down() {
       mdm="scaleio-mdm/$m"
       echo "Removing $mdm"
       juju remove-unit "$mdm"
-      ((--mode))
     done
   done
 
@@ -93,21 +93,21 @@ scale_up 3 2
 # to 5
 scale_up 5 2
 # to 3
-scale_down "Master MDM:" 1 "Tie-Breakers:" 1
+scale_down 3 "Master MDM:" 1 "Tie-Breakers:" 1
 # to 1
-scale_down "Master MDM:" 1
+scale_down 1 "Master MDM:" 1
 # 1 spare unit left
 # to 5 (spare unit will be used)
 scale_up 5 3
 # to 1
-scale_down "Master MDM:" 1 "Slave MDMs:" 1
+scale_down 1 "Master MDM:" 1 "Slave MDMs:" 1
 # 2 spare units should left
 # to 3
 scale_up 2 0
 # to 1
-scale_down "Slave MDMs:" 1
+scale_down 1 "Slave MDMs:" 1
 # 1 spare unit left should left
-juju ssh $master_mdm sudo scli --query_cluster --approve_certificate
+juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
 
 
 juju remove-service scaleio-mdm
