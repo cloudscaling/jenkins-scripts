@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
@@ -48,9 +48,9 @@ wait_and_check 1
 
 function scale_up() {
   # new cluster mode
-  mode=$1
+  local mode=$1
   # if we want to use spare units we will not add new units
-  new_units=$2
+  local new_units=$2
   echo "--------------------------------------------------------------------------- $(date)"
   echo "--------------------------------------------- Scale MDM's count up to $mode ---"
   echo "---------------------------------------------------------------------------"
@@ -63,14 +63,14 @@ function scale_up() {
 
 function scale_down() {
   # new cluster mode
-  mode=$1
+  local mode=$1
   shift
 
   echo "--------------------------------------------------------------------------- $(date)"
   echo "------------------------------------------- Scale MDM's count down to $mode ---"
   echo "---------------------------------------------------------------------------"
 
-  output=`juju ssh '$master_mdm sudo scli --query_cluster --approve_certificate' 2>/dev/null`
+  local output=`juju ssh "$master_mdm sudo scli --query_cluster --approve_certificate" 2>/dev/null`
   while (( "$#" )); do
     mname="$1"
     shift
