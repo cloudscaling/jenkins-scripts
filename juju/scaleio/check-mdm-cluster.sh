@@ -64,6 +64,7 @@ function scale_up() {
 function scale_down() {
   # new cluster mode
   mode=$1
+  shift
 
   echo "--------------------------------------------------------------------------- $(date)"
   echo "------------------------------------------- Scale MDM's count down to $mode ---"
