@@ -64,7 +64,7 @@ function scale_up() {
 function scale_down() {
   output=`juju ssh $master_mdm sudo scli --query_cluster --approve_certificate`
 
-  mode=5
+  mode=`get_cluster_mode`
   while (( "$#" )); do
     mname="$1"
     shift
