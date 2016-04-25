@@ -62,7 +62,11 @@ function scale_up() {
 }
 
 function scale_down() {
-  output=`juju ssh $master_mdm sudo scli --query_cluster --approve_certificate`
+  echo "--------------------------------------------------------------------------- $(date)"
+  echo "------------------------------------------------ Scale MDM's count down ---"
+  echo "---------------------------------------------------------------------------"
+
+  output=`juju ssh '$master_mdm sudo scli --query_cluster --approve_certificate' 2>/dev/null`
 
   mode=`get_cluster_mode`
   while (( "$#" )); do

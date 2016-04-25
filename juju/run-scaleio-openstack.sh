@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+inner_script="${1:-deploy.sh}"
+
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
@@ -30,10 +32,11 @@ function catch_errors() {
   exit $exit_code
 }
 
-$my_dir/scaleio-openstack/deploy.sh
+echo "--------------------------------------------- Run deploy script: $inner_script"
+$my_dir/scaleio-openstack/$inner_script
 
 master_mdm=`get_master_mdm`
-cluster_mode=$(juju get scaleio-mdm | grep -A 5 cluster-mode | grep "value:" | head -1 | awk '{print $2}')
+cluster_mode=`get_cluster_mode`
 $my_dir/scaleio/check-cluster.sh "juju ssh" $master_mdm $cluster_mode
 $my_dir/scaleio/check-sds.sh "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdb'
 $my_dir/scaleio/check-sdc.sh "juju ssh" $master_mdm $USERNAME $PASSWORD
