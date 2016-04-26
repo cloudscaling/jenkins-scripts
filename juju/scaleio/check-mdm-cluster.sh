@@ -7,9 +7,33 @@ source $my_dir/../functions
 
 master_mdm=''
 
+function get_mode() {
+  master_mdm=`get_master_mdm`
+  juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null | grep -A 1 "Cluster:" | grep "Mode:" | awk '{print $2}' | sed "s/,//"
+}
+
+function wait_for_mode() {
+  check_str="$1"
+  local max_iter=${2:-30}
+  # waiting for services
+  local iter=0
+  while [[ $(get_mode) != $check_str ]]
+  do
+    echo "Waiting for new status ($check_str) - $iter/$max_iter"
+    if ((iter >= max_iter)); then
+      echo "ERROR: Satus didn't change."
+      juju status
+      return 1
+    fi
+    sleep 30
+    ((++iter))
+  done
+}
+
 function wait_and_check() {
-  # wait a little for start of changes
-  sleep 20
+  # wait for new status
+  wait_for_mode "$1""_mode"
+
   wait_for_services "executing|blocked|waiting|allocating"
 
   # check for errors
