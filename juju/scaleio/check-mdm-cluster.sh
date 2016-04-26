@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
@@ -32,7 +32,7 @@ function wait_for_mode() {
 
 function wait_and_check() {
   # wait for new status
-  wait_for_mode "$1""_mode"
+  wait_for_mode "$1""_node"
 
   wait_for_services "executing|blocked|waiting|allocating"
 
