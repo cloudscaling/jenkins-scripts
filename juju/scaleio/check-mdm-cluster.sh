@@ -70,7 +70,7 @@ function scale_down() {
   echo "------------------------------------------- Scale MDM's count down to $mode ---"
   echo "---------------------------------------------------------------------------"
 
-  local output=`juju ssh "$master_mdm sudo scli --query_cluster --approve_certificate" 2>/dev/null`
+  local output=`juju ssh $master_mdm "sudo scli --query_cluster --approve_certificate" 2>/dev/null`
   while (( "$#" )); do
     mname="$1"
     shift
