@@ -19,6 +19,15 @@ function wait_for_mode() {
   local iter=0
   while [[ $(get_mode) != $check_str ]]
   do
+    if juju status | grep "current" | grep error ; then
+      echo "ERROR: Some services went to error state"
+      juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
+      echo "---------------------------------------------------------------------------"
+      juju status
+      echo "---------------------------------------------------------------------------"
+      exit 2
+    fi
+
     echo "Waiting for new status ($check_str) - $iter/$max_iter"
     if ((iter >= max_iter)); then
       echo "ERROR: Satus didn't change."
