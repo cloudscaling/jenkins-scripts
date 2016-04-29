@@ -1,9 +1,13 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
+
+echo "--------------------------------------------------------------------------- $(date)"
+echo "----------------------------------------------------------------- start ---"
+echo "---------------------------------------------------------------------------"
 
 # create machines
 echo "Create machines"
@@ -43,6 +47,11 @@ juju service add-unit empty-charm --to $m4
 juju service add-unit empty-charm --to $m5
 
 
+echo "--------------------------------------------------------------------------- $(date)"
+echo "-------------------------------------------------- full status at start ---"
+echo "---------------------------------------------------------------------------"
+juju status
+
 master_mdm=''
 
 function get_mode() {
@@ -57,7 +66,7 @@ function wait_for_mode() {
   local iter=0
   while [[ $(get_mode) != $check_str ]]
   do
-    if juju status | grep "current" | grep error ; then
+    if juju status | grep "current" | grep error >/dev/null ; then
       echo "ERROR: Some services went to error state"
       juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
       echo "---------------------------------------------------------------------------"
@@ -84,7 +93,7 @@ function wait_and_check() {
   wait_for_services "executing|blocked|waiting|allocating"
 
   # check for errors
-  if juju status | grep "current" | grep error ; then
+  if juju status | grep "current" | grep error >/dev/null ; then
     echo "ERROR: Some services went to error state"
     juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
     echo "---------------------------------------------------------------------------"
@@ -96,7 +105,7 @@ function wait_and_check() {
   echo "--------------------------------------------------------------------------- $(date)"
   echo "----------------------------------------------------------- juju status ---"
   echo "---------------------------------------------------------------------------"
-  juju status
+  juju status scaleio-mdm
 
   master_mdm=`get_master_mdm`
   echo "--------------------------------------------------------------------------- $(date)"
@@ -202,7 +211,7 @@ scale_down 1 "Slave MDMs:" 1
 
 # to 5 (1 spare unit will be used)
 scale_up 5 3
-# TODO: remove unit(s) and unit(s) back
+# TODO: remove unit(s) and add unit(s) back
 
 # 1 spare unit left should left
 juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
@@ -212,4 +221,6 @@ wait_for_units_removed "scaleio-mdm"
 
 juju status
 
-if [ -n "$errors" ] ; then exit 1 ; fi
+echo "--------------------------------------------------------------------------- $(date)"
+echo "------------------------------------------------------------------- end ---"
+echo "---------------------------------------------------------------------------"
