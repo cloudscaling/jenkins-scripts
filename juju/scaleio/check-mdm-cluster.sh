@@ -1,9 +1,46 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
+
+# create machines
+echo "Create machines"
+m1=$(juju add-machine 2>&1 | awk '{print $3}')
+echo "Machine created: $m1"
+m2=$(juju add-machine 2>&1 | awk '{print $3}')
+echo "Machine created: $m2"
+m3=$(juju add-machine 2>&1 | awk '{print $3}')
+echo "Machine created: $m3"
+m4=$(juju add-machine 2>&1 | awk '{print $3}')
+echo "Machine created: $m4"
+m5=$(juju add-machine 2>&1 | awk '{print $3}')
+echo "Machine created: $m5"
+
+echo "Wait for machines"
+for mch in $m1 $m2 $m3 $m4 $m5 ; do
+  iter=0
+  while ! juju status | grep "\"$mch\"" &>/dev/null ; do
+    echo "Waiting for machine $mch - $iter/12"
+    if ((iter >= 12)); then
+      echo "ERROR: Machine $mch didn't up."
+      juju status
+      exit 1
+    fi
+    ((++iter))
+    sleep 10
+  done
+done
+echo "Post-Wait for machines for 30 seconds"
+sleep 30
+
+# deploy fake charms to prevent machines removing
+juju deploy cs:trusty/empty --to $m1
+juju service add-unit empty --to $m2
+juju service add-unit empty --to $m3
+juju service add-unit empty --to $m4
+juju service add-unit empty --to $m5
 
 master_mdm=''
 
@@ -76,7 +113,7 @@ cd juju-scaleio
 echo "--------------------------------------------------------------------------- $(date)"
 echo "-------------------------------------------------------- Deploy one MDM ---"
 echo "---------------------------------------------------------------------------"
-juju deploy local:trusty/scaleio-mdm
+juju deploy local:trusty/scaleio-mdm --to $m1
 wait_and_check 1
 
 function scale_up() {
