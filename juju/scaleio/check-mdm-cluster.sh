@@ -121,10 +121,11 @@ function scale_up() {
     declare -a free_machines
     local mdm_machines=`get_mdm_machines`
     for mch in $m1 $m2 $m3 $m4 $m5 ; do
-      if ! echo "$mdm_machines" | grep -e "^$mch$" >/dev/null ; then
+      if ! echo "$mdm_machines" | grep -e "^[\t ]*$mch[\t ]$" >/dev/null ; then
         free_machines=(${free_machines[@]} $mch)
       fi
     done
+    echo "Found free machines: "${free_machines[@]}
     local index=0
     local fm_length=${#free_machines[@]}
     while (( index < fm_length && index < new_units )) ; do
