@@ -36,7 +36,7 @@ echo "Post-Wait for machines for 30 seconds"
 sleep 30
 
 # deploy fake charms to prevent machines removing
-juju deploy juju deploy --repository $my_dir/../empty-charm  local:trusty/empty --to $m1
+juju deploy --repository $my_dir/../empty-charm  local:trusty/empty-charm --to $m1
 juju service add-unit empty --to $m2
 juju service add-unit empty --to $m3
 juju service add-unit empty --to $m4
