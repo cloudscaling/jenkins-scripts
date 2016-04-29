@@ -37,10 +37,10 @@ sleep 30
 
 # deploy fake charms to prevent machines removing
 juju deploy --repository $my_dir/../empty-charm  local:trusty/empty-charm --to $m1
-juju service add-unit empty --to $m2
-juju service add-unit empty --to $m3
-juju service add-unit empty --to $m4
-juju service add-unit empty --to $m5
+juju service add-unit empty-charm --to $m2
+juju service add-unit empty-charm --to $m3
+juju service add-unit empty-charm --to $m4
+juju service add-unit empty-charm --to $m5
 
 
 master_mdm=''
