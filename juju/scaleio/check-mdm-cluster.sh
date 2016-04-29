@@ -137,7 +137,7 @@ scale_up 5 3
 scale_down 1 "Master MDM:" 1 "Slave MDMs:" 1
 # 2 spare units should left
 # to 3
-scale_up 2 0
+scale_up 3 0
 # to 1
 scale_down 1 "Slave MDMs:" 1
 # 1 spare unit left should left
