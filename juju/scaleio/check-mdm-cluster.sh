@@ -36,11 +36,12 @@ echo "Post-Wait for machines for 30 seconds"
 sleep 30
 
 # deploy fake charms to prevent machines removing
-juju deploy juju deploy "cs:~justin-fathomdb/trusty/empty" --to $m1
+juju deploy juju deploy --repository $my_dir/../empty-charm  local:trusty/empty --to $m1
 juju service add-unit empty --to $m2
 juju service add-unit empty --to $m3
 juju service add-unit empty --to $m4
 juju service add-unit empty --to $m5
+
 
 master_mdm=''
 
@@ -107,25 +108,34 @@ function wait_and_check() {
   $my_dir/check-cluster.sh "juju ssh" $master_mdm $1
 }
 
-cd juju-scaleio
-
-# check one MDM
-echo "--------------------------------------------------------------------------- $(date)"
-echo "-------------------------------------------------------- Deploy one MDM ---"
-echo "---------------------------------------------------------------------------"
-juju deploy local:trusty/scaleio-mdm --to $m1
-wait_and_check 1
-
 function scale_up() {
   # new cluster mode
   local mode=$1
   # if we want to use spare units we will not add new units
   local new_units=$2
+  local old_mode=`get_cluster_mode`
   echo "--------------------------------------------------------------------------- $(date)"
-  echo "--------------------------------------------- Scale MDM's count up to $mode ---"
+  echo "-------------------------------------- Scale MDM's count up from $old_mode to $mode ---"
   echo "---------------------------------------------------------------------------"
   if (( new_units > 0 )) ; then
-    juju service add-unit scaleio-mdm -n $new_units
+    declare -a free_machines
+    local mdm_machines=`get_mdm_machines`
+    for mch in $m1 $m2 $m3 $m4 $m5 ; do
+      if ! echo "$mdm_machines" | grep -e "^$mch$" >/dev/null ; then
+        free_machines=(${free_machines[@]} $mch)
+      fi
+    done
+    local index=0
+    local fm_length=${#free_machines[@]}
+    while (( index < fm_length && index < new_units )) ; do
+      juju service add-unit scaleio-mdm --to ${free_machines[$index]}
+      ((++index))
+    done
+    if (( index < new_units )) ; then
+      echo "WARNING: There are no enough machines!!!"
+      (( rest = new_units - index ))
+      juju service add-unit scaleio-mdm -n $rest
+    fi
   fi
   juju set scaleio-mdm cluster-mode=$mode
   wait_and_check $mode
@@ -136,8 +146,9 @@ function scale_down() {
   local mode=$1
   shift
 
+  local old_mode=`get_cluster_mode`
   echo "--------------------------------------------------------------------------- $(date)"
-  echo "------------------------------------------- Scale MDM's count down to $mode ---"
+  echo "---------------------------------- Scale MDM's count down from $old_mode to $mode ---"
   echo "---------------------------------------------------------------------------"
 
   local output=`juju ssh $master_mdm "sudo scli --query_cluster --approve_certificate" 2>/dev/null`
@@ -159,6 +170,16 @@ function scale_down() {
   wait_and_check $mode
 }
 
+cd juju-scaleio
+
+# check one MDM
+echo "--------------------------------------------------------------------------- $(date)"
+echo "-------------------------------------------------------- Deploy one MDM ---"
+echo "---------------------------------------------------------------------------"
+juju deploy local:trusty/scaleio-mdm --to $m1
+wait_and_check 1
+
+
 # to 3
 scale_up 3 2
 # to 5
@@ -177,9 +198,13 @@ scale_down 1 "Master MDM:" 1 "Slave MDMs:" 1
 scale_up 3 0
 # to 1
 scale_down 1 "Slave MDMs:" 1
+
+# to 5 (1 spare unit will be used)
+scale_up 5 3
+# TODO: remove unit(s) and unit(s) back
+
 # 1 spare unit left should left
 juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
-
 
 juju remove-service scaleio-mdm
 wait_for_units_removed "scaleio-mdm"
