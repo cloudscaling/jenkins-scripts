@@ -213,8 +213,6 @@ scale_down 1 "Slave MDMs:" 1
 scale_up 5 3
 # TODO: remove unit(s) and add unit(s) back
 
-# 1 spare unit left should left
-juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
 
 juju remove-service scaleio-mdm
 wait_for_units_removed "scaleio-mdm"

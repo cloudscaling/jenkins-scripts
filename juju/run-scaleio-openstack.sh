@@ -40,6 +40,7 @@ cluster_mode=`get_cluster_mode`
 $my_dir/scaleio/check-cluster.sh "juju ssh" $master_mdm $cluster_mode
 $my_dir/scaleio/check-sds.sh "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdb'
 $my_dir/scaleio/check-sdc.sh "juju ssh" $master_mdm $USERNAME $PASSWORD
+$my_dir/scaleio/check-performance.sh "juju ssh" $master_mdm $USERNAME $PASSWORD
 
 $my_dir/scaleio-openstack/check-openstack.sh
 

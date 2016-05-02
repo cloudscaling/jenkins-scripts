@@ -151,10 +151,12 @@ set +e
 master_mdm=`get_master_mdm`
 echo "Master MDM found at $master_mdm"
 if [ -n $master_mdm ] ; then
+  set -x
   juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate ; scli --query_all_volume --approve_certificate" 2>/dev/null
   juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate ; scli --query_all_sds --approve_certificate" 2>/dev/null
   juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate ; scli --query_all_sdc --approve_certificate" 2>/dev/null
   juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate ; scli --query_performance_parameters --all_sds --all_sdc" 2>/dev/null
+  set +x
 fi
 
 
