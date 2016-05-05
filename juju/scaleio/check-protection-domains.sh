@@ -5,8 +5,6 @@ my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
 
-errors=''
-
 cd juju-scaleio
 
 m1=$(juju add-machine --constraints "instance-type=i2.2xlarge" 2>&1 | awk '{print $3}')
@@ -41,11 +39,9 @@ wait_for_services "executing|blocked|waiting|allocating"
 if juju status | grep "current" | grep error ; then
   echo "ERROR: Some services went to error state"
   juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
-  errors+='F'
+  exit 1
 fi
 
 #TODO: Check sds protection-domains, fault-sets, storage-pools, device-paths
 
 juju status
-
-if [ -n "$errors" ] ; then exit 1 ; fi
