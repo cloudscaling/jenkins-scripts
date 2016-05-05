@@ -3,7 +3,8 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
-if ! inner_script=$1 ; then
+inner_script=${1:-}
+if [ -z "$inner_script" ] ; then
   echo "No script is specified but required"
   exit 1
 fi
