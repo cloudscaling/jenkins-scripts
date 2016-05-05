@@ -23,8 +23,8 @@ echo "--------------------------------------------------------------------------
 echo "----------------- Deploy SDS 1 (pd1; fs1; sp1,sp2; /dev/xvdb,/dev/xvdc) ---"
 echo "---------------------------------------------------------------------------"
 juju deploy local:trusty/scaleio-sds scaleio-sds-pd1 --to $m1
-juju set scaleio-sds protection-domain="pd1" fault-set="fs1" storage-pools="sp1,sp2" device-paths="/dev/xvdb,/dev/xvdc"
-juju add-relation scaleio-sds scaleio-mdm
+juju set scaleio-sds-pd1 protection-domain="pd1" fault-set="fs1" storage-pools="sp1,sp2" device-paths="/dev/xvdb,/dev/xvdc"
+juju add-relation scaleio-sds-pd1 scaleio-mdm
 
 echo "---------------------------------------------------------------------------"
 echo "----------------- Deploy SDS 2 (pd1; fs1; sp2,sp1; /dev/xvdb,/dev/xvdc) ---"
