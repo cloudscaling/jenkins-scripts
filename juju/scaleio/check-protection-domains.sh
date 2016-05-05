@@ -12,6 +12,7 @@ echo "Machine created: $m1"
 m2=$(juju add-machine --constraints "instance-type=i2.2xlarge" 2>&1 | awk '{print $3}')
 echo "Machine created: $m2"
 
+wait_for_machines $m1 $m2
 
 echo "---------------------------------------------------------------------------"
 echo "------------------------------------------------------------ Deploy MDM ---"

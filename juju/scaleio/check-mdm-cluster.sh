@@ -22,22 +22,7 @@ echo "Machine created: $m4"
 m5=$(juju add-machine 2>&1 | awk '{print $3}')
 echo "Machine created: $m5"
 
-echo "Wait for machines"
-for mch in $m1 $m2 $m3 $m4 $m5 ; do
-  iter=0
-  while ! juju status | grep "\"$mch\"" &>/dev/null ; do
-    echo "Waiting for machine $mch - $iter/12"
-    if ((iter >= 12)); then
-      echo "ERROR: Machine $mch didn't up."
-      juju status
-      exit 1
-    fi
-    ((++iter))
-    sleep 10
-  done
-done
-echo "Post-Wait for machines for 30 seconds"
-sleep 30
+wait_for_machines $m1 $m2 $m3 $m4 $m5
 
 # deploy fake charms to prevent machines removing
 juju deploy --repository $my_dir/../empty-charm  local:trusty/empty-charm --to $m1
