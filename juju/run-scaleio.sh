@@ -3,6 +3,12 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+inner_script=${1:-}
+if [ -z "$inner_script" ] ; then
+  echo "No script is specified but required"
+  exit 1
+fi
+
 if ! juju bootstrap ; then
   echo "Bootstrap error. exiting..."
   exit 1
@@ -31,7 +37,7 @@ function catch_errors() {
   exit $exit_code
 }
 
-$my_dir/scaleio/check-mdm-cluster.sh
+$my_dir/$inner_script
 
 save_logs
 
