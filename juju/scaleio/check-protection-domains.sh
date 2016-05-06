@@ -34,7 +34,7 @@ juju set scaleio-sds-pd2 protection-domain="pd2" fault-set="fs2" storage-pools="
 juju add-relation scaleio-sds-pd2 scaleio-mdm
 
 # wait
-wait_for_services "executing|blocked|waiting|allocating"
+wait_absence_status_for_services "executing|blocked|waiting|allocating"
 
 # check for errors
 if juju status | grep "current" | grep error ; then

@@ -123,7 +123,7 @@ juju add-relation "nova-compute:ephemeral-backend" "scaleio-openstack:ephemeral-
 
 
 echo "Wait for services start: $(date)"
-wait_for_services "executing|blocked|waiting"
+wait_absence_status_for_services "executing|blocked|waiting|allocating"
 echo "Wait for services end: $(date)"
 
 # fix security group 'juju-amazon'

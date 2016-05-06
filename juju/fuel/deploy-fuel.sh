@@ -55,10 +55,11 @@ juju set fuel-compute roles="compute"
 juju add-relation fuel-master fuel-primary-controller
 juju add-relation fuel-master fuel-controller
 juju add-relation fuel-master fuel-compute
+sleep 15
 
 
 echo "Wait for services start: $(date)"
-wait_for_services "executing|blocked|waiting"
+wait_absence_status_for_services "executing|blocked|waiting|allocating"
 echo "Wait for services end: $(date)"
 
 juju set fuel-master deploy=1
@@ -66,14 +67,13 @@ sleep 30
 
 
 echo "Wait for services start: $(date)"
-wait_for_services "executing|blocked|waiting"
+wait_absence_status_for_services "maintenance"
 echo "Wait for services end: $(date)"
 sleep 10
 
-for mch in $m3 $m4 $m5 ; do
-  echo "INFO: query cluster on machine $mch"
-  juju ssh $mch 'scli --query_cluster --approve_certificate'
-done
+set +e
+echo "INFO: query cluster on primary controller machine $m3"
+juju ssh $m3 'scli --query_cluster --approve_certificate'
 
 # check for errors
 if juju status | grep "current" | grep error ; then

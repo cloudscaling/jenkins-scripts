@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function wait_for_services() {
+function wait_absence_status_for_services() {
   check_str=$1
   local max_iter=${2:-30}
   # waiting for services

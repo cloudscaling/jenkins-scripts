@@ -75,7 +75,7 @@ function wait_and_check() {
   # wait for new status
   wait_for_mode "$1""_node"
 
-  wait_for_services "executing|blocked|waiting|allocating"
+  wait_absence_status_for_services "executing|blocked|waiting|allocating"
 
   # check for errors
   if juju status | grep "current" | grep error >/dev/null ; then
