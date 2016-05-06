@@ -28,6 +28,8 @@ function catch_errors() {
   local exit_code=$?
   echo "Errors!" $exit_code $@
 
+  # sleep some time to flush logs
+  sleep 20
   save_logs
 
   if [[ $CLEAN_ENV != 'false' ]] ; then
