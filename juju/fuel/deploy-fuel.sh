@@ -68,7 +68,12 @@ sleep 30
 echo "Wait for services start: $(date)"
 wait_for_services "executing|blocked|waiting"
 echo "Wait for services end: $(date)"
+sleep 10
 
+for mch in $m3 $m4 $m5 ; do
+  echo "INFO: query cluster on machine $mch"
+  juju ssh $mch 'scli --query_cluster --approve_certificate'
+done
 
 # check for errors
 if juju status | grep "current" | grep error ; then
