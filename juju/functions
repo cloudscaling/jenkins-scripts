@@ -13,6 +13,11 @@ function wait_absence_status_for_services() {
       juju status
       return 1
     fi
+    if juju status | grep "current" | grep error ; then
+      echo "ERROR: Some services went to error state"
+      juju status
+      return 1
+    fi
     sleep 30
     ((++iter))
   done
@@ -28,6 +33,11 @@ function wait_for_units_removed() {
     echo "Waiting for all units to be removed - $iter/$max_iter"
     if ((iter >= max_iter)); then
       echo "ERROR: Units didn't removed."
+      juju status
+      return 1
+    fi
+    if juju status | grep "current" | grep error ; then
+      echo "ERROR: Some services went to error state"
       juju status
       return 1
     fi
