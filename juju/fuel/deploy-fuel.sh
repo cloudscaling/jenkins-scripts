@@ -53,7 +53,7 @@ juju service add-unit fuel-compute --to $m2
 juju set fuel-compute roles="compute"
 
 juju add-relation fuel-master fuel-primary-controller
-juju add-relation fuel-master fuel-controller
+#juju add-relation fuel-master fuel-controller
 juju add-relation fuel-master fuel-compute
 sleep 15
 
