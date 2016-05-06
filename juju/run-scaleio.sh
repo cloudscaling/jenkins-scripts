@@ -18,8 +18,6 @@ trap catch_errors ERR
 
 function save_logs() {
   # save status to file
-  rm -rf logs
-  mkdir logs
   juju status > logs/juju_status.log
   juju ssh 0 sudo cat /var/log/juju/all-machines.log > logs/all-machines.log 2>/dev/null
 }
@@ -38,6 +36,9 @@ function catch_errors() {
 
   exit $exit_code
 }
+
+rm -rf logs
+mkdir logs
 
 $my_dir/$inner_script
 

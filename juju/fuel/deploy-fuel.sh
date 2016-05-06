@@ -5,6 +5,7 @@ my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
 
+cdir="$(pwd)"
 cd fuel-charms
 
 # this script will change current bundle and it must be called here...
@@ -20,6 +21,24 @@ m4=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print
 echo "Machine created: $m4"
 m5=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
 echo "Machine created: $m5"
+
+trap catch_errors ERR
+
+function save_logs() {
+  # save status to file
+  for mch in $m3 $m4 $m5 ; do
+    mdir="$cdir/logs/$mch"
+    mkdir -p "$mdir"
+    juju ssh $mch 'cat /var/log/puppet-scaleio.log' > "$mdir/puppet-scaleio.log" 2>/dev/null
+    juju ssh $mch 'cat /var/lib/hiera/defaults.yaml' > "$mdir/var-lib-hiera-defaults.log" 2>/dev/null
+  done
+}
+
+function catch_errors() {
+  local exit_code=$?
+  save_logs
+  exit $exit_code
+}
 
 echo "Wait for machines"
 for mch in $m1 $m2 $m3 $m4 $m5 ; do
@@ -82,3 +101,5 @@ if juju status | grep "current" | grep error ; then
   juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
   exit 1
 fi
+
+save_logs
