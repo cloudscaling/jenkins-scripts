@@ -44,9 +44,9 @@ juju set fuel-master device-paths=/dev/xvdb
 juju deploy local:trusty/fuel-node fuel-primary-controller --to $m3
 juju set fuel-primary-controller roles="primary-controller cinder"
 
-juju deploy local:trusty/fuel-node fuel-controller --to $m4
-juju service add-unit fuel-controller --to $m5
-juju set fuel-controller roles="controller cinder"
+#juju deploy local:trusty/fuel-node fuel-controller --to $m4
+#juju service add-unit fuel-controller --to $m5
+#juju set fuel-controller roles="controller cinder"
 
 juju deploy local:trusty/fuel-node fuel-compute --to $m1
 juju service add-unit fuel-compute --to $m2
