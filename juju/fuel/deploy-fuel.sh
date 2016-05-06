@@ -57,7 +57,6 @@ juju add-relation fuel-master fuel-controller
 juju add-relation fuel-master fuel-compute
 sleep 15
 
-
 echo "Wait for services start: $(date)"
 wait_absence_status_for_services "executing|blocked|waiting|allocating"
 echo "Wait for services end: $(date)"
@@ -65,15 +64,17 @@ echo "Wait for services end: $(date)"
 juju set fuel-master deploy=1
 sleep 30
 
+# temporary workaround
+set +e
 
 echo "Wait for services start: $(date)"
 wait_absence_status_for_services "maintenance"
 echo "Wait for services end: $(date)"
-sleep 10
 
-set +e
-echo "INFO: query cluster on primary controller machine $m3"
-juju ssh $m3 'scli --query_cluster --approve_certificate'
+for mch in $m3 $m4 $m5 ; do
+  echo "INFO: query cluster on machine $mch"
+  juju ssh $mch 'scli --query_cluster --approve_certificate'
+done
 
 # check for errors
 if juju status | grep "current" | grep error ; then
@@ -81,6 +82,3 @@ if juju status | grep "current" | grep error ; then
   juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
   exit 1
 fi
-
-echo "Waiting for all services up"
-sleep 60
