@@ -89,8 +89,8 @@ echo "Wait for services end: $(date)"
 
 # check query_cluster output before exit on error if exists
 master_mdm=`get_master_mdm "echo $m3 $m4 $m5"`
-echo "INFO: query cluster on machine $mch"
-juju ssh $master_mdm 'scli --query_cluster --approve_certificate'
+echo "INFO: query cluster on machine $master_mdm"
+juju ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
 
 # check for errors
 if juju status | grep "current" | grep error ; then
@@ -101,7 +101,7 @@ fi
 
 for mch in $m1 $m2 $m3 $m4 $m5 ; do
   echo "INFO: check nova and cinder packages on machine $mch"
-  juju ssh $mch 'dpkg -l | grep -P "nova|cinder"'
+  juju ssh $mch 'dpkg -l | grep -P "nova|cinder || /bin/true"' 2>/dev/null
 done
 
 save_logs
