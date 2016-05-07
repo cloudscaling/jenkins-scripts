@@ -99,9 +99,4 @@ if juju status | grep "current" | grep error ; then
   exit 1
 fi
 
-for mch in $m1 $m2 $m3 $m4 $m5 ; do
-  echo "INFO: check nova and cinder packages on machine $mch"
-  juju ssh $mch 'dpkg -l | grep -P "nova|cinder || /bin/true"' 2>/dev/null
-done
-
 save_logs
