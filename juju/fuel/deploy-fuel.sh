@@ -83,17 +83,14 @@ echo "Wait for services end: $(date)"
 juju set fuel-master deploy=1
 sleep 30
 
-# temporary workaround
-set +e
-
 echo "Wait for services start: $(date)"
 wait_absence_status_for_services "maintenance"
 echo "Wait for services end: $(date)"
 
-for mch in $m3 $m4 $m5 ; do
-  echo "INFO: query cluster on machine $mch"
-  juju ssh $mch 'scli --query_cluster --approve_certificate'
-done
+# check query_cluster output before exit on error if exists
+master_mdm=`get_master_mdm "echo $m3 $m4 $m5"`
+echo "INFO: query cluster on machine $mch"
+juju ssh $master_mdm 'scli --query_cluster --approve_certificate'
 
 # check for errors
 if juju status | grep "current" | grep error ; then
@@ -101,5 +98,10 @@ if juju status | grep "current" | grep error ; then
   juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
   exit 1
 fi
+
+for mch in $m1 $m2 $m3 $m4 $m5 ; do
+  echo "INFO: check nova and cinder packages on machine $mch"
+  juju ssh $mch 'dpkg -l | grep -P "nova|cinder"'
+done
 
 save_logs

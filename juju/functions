@@ -51,8 +51,9 @@ function get_mdm_machines() {
 }
 
 function get_master_mdm() {
+  get_mdms=${1:-get_mdm_machines}
   master_mdm=''
-  for mch in `get_mdm_machines` ; do
+  for mch in `$get_mdms` ; do
     if juju ssh $mch sudo scli --query_cluster --approve_certificate 2>/dev/null 1>/dev/null ; then
       echo "$mch"
       return
