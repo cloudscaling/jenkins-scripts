@@ -46,9 +46,7 @@ if juju status | grep "current" | grep error ; then
   exit 1
 fi
 
-#TODO: Check sds protection-domains, fault-sets, storage-pools, device-paths
-
-if ! `juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds" 2>/dev/null >/tmp/all_sds` ; then
+if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds --approve_certificate" 2>/dev/null` ; then
   echo 'ERROR: The command "scli --query_all_sds --approve_certificate" failed'
   echo "$output"
   exit 1
@@ -58,64 +56,58 @@ fi
 echo "---------------------------------------------------------------------------"
 echo "------------------------------------------------------------- Check SDS ---"
 echo "---------------------------------------------------------------------------"
-if cat /tmp/all_sds | grep "SDS ID" | grep -v "State: Connected" ; then
+if echo "$output" | grep "SDS ID" | grep -v "State: Connected" ; then
   echo 'ERROR: Not all sds are connected'
   echo "$output"
   exit 1
-else
-  echo 'All sds are connected'
 fi
 
-sds[1]=$(cat /tmp/all_sds | grep "scaleio_sds_pd1" | awk '{print $3}')
-sds[2]=$(cat /tmp/all_sds | grep "scaleio_sds_pd2" | awk '{print $3}')
+sds[1]=$(echo "$output" | grep "scaleio_sds_pd1" | awk '{print $3}')
+sds[2]=$(echo "$output" | grep "scaleio_sds_pd2" | awk '{print $3}')
 
 for i in 1 2 ; do
   echo "---------------------------------------------------------------------------"
   echo "-------------------------------------- Check SDS in protection domain $i ---"
   echo "---------------------------------------------------------------------------"
-  juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_sds --sds_id ${sds[$i]} " 2>/dev/null >/tmp/sds_pd$i
-  if [[ `cat /tmp/sds_pd$i | grep 'Protection Domain:' | awk '{print $5}'` != pd$i* ]] ; then
+  sds_output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_sds --sds_id ${sds[$i]} " 2>/dev/null`
+  if [[ `echo "$sds_output" | grep 'Protection Domain:' | awk '{print $5}'` != pd$i* ]] ; then
     echo "Error in protection domain in scaleio_sds_pd$i"
-    cat /tmp/sds_pd$i
+    echo "$sds_output"
     exit 1
   fi
-  if [[ `cat /tmp/sds_pd$i | grep "Fault Set:" | awk '{print $5}'` != fs$i* ]] ; then
+  if [[ `echo "$sds_output" | grep "Fault Set:" | awk '{print $5}'` != fs$i* ]] ; then
     echo "Error in fault set in scaleio_sds_pd$i"
-    cat /tmp/sds_pd$i
+    cat "$sds_output"
     exit 1
   fi
-  if [[ -z `cat /tmp/sds_pd$i | grep "Device information" | grep "total 2 devices"` ]] ; then
+  if [[ -z `echo "$sds_output" | grep "Device information" | grep "total 2 devices"` ]] ; then
     echo "Error in devices number in scaleio_sds_pd$i"
-    cat /tmp/sds_pd$i
+    cat "$sds_output"
     exit 1
   fi
-  if [[ $i == 1 ]] ; then
-    other=2
-  else
-    other=1
-  fi
-  if [[ -z `cat /tmp/sds_pd$i | grep "Path: /dev/xvdb"` ]] ; then
+  if [[ -z `echo "$sds_output" | grep "Path: /dev/xvdb"` ]] ; then
     echo "Error in device path in scaleio_sds_pd$i"
-    cat /tmp/sds_pd$i
+    cat "$sds_output"
     exit 1
   fi
-  if [[ -z `cat /tmp/sds_pd$i | sed -n '/Path: \/dev\/xvdb/{n;p}' | grep "Storage Pool: sp$i"` ]] ; then
-    echo "Error in storage pool in scaleio_sds_pd$i"
-    cat /tmp/sds_pd$i
+  if [[ -z `echo "$sds_output" | sed -n '/Path: \/dev\/xvdb/{n;p}' | grep "Storage Pool: sp$i"` ]] ; then
+    echo "Error in storage pool $i in scaleio_sds_pd$i"
+    cat "$sds_output"
     exit 1
   fi
-  if [[ -z `cat /tmp/sds_pd$i | grep "Path: /dev/xvdc"` ]] ; then
+  if [[ -z `echo "$sds_output" | grep "Path: /dev/xvdc"` ]] ; then
     echo "Error in device path in scaleio_sds_pd$i"
-    cat /tmp/sds_pd$i
+    cat "$sds_output"
     exit 1
   fi
-  if [[ -z `cat /tmp/sds_pd$i | sed -n '/Path: \/dev\/xvdc/{n;p}' | grep "Storage Pool: sp$other"` ]] ; then
-    echo "Error in storage pool in scaleio_sds_pd$i"
-    cat /tmp/sds_pd$i
+  other=$((3-$i))
+  if [[ -z `echo "$sds_output" | sed -n '/Path: \/dev\/xvdc/{n;p}' | grep "Storage Pool: sp$other"` ]] ; then
+    echo "Error in storage pool $other in scaleio_sds_pd$i"
+    cat "$sds_output"
     exit 1
   fi
 done
 
-juju status
+juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds --approve_certificate"
 
 echo SUCCESS
