@@ -106,4 +106,6 @@ if juju status | grep "current" | grep error ; then
   exit 1
 fi
 
+$my_dir/../scaleio/check-cluster.sh "juju ssh" $master_mdm 3
+
 save_logs
