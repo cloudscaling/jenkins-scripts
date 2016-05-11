@@ -11,9 +11,6 @@ juju status
 
 cd juju-scaleio
 
-# this script will change current bundle and it must be called here...
-#$my_dir/fix_scini_problems.sh
-
 m1=$(juju add-machine --constraints "instance-type=r3.large" 2>&1 | awk '{print $3}')
 echo "Machine created: $m1"
 m2=$(juju add-machine --constraints "instance-type=r3.large" 2>&1 | awk '{print $3}')

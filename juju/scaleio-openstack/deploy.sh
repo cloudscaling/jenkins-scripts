@@ -12,7 +12,7 @@ juju status
 cd juju-scaleio
 
 # this script will change current bundle and it must be called here...
-#$my_dir/fix_scini_problems.sh
+$my_dir/fix_scini_problems.sh
 
 if [ -n "$VERSION" ] ; then
   echo "Change version to $VERSION"

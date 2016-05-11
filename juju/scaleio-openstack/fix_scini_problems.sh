@@ -1,5 +1,15 @@
 #!/bin/bash -ex
 
+# check kernel
+rm -f index.html
+wget -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/
+kernel=`juju ssh 0 'uname -r' 2>/dev/null`
+if cat index.html | grep $kernel ; then
+  echo "INFO: driver for kernel $kernel found on ftp.emc.com"
+  exit
+fi
+echo "WARNING: driver for kernel $kernel not found on ftp.emc.com. Upgrade kernel to 4.2.0-30"
+
 # due to problems with 'scini' driver we will run two machines and update kernel
 juju machine add --constraints "instance-type=r3.large" -n 2
 
