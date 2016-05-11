@@ -40,22 +40,29 @@ function catch_errors() {
   exit $exit_code
 }
 
-echo "Wait for machines"
-for mch in $m1 $m2 $m3 $m4 $m5 ; do
-  iter=0
-  while ! juju status | grep "\"$mch\"" &>/dev/null ; do
-    echo "Waiting for machine $mch - $iter/12"
-    if ((iter >= 12)); then
-      echo "ERROR: Machine $mch didn't up."
-      juju status
-      exit 1
-    fi
-    ((++iter))
-    sleep 10
+# wait for machines up
+wait_for_machines $m1 $m2 $m3 $m4 $m5
+
+# check kernel at one machine
+rm -f index.html
+wget -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/
+kernel=`juju ssh $m1 "uname -r" 2>/dev/null`
+kernel=`echo $kernel | sed 's/\r//'`
+if ! cat index.html | grep $kernel ; then
+  echo "WARNING: driver for kernel $kernel not found on ftp.emc.com. Upgrade kernel to 4.2.0-30"
+
+  # change kernel and reboot
+  for machine in $m1 $m2 $m3 $m4 $m5 ; do
+    echo "--- Updating machine $machine"
+    juju ssh $machine "sudo apt-get install -fy linux-image-4.2.0-30-generic linux-headers-4.2.0-30-generic &>/dev/null" 2>/dev/null
+    juju ssh $machine "sudo reboot" 2>/dev/null
   done
-done
-echo "Post-Wait for machines for 30 seconds"
-sleep 30
+
+  # wait for machines up
+  wait_for_machines $m1 $m2 $m3 $m4 $m5
+fi
+rm -f index.html
+
 
 juju deploy local:trusty/fuel-master --to 0
 juju set fuel-master device-paths=/dev/xvdb
