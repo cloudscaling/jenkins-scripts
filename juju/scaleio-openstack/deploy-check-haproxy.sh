@@ -3,43 +3,10 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
-function wait_volume() {
-  local volume_id=$1
-  echo "------------------------------  Wait for volume: $volume_id"
-  local fail=0
-  while [[ true ]] ; do
-    if ((fail >= MAX_FAIL)); then
-      echo '' >> errors
-      echo "ERROR: Volume creation fails (timeout)" >> errors
-      cinder show $volume_id >> errors
-      return
-    fi
-    echo "attempt $fail of $MAX_FAIL"
-    status=$(volume_status $volume_id)
-    if [[ $status == "available" ]]; then
-      break
-    fi
-    if [[ $status == "error" || -z "$status" ]]; then
-      echo '' >> errors
-      echo 'ERROR: Volume creation error' >> errors
-      cinder show $volume_id >> errors
-      return
-    fi
-    sleep 10
-    ((++fail))
-  done
-}
-
 source $my_dir/../functions
-
-juju deploy juju-gui --to 0
-juju expose juju-gui
-juju status
+source $my_dir/functions
 
 cd juju-scaleio
-
-# this script will change current bundle and it must be called here...
-#$my_dir/fix_scini_problems.sh
 
 m1=$(juju add-machine --constraints "instance-type=r3.large" 2>&1 | awk '{print $3}')
 echo "Machine created: $m1"
@@ -116,12 +83,7 @@ sleep 30
 juju status
 
 echo "Wait for services start: $(date)"
-if ! sout=$(wait_for_services "executing|blocked|waiting" 60) ; then
-  echo $sout
-  exit 1
-else
-  echo $sout
-fi
+wait_absence_status_for_services "executing|blocked|waiting|allocating"
 echo "Wait for services end: $(date)"
 
 # fix security group 'juju-amazon'
@@ -158,7 +120,7 @@ export OS_PASSWORD=password
 
 keystone catalog
 
-echo "Check san_ip in cinder.conf"
+echo "Check ScaleIO geteway IP setting in cinder.conf"
 conf_ip=`juju ssh 1 sudo cat /etc/cinder/cinder.conf 2>/dev/null | grep san_ip | awk '{print $3}' | sed "s/\r//"`
 if [[ "$conf_ip" != "${ip_addresses[0]}" ]] ; then
   echo "Error in san_ip in cinder.conf"
