@@ -1,0 +1,28 @@
+#!/bin/bash
+
+function wait_volume() {
+  local volume_id=$1
+  echo "------------------------------  Wait for volume: $volume_id"
+  local fail=0
+  while [[ true ]] ; do
+    if ((fail >= MAX_FAIL)); then
+      echo '' >> errors
+      echo "ERROR: Volume creation fails (timeout)" >> errors
+      cinder show $volume_id >> errors
+      return
+    fi
+    echo "attempt $fail of $MAX_FAIL"
+    status=$(volume_status $volume_id)
+    if [[ $status == "available" ]]; then
+      break
+    fi
+    if [[ $status == "error" || -z "$status" ]]; then
+      echo '' >> errors
+      echo 'ERROR: Volume creation error' >> errors
+      cinder show $volume_id >> errors
+      return
+    fi
+    sleep 10
+    ((++fail))
+  done
+}

@@ -4,6 +4,7 @@ my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
+source $my_dir/functions
 
 rm -f errors
 touch errors
@@ -11,33 +12,6 @@ MAX_FAIL=30
 
 function volume_status() { cinder show $1 | awk '/ status / {print $4}'; }
 instance_status() { nova show $1 | awk '/ status / {print $4}'; }
-
-function wait_volume() {
-  local volume_id=$1
-  echo "------------------------------  Wait for volume: $volume_id"
-  local fail=0
-  while [[ true ]] ; do
-    if ((fail >= MAX_FAIL)); then
-      echo '' >> errors
-      echo "ERROR: Volume creation fails (timeout)" >> errors
-      cinder show $volume_id >> errors
-      return
-    fi
-    echo "attempt $fail of $MAX_FAIL"
-    status=$(volume_status $volume_id)
-    if [[ $status == "available" ]]; then
-      break
-    fi
-    if [[ $status == "error" || -z "$status" ]]; then
-      echo '' >> errors
-      echo 'ERROR: Volume creation error' >> errors
-      cinder show $volume_id >> errors
-      return
-    fi
-    sleep 10
-    ((++fail))
-  done
-}
 
 function wait_instance() {
   local instance_id=$1
