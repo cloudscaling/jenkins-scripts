@@ -123,9 +123,10 @@ keystone catalog
 echo "Check ScaleIO geteway IP setting in cinder.conf"
 conf_ip=`juju ssh 1 sudo cat /etc/cinder/cinder.conf 2>/dev/null | grep san_ip | awk '{print $3}' | sed "s/\r//"`
 if [[ "$conf_ip" != "${ip_addresses[0]}" ]] ; then
-  echo "Error in san_ip in cinder.conf"
+  echo "Error in ScaleIO geteway IP setting in cinder.conf"
   exit 1
 fi
+echo "Success"
 
 echo "------------------------------  Check creation of cinder volumes"
 cinder create --display_name simple_volume 1
