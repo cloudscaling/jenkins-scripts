@@ -120,10 +120,10 @@ export OS_PASSWORD=password
 
 keystone catalog
 
-echo "Check ScaleIO geteway IP setting in cinder.conf"
+echo "Check ScaleIO gateway IP setting in cinder.conf"
 conf_ip=`juju ssh 1 sudo cat /etc/cinder/cinder.conf 2>/dev/null | grep san_ip | awk '{print $3}' | sed "s/\r//"`
 if [[ "$conf_ip" != "${ip_addresses[0]}" ]] ; then
-  echo "Error in ScaleIO geteway IP setting in cinder.conf"
+  echo "Error in ScaleIO gateway IP setting in cinder.conf"
   exit 1
 fi
 echo "Success"
