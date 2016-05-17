@@ -7,25 +7,23 @@ source $my_dir/../functions
 source $my_dir/functions
 
 function check_volume() {
-cinder create --display_name simple_volume_$1_$2 1
-if ! volume_id=`cinder list | grep " simple_volume_$1_$2 " | awk '{print $2}'` ; then
-  echo "No volume was created with $1 and $2"
-  exit 1
-fi
-wait_volume $volume_id
+  local volume_name=simple_volume_$1
 
-status=`cinder show $1 | awk '/ status / {print $4}'`
+  cinder create --display_name $volume_name 1
+  if ! volume_id=`cinder list | grep " $volume_name " | awk '{print $2}'` ; then
+    echo "No volume was created with $1"
+    exit 1
+  fi
+  wait_volume $volume_id
 
-if [[ $status == "available" ]]; then
-  echo "Success"
-fi
-if [[ $status == "error" || -z "$status" ]]; then
-  echo 'ERROR: Volume creation error' >> errors
-  cinder show $volume_id
+  status=`cinder show $volume_id | awk '/ status / {print $4}'`
+
+  if [[ $status == "available" ]]; then
+    echo "Success"
+  elif [[ $status == "error" || -z "$status" ]]; then
+    echo 'ERROR: Volume creation error'
+  fi
   cinder delete $volume_id >/dev/null
-  return
-fi
-cinder delete $volume_id >/dev/null
 }
 
 cd juju-scaleio
@@ -86,8 +84,10 @@ for ip_address in `juju status scaleio-gw | grep public-address | awk '{print $2
   ip_addresses[$i]=$ip_address
   ((++i))
 done
+gw_ip_1=${ip_addresses[0]}
+gw_ip_2=${ip_addresses[1]}
 
-juju set scaleio-gw "vip=${ip_addresses[0]}"
+juju set scaleio-gw "vip=$gw_ip_1"
 
 echo "Add relations"
 juju add-relation "scaleio-sdc:scaleio-mdm" "scaleio-mdm:scaleio-mdm"
@@ -144,31 +144,25 @@ keystone catalog
 
 echo "Check ScaleIO gateway IP setting in cinder.conf"
 conf_ip=`juju ssh 1 sudo cat /etc/cinder/cinder.conf 2>/dev/null | grep san_ip | awk '{print $3}' | sed "s/\r//"`
-if [[ "$conf_ip" != "${ip_addresses[0]}" ]] ; then
+if [[ "$conf_ip" != "$gw_ip_1" ]] ; then
   echo "Error in ScaleIO gateway IP setting in cinder.conf"
-  echo "Expected ${ip_addresses[0]}, but got $conf_ip"
+  echo "Expected $gw_ip_1, but got $conf_ip"
   exit 1
 fi
 echo "Success"
 
 echo "Check creation of cinder volume through gw1"
-check_volume ha1 gw1
+check_volume ha1_gw1
 
 echo "Stop scaleio-gateway service on the first gateway"
 juju ssh 2 sudo service scaleio-gateway stop
 
 echo "Check creation of cinder volume through gw2"
-check_volume ha1 gw2
-
-juju remove-relation "scaleio-gw:scaleio-mdm" "scaleio-mdm:scaleio-mdm"
-juju remove-relation "scaleio-openstack:scaleio-gw" "scaleio-gw:scaleio-gw"
+check_volume ha1_gw2
 
 echo "Set haproxy to another address"
-juju set scaleio-gw "vip=${ip_addresses[1]}"
+juju set scaleio-gw "vip=$gw_ip_2"
 sleep 30
-
-juju add-relation "scaleio-gw:scaleio-mdm" "scaleio-mdm:scaleio-mdm"
-juju add-relation "scaleio-openstack:scaleio-gw" "scaleio-gw:scaleio-gw"
 
 echo "Wait for services start: $(date)"
 wait_absence_status_for_services "executing|blocked|waiting|allocating"
@@ -176,15 +170,15 @@ echo "Wait for services end: $(date)"
 
 echo "Check ScaleIO gateway IP setting in cinder.conf"
 conf_ip=`juju ssh 1 sudo cat /etc/cinder/cinder.conf 2>/dev/null | grep san_ip | awk '{print $3}' | sed "s/\r//"`
-if [[ "$conf_ip" != "${ip_addresses[1]}" ]] ; then
+if [[ "$conf_ip" != "$gw_ip_2" ]] ; then
   echo "Error in ScaleIO gateway IP setting in cinder.conf"
-  echo "Expected ${ip_addresses[1]}, but got $conf_ip"
+  echo "Expected $gw_ip_2, but got $conf_ip"
   exit 1
 fi
 echo "Success"
 
 echo "Check creation of cinder volume through gw2"
-check_volume ha2 gw2
+check_volume ha2_gw2
 
 echo "Stop scaleio-gateway service"
 juju ssh 2 sudo service scaleio-gateway start
@@ -193,6 +187,6 @@ echo "Stop scaleio-gateway service"
 juju ssh 4 sudo service scaleio-gateway stop
 
 echo "Check creation of cinder volume through gw1"
-check_volume ha2 gw1
+check_volume ha2_gw1
 
 echo SUCCESS
