@@ -41,12 +41,12 @@ function wait_instance() {
 }
 
 # check installed cloud
-auth_ip=`juju status keystone/0 --format json | jq .services.keystone.units | grep public-address | sed 's/[\",]//g' | awk '{print $2}'`
 rm -rf .venv
 virtualenv .venv
 source .venv/bin/activate
 pip install -q python-openstackclient
 
+auth_ip=`juju status keystone/0 --format json | jq .services.keystone.units | grep public-address | sed 's/[\",]//g' | awk '{print $2}'`
 export OS_AUTH_URL=http://$auth_ip:5000/v2.0
 export OS_USERNAME=admin
 export OS_TENANT_NAME=admin
