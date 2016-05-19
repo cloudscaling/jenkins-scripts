@@ -112,6 +112,7 @@ function check_volume_creation() {
   local volume_name=simple_volume_$1
 
   volume_id=`cinder create --display_name $volume_name 1 | grep " id " | awk '{print $4}'`
+  echo "INFO: Volume created. Name: $volume_name  Id: $volume_id"
   wait_volume $volume_id
 
   status=`cinder show $volume_id | awk '/ status / {print $4}'`
@@ -120,7 +121,10 @@ function check_volume_creation() {
   elif [[ $status == "error" || -z "$status" ]]; then
     echo 'ERROR: Volume creation error'
   fi
-  cinder delete $volume_id >/dev/null
+  if ! output=`cinder delete $volume_id` ; then
+    echo "$output" >> errors
+    echo 'ERROR: Volume deletion error'
+  fi
 }
 
 function check_cinder_conf() {
