@@ -147,19 +147,19 @@ function catch_errors() {
 
 check_cinder_conf ${ip_addresses[0]}
 
-echo "INFO: Check creation of cinder volume through gw1"
+echo "INFO: Check creation of cinder volume through gw1 $(date)"
 check_volume_creation ha1_gw1
 
-echo "INFO: Stop scaleio-gateway service on the first gateway"
-juju ssh 2 sudo service scaleio-gateway stop 2>/dev/null
+echo "INFO: Stop scaleio-gateway service on the first gateway $(date)"
+juju ssh 2 'sudo service scaleio-gateway stop || /bin/true' 2>/dev/null
 sleep 10
-echo "INFO: Check status scaleio-gateway service on the first gateway"
+echo "INFO: Check status scaleio-gateway service on the first gateway $(date)"
 juju ssh 2 sudo service scaleio-gateway status 2>/dev/null
 
-echo "INFO: Check creation of cinder volume through gw2"
+echo "INFO: Check creation of cinder volume through gw2 $(date)"
 check_volume_creation ha1_gw2
 
-echo "INFO: Configure haproxy to second GW"
+echo "INFO: Configure haproxy to second GW $(date)"
 juju set scaleio-gw "vip=${ip_addresses[1]}"
 sleep 30
 echo "INFO: Wait for services start: $(date)"
@@ -168,23 +168,21 @@ echo "INFO: Wait for services end: $(date)"
 
 check_cinder_conf ${ip_addresses[1]}
 
-echo "INFO: Check creation of cinder volume through gw2"
+echo "INFO: Check creation of cinder volume through gw2 $(date)"
 check_volume_creation ha2_gw2
 
-set +e
-echo "INFO: Start scaleio-gateway service on the first gateway"
-juju ssh 2 sudo service scaleio-gateway start 2>/dev/null
+echo "INFO: Start scaleio-gateway service on the first gateway $(date)"
+juju ssh 2 'sudo service scaleio-gateway start || /bin/true' 2>/dev/null
 sleep 10
-echo "INFO: Check status scaleio-gateway service on the first gateway"
+echo "INFO: Check status scaleio-gateway service on the first gateway $(date)"
 juju ssh 2 sudo service scaleio-gateway status 2>/dev/null
-echo "INFO: Stop scaleio-gateway service on the second gateway"
-juju ssh 4 sudo service scaleio-gateway stop 2>/dev/null
+echo "INFO: Stop scaleio-gateway service on the second gateway $(date)"
+juju ssh 4 'sudo service scaleio-gateway stop || /bin/true' 2>/dev/null
 sleep 10
-echo "INFO: Check status scaleio-gateway service on the second gateway"
+echo "INFO: Check status scaleio-gateway service on the second gateway $(date)"
 juju ssh 4 sudo service scaleio-gateway status 2>/dev/null
-set -e
 
-echo "INFO: Check creation of cinder volume through gw1"
+echo "INFO: Check creation of cinder volume through gw1 $(date)"
 check_volume_creation ha2_gw1
 
 trap - ERR
