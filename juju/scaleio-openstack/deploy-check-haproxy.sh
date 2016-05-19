@@ -76,8 +76,6 @@ juju add-relation "cinder:storage-backend" "scaleio-openstack:storage-backend"
 
 sleep 30
 
-juju status
-
 echo "Wait for services start: $(date)"
 wait_absence_status_for_services "executing|blocked|waiting|allocating"
 echo "Wait for services end: $(date)"
@@ -116,13 +114,12 @@ keystone catalog
 function check_volume_creation() {
   local volume_name=simple_volume_$1
 
-  cinder create --display_name $volume_name 1
-  volume_id=`cinder list | grep " $volume_name " | awk '{print $2}'`
+  volume_id=`cinder create --display_name $volume_name 1 | grep " id " | awk '{print $4}'`
   wait_volume $volume_id
 
   status=`cinder show $volume_id | awk '/ status / {print $4}'`
   if [[ $status == "available" ]]; then
-    echo "Success"
+    echo "INFO: Success"
   elif [[ $status == "error" || -z "$status" ]]; then
     echo 'ERROR: Volume creation error'
   fi
@@ -131,21 +128,24 @@ function check_volume_creation() {
 
 function check_cinder_conf() {
   gw_ip=$1
-  echo "Check ScaleIO gateway IP setting in cinder.conf"
+  echo "INFO: Check ScaleIO gateway IP setting in cinder.conf"
   conf_ip=`juju ssh 1 sudo cat /etc/cinder/cinder.conf 2>/dev/null | grep san_ip | awk '{print $3}' | sed "s/\r//"`
   if [[ "$conf_ip" != "$gw_ip" ]] ; then
-    echo "Error in ScaleIO gateway IP setting in cinder.conf"
-    echo "Expected $gw_ip, but got $conf_ip"
+    echo "ERROR: Error in ScaleIO gateway IP setting in cinder.conf"
+    echo "ERROR: Expected $gw_ip, but got $conf_ip"
     return 1
   fi
-  echo "Success"
+  echo "INFO: Success"
 }
 
 trap catch_errors ERR
 
 function catch_errors() {
   local exit_code=$?
-  echo "Errors!" $exit_code $@
+  echo "ERROR: error catched: " $exit_code $@
+
+  juju ssh 2 sudo ls -lR /opt
+  juju ssh 4 sudo ls -lR /opt
 
   $my_dir/save_logs.sh
   exit $exit_code
@@ -153,38 +153,48 @@ function catch_errors() {
 
 check_cinder_conf ${ip_addresses[0]}
 
-echo "Check creation of cinder volume through gw1"
+echo "INFO: Check creation of cinder volume through gw1"
 check_volume_creation ha1_gw1
 
-echo "Stop scaleio-gateway service on the first gateway"
+echo "INFO: Stop scaleio-gateway service on the first gateway"
 juju ssh 2 sudo service scaleio-gateway stop 2>/dev/null
+echo "INFO: Check status scaleio-gateway service on the first gateway"
+juju ssh 2 sudo service scaleio-gateway status 2>/dev/null
 
-echo "Check creation of cinder volume through gw2"
+echo "INFO: Check creation of cinder volume through gw2"
 check_volume_creation ha1_gw2
 
-echo "Configure haproxy to second GW"
+echo "INFO: Configure haproxy to second GW"
 juju set scaleio-gw "vip=${ip_addresses[1]}"
 sleep 10
-echo "Wait for services start: $(date)"
+echo "INFO: Wait for services start: $(date)"
 wait_absence_status_for_services "executing|blocked|waiting|allocating"
-echo "Wait for services end: $(date)"
+echo "INFO: Wait for services end: $(date)"
 
 check_cinder_conf ${ip_addresses[1]}
 
-echo "Check creation of cinder volume through gw2"
+echo "INFO: Check creation of cinder volume through gw2"
 check_volume_creation ha2_gw2
 
-echo "Stop scaleio-gateway service"
+set +e
+echo "INFO: Start scaleio-gateway service on the first gateway"
 juju ssh 2 sudo service scaleio-gateway start 2>/dev/null
-sleep 20
-echo "Stop scaleio-gateway service"
+echo "INFO: Check status scaleio-gateway service on the first gateway"
+juju ssh 2 sudo service scaleio-gateway status 2>/dev/null
+echo "INFO: Stop scaleio-gateway service on the second gateway"
 juju ssh 4 sudo service scaleio-gateway stop 2>/dev/null
+echo "INFO: Check status scaleio-gateway service on the second gateway"
+juju ssh 4 sudo service scaleio-gateway status 2>/dev/null
+set -e
 
-echo "Check creation of cinder volume through gw1"
+echo "INFO: Check creation of cinder volume through gw1"
 check_volume_creation ha2_gw1
 
-trap catch_errors ERR
+juju ssh 2 sudo ls -lR /opt
+juju ssh 4 sudo ls -lR /opt
+
+trap - ERR
 
 $my_dir/save_logs.sh
 
-echo SUCCESS
+echo "SUCCESS"
