@@ -141,9 +141,6 @@ function catch_errors() {
   local exit_code=$?
   echo "ERROR: error catched: " $exit_code $@
 
-  juju ssh 2 sudo ls -lR /opt
-  juju ssh 4 sudo ls -lR /opt
-
   $my_dir/save_logs.sh
   exit $exit_code
 }
