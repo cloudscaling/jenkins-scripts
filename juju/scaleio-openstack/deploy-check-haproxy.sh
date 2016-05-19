@@ -158,6 +158,7 @@ check_volume_creation ha1_gw1
 
 echo "INFO: Stop scaleio-gateway service on the first gateway"
 juju ssh 2 sudo service scaleio-gateway stop 2>/dev/null
+sleep 10
 echo "INFO: Check status scaleio-gateway service on the first gateway"
 juju ssh 2 sudo service scaleio-gateway status 2>/dev/null
 
@@ -166,7 +167,7 @@ check_volume_creation ha1_gw2
 
 echo "INFO: Configure haproxy to second GW"
 juju set scaleio-gw "vip=${ip_addresses[1]}"
-sleep 10
+sleep 30
 echo "INFO: Wait for services start: $(date)"
 wait_absence_status_for_services "executing|blocked|waiting|allocating"
 echo "INFO: Wait for services end: $(date)"
@@ -179,10 +180,12 @@ check_volume_creation ha2_gw2
 set +e
 echo "INFO: Start scaleio-gateway service on the first gateway"
 juju ssh 2 sudo service scaleio-gateway start 2>/dev/null
+sleep 10
 echo "INFO: Check status scaleio-gateway service on the first gateway"
 juju ssh 2 sudo service scaleio-gateway status 2>/dev/null
 echo "INFO: Stop scaleio-gateway service on the second gateway"
 juju ssh 4 sudo service scaleio-gateway stop 2>/dev/null
+sleep 10
 echo "INFO: Check status scaleio-gateway service on the second gateway"
 juju ssh 4 sudo service scaleio-gateway status 2>/dev/null
 set -e
@@ -190,11 +193,13 @@ set -e
 echo "INFO: Check creation of cinder volume through gw1"
 check_volume_creation ha2_gw1
 
-juju ssh 2 sudo ls -lR /opt
-juju ssh 4 sudo ls -lR /opt
-
 trap - ERR
 
 $my_dir/save_logs.sh
+
+if [ -s errors ] ; then
+  cat errors
+  exit 1
+fi
 
 echo "SUCCESS"
