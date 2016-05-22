@@ -24,7 +24,7 @@ function save_logs() {
       echo "  version info:"
       juju ssh $mch "dpkg -s python-cinder | grep 'Version:'" 2>/dev/null
     elif [[ $service =~ 'scaleio-gw' ]] ; then
-      local dirs='/opt/emc/scaleio/gateway/logs'
+      local dirs='/opt/emc/scaleio/gateway/logs /etc/haproxy/haproxy.cfg'
     else
       continue
     fi

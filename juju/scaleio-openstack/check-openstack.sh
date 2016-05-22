@@ -3,42 +3,12 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
-source $my_dir/../functions
-source $my_dir/functions
-
 rm -f errors
 touch errors
-MAX_FAIL=30
+export MAX_FAIL=30
 
-function volume_status() { cinder show $1 | awk '/ status / {print $4}'; }
-instance_status() { nova show $1 | awk '/ status / {print $4}'; }
-
-function wait_instance() {
-  local instance_id=$1
-  echo "------------------------------  Wait for instance: $instance_id"
-  local fail=0
-  while [[ true ]] ; do
-    if ((fail >= MAX_FAIL)); then
-      echo '' >> errors
-      echo "ERROR: Instance active status wait timeout occured" >> errors
-      nova show $instance_id >> errors
-      return 0
-    fi
-    echo "attempt $fail of $MAX_FAIL"
-    status=$(instance_status $instance_id)
-    if [[ "$status" == "ACTIVE" ]]; then
-      break
-    fi
-    if [[ "$status" == "ERROR" || -z "$status" ]]; then
-      echo '' >> errors
-      echo 'ERROR: Instance booting error' >> errors
-      nova show $instance_id >> errors
-      return 0
-    fi
-    sleep 10
-    ((++fail))
-  done
-}
+source $my_dir/../functions
+source $my_dir/functions
 
 # check installed cloud
 rm -rf .venv

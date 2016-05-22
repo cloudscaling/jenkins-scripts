@@ -1,5 +1,35 @@
 #!/bin/bash
 
+instance_status() { nova show $1 | awk '/ status / {print $4}'; }
+function volume_status() { cinder show $1 | awk '/ status / {print $4}'; }
+
+function wait_instance() {
+  local instance_id=$1
+  echo "------------------------------  Wait for instance: $instance_id"
+  local fail=0
+  while [[ true ]] ; do
+    if ((fail >= MAX_FAIL)); then
+      echo '' >> errors
+      echo "ERROR: Instance active status wait timeout occured" >> errors
+      nova show $instance_id >> errors
+      return 0
+    fi
+    echo "attempt $fail of $MAX_FAIL"
+    status=$(instance_status $instance_id)
+    if [[ "$status" == "ACTIVE" ]]; then
+      break
+    fi
+    if [[ "$status" == "ERROR" || -z "$status" ]]; then
+      echo '' >> errors
+      echo 'ERROR: Instance booting error' >> errors
+      nova show $instance_id >> errors
+      return 0
+    fi
+    sleep 10
+    ((++fail))
+  done
+}
+
 function wait_volume() {
   local volume_id=$1
   echo "------------------------------  Wait for volume: $volume_id"

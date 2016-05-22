@@ -3,6 +3,10 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+rm -f errors
+touch errors
+export MAX_FAIL=30
+
 source $my_dir/../functions
 source $my_dir/functions
 
@@ -54,6 +58,8 @@ juju deploy local:trusty/scaleio-sds --to $m2
 juju service add-unit scaleio-sds --to $m3
 juju service add-unit scaleio-sds --to $m4
 juju set scaleio-sds "device-paths=/dev/xvdb"
+
+cd ..
 
 sleep 10
 ip_addresses=(`juju status scaleio-gw | grep public-address | awk '{print $2}'`)
@@ -139,6 +145,15 @@ function check_cinder_conf() {
   echo "INFO: Success"
 }
 
+function check_haproxy_responses() {
+  gw_ip1=$1
+  gw_ip2=$2
+  resp=`curl -k -u admin:Default_password https://$gw_ip1:4443/api/login`
+  echo "INFO: Check server HA1 response: $resp"
+  resp=`curl -k -u admin:Default_password https://$gw_ip2:4443/api/login`
+  echo "INFO: Check server HA2 response: $resp"
+}
+
 trap catch_errors ERR
 
 function catch_errors() {
@@ -151,6 +166,7 @@ function catch_errors() {
 
 check_cinder_conf ${ip_addresses[0]}
 
+check_haproxy_responses ${ip_addresses[@]}
 echo "INFO: Check creation of cinder volume through gw1 $(date)"
 check_volume_creation ha1_gw1
 
@@ -160,6 +176,7 @@ sleep 10
 echo "INFO: Check status scaleio-gateway service on the first gateway $(date)"
 juju ssh 2 sudo service scaleio-gateway status 2>/dev/null
 
+check_haproxy_responses ${ip_addresses[@]}
 echo "INFO: Check creation of cinder volume through gw2 $(date)"
 check_volume_creation ha1_gw2
 
@@ -172,6 +189,7 @@ echo "INFO: Wait for services end: $(date)"
 
 check_cinder_conf ${ip_addresses[1]}
 
+check_haproxy_responses ${ip_addresses[@]}
 echo "INFO: Check creation of cinder volume through gw2 $(date)"
 check_volume_creation ha2_gw2
 
@@ -186,6 +204,7 @@ sleep 10
 echo "INFO: Check status scaleio-gateway service on the second gateway $(date)"
 juju ssh 4 sudo service scaleio-gateway status 2>/dev/null
 
+check_haproxy_responses ${ip_addresses[@]}
 echo "INFO: Check creation of cinder volume through gw1 $(date)"
 check_volume_creation ha2_gw1
 
