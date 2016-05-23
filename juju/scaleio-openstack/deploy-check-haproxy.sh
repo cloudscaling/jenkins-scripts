@@ -148,10 +148,10 @@ function check_cinder_conf() {
 function check_haproxy_responses() {
   gw_ip1=$1
   gw_ip2=$2
-  resp=`curl -k -u admin:Default_password https://$gw_ip1:4443/api/login`
-  echo "INFO: Check server HA1 response: $resp"
-  resp=`curl -k -u admin:Default_password https://$gw_ip2:4443/api/login`
-  echo "INFO: Check server HA2 response: $resp"
+  resp=`curl -k -u admin:Default_password https://$gw_ip1:4443/api/login 2>/dev/null`
+  echo "INFO: Check server HA1($gw_ip1) response: $resp"
+  resp=`curl -k -u admin:Default_password https://$gw_ip2:4443/api/login 2>/dev/null`
+  echo "INFO: Check server HA2($gw_ip2) response: $resp"
 }
 
 trap catch_errors ERR
