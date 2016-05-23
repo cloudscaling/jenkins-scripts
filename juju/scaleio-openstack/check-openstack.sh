@@ -52,12 +52,23 @@ nova flavor-create fl8gbext --ephemeral 8 --swap 8192 53 512 8 1
 sleep 2
 
 echo "------------------------------  Run instance from bootable volume"
-nova boot --flavor 1 --block-device "device=/dev/vda,id=$volume_id,shutdown=remove,source=volume,dest=volume,bootindex=0" inst_from_volume
-instance_id=`nova list | grep " inst_from_volume " | awk '{print $2}'`
+iname='inst_from_volume'
+nova boot --flavor 1 --block-device "device=/dev/vda,id=$volume_id,shutdown=remove,source=volume,dest=volume,bootindex=0" $iname
+instance_id=`nova list | grep " $iname " | awk '{print $2}'`
 wait_instance $instance_id
-nova show inst_from_volume
+nova show $iname
 echo "------------------------------  Console log"
-nova console-log inst_from_volume | tail -10
+nova console-log $iname | tail -10
+echo "------------------------------  Check live migration"
+nova live-migration $iname
+sleep 20
+wait_instance $instance_id
+nova show $iname
+host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
+if [[ "$host1" == "$host2" ]] ; then
+  echo '' >> errors
+  echo "\n""ERROR: Host is not changed after live migration." >> errors
+fi
 
 echo "------------------------------  Run instance from ephemeral"
 iname="instance_01"
