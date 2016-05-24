@@ -98,6 +98,36 @@ instance_id=`nova list | grep " $iname " | awk '{print $2}'`
 wait_instance $instance_id
 nova show $iname
 
+# check snapshots
+echo "---------------------------------------- Creating volume ------"
+cinder create --display_name volume_for_snaps 1
+volume_id=`cinder list | grep " volume_for_snaps " | awk '{print $2}'`
+wait_volume $volume_id
+
+echo "---------------------------------------- Creating snapshot ----"
+cinder snapshot-create volume_for_snaps
+sleep 5
+status=`cinder snapshot-list | grep $volume_id | awk '{print$6}'` # == available
+if [[ "$status" != "available" ]] ; then
+  echo '' >> errors
+  echo "\n""ERROR: The status of snapshot is $status." >> errors
+fi
+
+echo "---------------------------- Creating volume from snapshot ----"
+snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
+cinder create --snapshot_id $snapshot_id --name from_snapshot
+wait_volume from_snapshot
+
+echo "-----------------------------------------Deleting snapshot ----"
+cinder snapshot_delete $snapshot_id
+sleep 5
+if [[ `cinder snapshot-list | grep $snapshot_id ` ]] ; then
+  echo '' >> errors
+  echo "\n""Snapshot $snapshot_id wasnt deleted." >> errors
+fi
+cinder delete volume_for_snaps
+cinder delete from_snapshot
+
 
 # all checks is done and we cant switch off traps
 set +e
