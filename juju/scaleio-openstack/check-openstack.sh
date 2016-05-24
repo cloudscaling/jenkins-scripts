@@ -119,7 +119,7 @@ cinder create --snapshot_id $snapshot_id --name from_snapshot
 wait_volume from_snapshot
 
 echo "-----------------------------------------Deleting snapshot ----"
-cinder snapshot_delete $snapshot_id
+cinder snapshot-delete $snapshot_id
 sleep 5
 if [[ `cinder snapshot-list | grep $snapshot_id ` ]] ; then
   echo '' >> errors
