@@ -24,12 +24,12 @@ echo "Machine created: $m4"
 wait_for_machines $m1 $m2 $m3 $m4
 
 echo "Deploy cinder"
-juju deploy cs:trusty/cinder --to $m1
+juju deploy local:trusty/cinder --to $m1
 juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-liberty" "overwrite=true"
 juju expose cinder
 
 echo "Deploy keystone"
-juju deploy cs:trusty/keystone --to $m3
+juju deploy local:trusty/keystone --to $m3
 juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose keystone
 

@@ -40,7 +40,7 @@ echo "Post-Wait for machines for 30 seconds"
 sleep 30
 
 echo "Deploy cinder"
-juju deploy cs:trusty/cinder --to $m1
+juju deploy local:trusty/cinder --to $m1
 juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-liberty" "overwrite=true"
 juju expose cinder
 
@@ -60,7 +60,7 @@ juju set glance "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose glance
 
 echo "Deploy keystone"
-juju deploy cs:trusty/keystone --to $m4
+juju deploy local:trusty/keystone --to $m4
 juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose keystone
 
