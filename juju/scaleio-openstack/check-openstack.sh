@@ -128,6 +128,38 @@ fi
 cinder delete volume_for_snaps
 cinder delete from_snapshot
 
+echo "---------------------------------------- Creating instance ------"
+iname="instance_for_snaps" 
+nova boot --flavor 1 --image cirros $iname
+instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+wait_instance $instance_id
+
+echo "---------------------------------------- Creating snapshot ----"
+nova image-create $iname shapshot_image
+sleep 5
+status=`nova image-list | grep $instance_id | awk '{print$6}'` 
+if [[ "$status" != "ACTIVE" ]] ; then
+  echo '' >> errors
+  echo "\n""ERROR: The status of snapshot is $status ." >> errors
+fi
+
+echo "---------------------------- Creating instance from snapshot ----"
+iname="from_snapshot"
+snapshot_id=`nova image-list | grep $instance_id | awk '{print$2}' `
+nova boot --flavor 1 --image $snapshot_id $iname
+instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+wait_instance $instance_id
+
+echo "-----------------------------------------Deleting snapshot ----"
+nova image-delete $snapshot_id
+sleep 5 # wait_snapshot
+if [[ `nova image-list | grep $snapshot_id ` ]] ; then
+  echo '' >> errors
+  echo "\n""Snapshot wasnt deleted." >> errors
+fi
+nova delete instance_for_snaps
+nova delete from_snapshot
+
 
 # all checks is done and we cant switch off traps
 set +e
