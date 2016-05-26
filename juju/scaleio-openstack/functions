@@ -3,7 +3,7 @@
 instance_status() { nova show $1 | awk '/ status / {print $4}'; }
 function volume_status() { cinder show $1 | awk '/ status / {print $4}'; }
 function snapshot_status() { cinder snapshot-show $1 | awk '/ status / {print $4}'; }
-function snapshot_instance_status() { openstack image show $1 | awk '/ status / {print $4}'; }
+function image_status() { openstack image show $1 | awk '/ status / {print $4}'; }
 
 function wait_instance() {
   local instance_id=$1
@@ -86,7 +86,7 @@ function wait_snapshot() {
   done
 }
 
-function wait_instance_snapshot() {
+function wait_image() {
   local snapshot_id=$1
   echo "------------------------------  Wait for snapshot: $snapshot_id"
   local fail=0
@@ -98,7 +98,7 @@ function wait_instance_snapshot() {
       return 0
     fi
     echo "attempt $fail of $MAX_FAIL"
-    status=$(snapshot_instance_status $snapshot_id)
+    status=$(image_status $snapshot_id)
     echo $status
     if [[ "$status" == "ACTIVE" ]]; then
       break
