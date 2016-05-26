@@ -98,62 +98,57 @@ instance_id=`nova list | grep " $iname " | awk '{print $2}'`
 wait_instance $instance_id
 nova show $iname
 
+nova delete instance_01 instance_02 inst_from_volume
+sleep 10
+
 # check snapshots
-echo "---------------------------------------- Creating volume ------"
+echo "------------------------------  Creating volume"
 cinder create --display_name volume_for_snaps 1
 volume_id=`cinder list | grep " volume_for_snaps " | awk '{print $2}'`
 wait_volume $volume_id
 
-echo "---------------------------------------- Creating snapshot ----"
+echo "------------------------------  Creating snapshot"
 cinder snapshot-create volume_for_snaps
-sleep 5
-status=`cinder snapshot-list | grep $volume_id | awk '{print$6}'` # == available
-if [[ "$status" != "available" ]] ; then
-  echo '' >> errors
-  echo "\n""ERROR: The status of snapshot is $status." >> errors
-fi
+snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
+wait_snapshot $snapshot_id
 
-echo "---------------------------- Creating volume from snapshot ----"
+echo "------------------------------  Creating volume from snapshot"
 snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
 cinder create --snapshot_id $snapshot_id --name from_snapshot
 wait_volume from_snapshot
 
-echo "-----------------------------------------Deleting snapshot ----"
+echo "------------------------------ Deleting snapshot"
 cinder snapshot-delete $snapshot_id
 sleep 5
-if [[ `cinder snapshot-list | grep $snapshot_id ` ]] ; then
+if `cinder snapshot-list | grep $snapshot_id ` ; then
   echo '' >> errors
   echo "\n""Snapshot $snapshot_id wasnt deleted." >> errors
 fi
 cinder delete volume_for_snaps
 cinder delete from_snapshot
 
-echo "---------------------------------------- Creating instance ------"
+echo "------------------------------  Creating instance"
 iname="instance_for_snaps" 
 nova boot --flavor 1 --image cirros $iname
 instance_id=`nova list | grep " $iname " | awk '{print $2}'`
 wait_instance $instance_id
 
-echo "---------------------------------------- Creating snapshot ----"
-nova image-create $iname shapshot_image
-sleep 5
-status=`nova image-list | grep $instance_id | awk '{print$6}'` 
-if [[ "$status" != "ACTIVE" ]] ; then
-  echo '' >> errors
-  echo "\n""ERROR: The status of snapshot is $status ." >> errors
-fi
+echo "------------------------------  Creating snapshot"
+nova image-create $instance_id snapshot_image
+snapshot_id=`openstack image show snapshot_image | grep " id " | awk '{print $4}'`
+wait_instance_snapshot $snapshot_id
 
-echo "---------------------------- Creating instance from snapshot ----"
+echo "------------------------------  Creating instance from snapshot"
 iname="from_snapshot"
-snapshot_id=`nova image-list | grep $instance_id | awk '{print$2}' `
-nova boot --flavor 1 --image $snapshot_id $iname
+snapshot_id=`openstack image show from_snapshot | grep " id " | awk '{print $4}'`
+nova boot --flavor 51 --image $snapshot_id $iname
 instance_id=`nova list | grep " $iname " | awk '{print $2}'`
 wait_instance $instance_id
 
-echo "-----------------------------------------Deleting snapshot ----"
-nova image-delete $snapshot_id
-sleep 5 # wait_snapshot
-if [[ `nova image-list | grep $snapshot_id ` ]] ; then
+echo "------------------------------  Deleting snapshot"
+openstack image delete $snapshot_id
+sleep 5
+if `openstack image list | grep $snapshot_id ` ; then
   echo '' >> errors
   echo "\n""Snapshot wasnt deleted." >> errors
 fi
