@@ -110,7 +110,6 @@ snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
 wait_snapshot $snapshot_id
 
 echo "------------------------------  Creating volume from snapshot"
-snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
 cinder create --snapshot_id $snapshot_id --name from_snapshot
 snap_volume_id=`cinder list | grep " from_snapshot " | awk '{print $2}'`
 wait_volume $snap_volume_id
