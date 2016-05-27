@@ -2,6 +2,8 @@
 
 instance_status() { nova show $1 | awk '/ status / {print $4}'; }
 function volume_status() { cinder show $1 | awk '/ status / {print $4}'; }
+function snapshot_status() { cinder snapshot-show $1 | awk '/ status / {print $4}'; }
+function image_status() { openstack image show $1 | awk '/ status / {print $4}'; }
 
 function wait_instance() {
   local instance_id=$1
@@ -51,6 +53,61 @@ function wait_volume() {
       echo 'ERROR: Volume creation error' >> errors
       cinder show $volume_id >> errors
       return
+    fi
+    sleep 10
+    ((++fail))
+  done
+}
+
+function wait_snapshot() {
+  local snapshot_id=$1
+  echo "----------------------------  Wait for snapshot: $volume_id"
+  local fail=0
+  while [[ true ]] ; do
+    if ((fail >= MAX_FAIL)); then
+      echo '' >> errors
+      echo "ERROR: Snapshot creation fails (timeout)" >> errors
+      cinder snapshot-show $snapshot_id >> errors
+      return
+    fi
+    echo "attempt $fail of $MAX_FAIL"
+    status=$(snapshot_status $snapshot_id)
+    if [[ $status == "available" ]]; then
+      break
+    fi
+    if [[ $status == "error" || -z "$status" ]]; then
+      echo '' >> errors
+      echo 'ERROR: Snapshot creation error' >> errors
+      cinder snapshot-show $snapshot_id >> errors
+      return
+    fi
+    sleep 10
+    ((++fail))
+  done
+}
+
+function wait_image() {
+  local snapshot_id=$1
+  echo "------------------------------  Wait for snapshot: $snapshot_id"
+  local fail=0
+  while [[ true ]] ; do
+    if ((fail >= MAX_FAIL)); then
+      echo '' >> errors
+      echo "ERROR: Snapshot active status wait timeout occured" >> errors
+      openstack image show $snapshot_id >> errors
+      return 0
+    fi
+    echo "attempt $fail of $MAX_FAIL"
+    status=$(image_status $snapshot_id)
+    echo $status
+    if [[ "$status" == "ACTIVE" ]]; then
+      break
+    fi
+    if [[ "$status" == "ERROR" || -z "$status" ]]; then
+      echo '' >> errors
+      echo 'ERROR: Snapshot creating error' >> errors
+      openstack image show $snapshot_id >> errors
+      return 0
     fi
     sleep 10
     ((++fail))
