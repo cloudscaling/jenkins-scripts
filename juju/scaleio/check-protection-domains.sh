@@ -26,7 +26,7 @@ echo "--------------------------------------------------------------------------
 echo "----------------- Deploy SDS 1 (pd1; fs1; sp1,sp2; /dev/xvdb,/dev/xvdc) ---"
 echo "---------------------------------------------------------------------------"
 juju deploy local:trusty/scaleio-sds scaleio-sds-pd1 --to $m1
-juju set scaleio-sds-pd1 protection-domain="pd1" fault-set="fs1" storage-pools="sp1,sp2" device-paths="/dev/xvdb,/dev/xvdc"
+juju set scaleio-sds-pd1 zero-padding-policy=enable protection-domain="pd1" fault-set="fs1" storage-pools="sp1,sp2" device-paths="/dev/xvdb,/dev/xvdc"
 juju add-relation scaleio-sds-pd1 scaleio-mdm
 
 echo "---------------------------------------------------------------------------"
@@ -46,7 +46,7 @@ if juju status | grep "current" | grep error ; then
   exit 1
 fi
 
-if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds --approve_certificate" 2>/dev/null` ; then
+if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds" 2>/dev/null` ; then
   echo "ERROR: The command scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds --approve_certificate 2>/dev/null failed"
   echo "$output"
   exit 1
@@ -110,5 +110,11 @@ for i in 1 2 ; do
     exit 1
   fi
 done
+
+echo "--------------------------------------------------- Query storage pools ---"
+juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd1 --storage_pool_name sp1" 2>/dev/null
+juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd1 --storage_pool_name sp2" 2>/dev/null
+juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd2 --storage_pool_name sp1" 2>/dev/null
+juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd2 --storage_pool_name sp2" 2>/dev/null
 
 echo SUCCESS
