@@ -25,11 +25,11 @@ echo "Machine created: $m5"
 wait_for_machines $m1 $m2 $m3 $m4 $m5
 
 # deploy fake charms to prevent machines removing
-juju deploy --repository $my_dir/../empty-charm  local:trusty/empty-charm --to $m1
-juju service add-unit empty-charm --to $m2
-juju service add-unit empty-charm --to $m3
-juju service add-unit empty-charm --to $m4
-juju service add-unit empty-charm --to $m5
+juju deploy ubuntu --to $m1
+juju service add-unit ubuntu --to $m2
+juju service add-unit ubuntu --to $m3
+juju service add-unit ubuntu --to $m4
+juju service add-unit ubuntu --to $m5
 
 
 echo "--------------------------------------------------------------------------- $(date)"
