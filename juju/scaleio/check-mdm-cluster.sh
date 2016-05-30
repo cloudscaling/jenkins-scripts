@@ -75,17 +75,7 @@ function wait_and_check() {
   # wait for new status
   wait_for_mode "$1""_node"
 
-  wait_absence_status_for_services "executing|blocked|waiting|allocating"
-
-  # check for errors
-  if juju status | grep "current" | grep error >/dev/null ; then
-    echo "ERROR: Some services went to error state"
-    juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
-    echo "---------------------------------------------------------------------------"
-    juju status
-    echo "---------------------------------------------------------------------------"
-    exit 2
-  fi
+  wait_status
 
   echo "--------------------------------------------------------------------------- $(date)"
   echo "----------------------------------------------------------- juju status ---"
@@ -200,7 +190,7 @@ scale_up 5 3
 
 
 juju remove-service scaleio-mdm
-wait_for_units_removed "scaleio-mdm"
+wait_for_removed "scaleio-mdm"
 
 juju status
 

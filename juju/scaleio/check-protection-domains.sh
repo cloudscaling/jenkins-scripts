@@ -36,15 +36,7 @@ juju deploy local:trusty/scaleio-sds scaleio-sds-pd2 --to $m2
 juju set scaleio-sds-pd2 protection-domain="pd2" fault-set="fs2" storage-pools="sp2,sp1" device-paths="/dev/xvdb,/dev/xvdc"
 juju add-relation scaleio-sds-pd2 scaleio-mdm
 
-# wait
-wait_absence_status_for_services "executing|blocked|waiting|allocating"
-
-# check for errors
-if juju status | grep "current" | grep error ; then
-  echo "ERROR: Some services went to error state"
-  juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
-  exit 1
-fi
+wait_status
 
 if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds" 2>/dev/null` ; then
   echo "ERROR: The command scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds --approve_certificate 2>/dev/null failed"
