@@ -6,6 +6,7 @@ my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
 source $my_dir/functions
+source $my_dir/scaleio/static-checks
 
 USERNAME="admin"
 PASSWORD="Default_password"
@@ -37,10 +38,13 @@ $my_dir/scaleio-openstack/$inner_script
 
 master_mdm=`get_master_mdm`
 cluster_mode=`get_cluster_mode`
-$my_dir/scaleio/check-cluster.sh "juju ssh" $master_mdm $cluster_mode
-$my_dir/scaleio/check-sds.sh "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdb'
-$my_dir/scaleio/check-sdc.sh "juju ssh" $master_mdm $USERNAME $PASSWORD
-$my_dir/scaleio/check-performance.sh "juju ssh" $master_mdm $USERNAME $PASSWORD
+errors=0
+check-cluster "juju ssh" $master_mdm $cluster_mode || ((++errors))
+check-sds "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdb' || ((++errors))
+check-sdc "juju ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
+check-performance "juju ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
+
+if (( errors > 0 )) ; then /bin/false ; fi
 
 $my_dir/scaleio-openstack/check-openstack.sh
 

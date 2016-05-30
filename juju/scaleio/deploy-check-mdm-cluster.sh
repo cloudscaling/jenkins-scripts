@@ -4,6 +4,7 @@ my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
+source $my_dir/../scaleio/static-checks
 
 echo "--------------------------------------------------------------------------- $(date)"
 echo "----------------------------------------------------------------- start ---"
@@ -57,7 +58,7 @@ function wait_for_mode() {
       echo "---------------------------------------------------------------------------"
       juju status
       echo "---------------------------------------------------------------------------"
-      exit 2
+      return 2
     fi
 
     echo "Waiting for new status ($check_str) - $iter/$max_iter"
@@ -89,7 +90,7 @@ function wait_and_check() {
   echo "Master MDM found at $master_mdm"
   juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
 
-  $my_dir/check-cluster.sh "juju ssh" $master_mdm $1
+  check-cluster "juju ssh" $master_mdm $1
 }
 
 function scale_up() {

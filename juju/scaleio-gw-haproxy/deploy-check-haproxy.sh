@@ -8,7 +8,7 @@ touch errors
 export MAX_FAIL=30
 
 source $my_dir/../functions
-source $my_dir/functions
+source $my_dir/../functions-openstack
 
 cd juju-scaleio
 

@@ -8,7 +8,7 @@ touch errors
 export MAX_FAIL=30
 
 source $my_dir/../functions
-source $my_dir/functions
+source $my_dir/../functions-openstack
 
 # check installed cloud
 rm -rf .venv
@@ -120,7 +120,7 @@ cinder snapshot-delete $snapshot_id
 sleep 5
 if `cinder snapshot-list | grep $snapshot_id ` ; then
   echo '' >> errors
-  echo "\n""Snapshot $snapshot_id wasnt deleted." >> errors
+  echo "\n""Snapshot $snapshot_id wasn't deleted." >> errors
 fi
 cinder delete $volume_id
 
@@ -147,7 +147,7 @@ cinder delete $volume_id
 # sleep 5
 # if `openstack image list | grep $snapshot_id ` ; then
 #   echo '' >> errors
-#   echo "\n""Snapshot wasnt deleted." >> errors
+#   echo "\n""Snapshot wasn't deleted." >> errors
 # fi
 # nova delete instance_for_snaps
 # nova delete from_snapshot
@@ -161,10 +161,10 @@ master_mdm=`get_master_mdm`
 echo "Master MDM found at $master_mdm"
 if [ -n $master_mdm ] ; then
   set -x
-  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate ; scli --query_all_volume --approve_certificate" 2>/dev/null
-  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate ; scli --query_all_sds --approve_certificate" 2>/dev/null
-  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate ; scli --query_all_sdc --approve_certificate" 2>/dev/null
-  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate ; scli --query_performance_parameters --all_sds --all_sdc" 2>/dev/null
+  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume --approve_certificate" 2>/dev/null
+  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_sds --approve_certificate" 2>/dev/null
+  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_sdc --approve_certificate" 2>/dev/null
+  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_performance_parameters --all_sds --all_sdc" 2>/dev/null
   set +x
 fi
 

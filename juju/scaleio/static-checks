@@ -1,0 +1,154 @@
+#!/bin/bash
+
+function check-cluster() {
+  local SSH=$1
+  local NODE=$2
+  local controllers=$3
+
+  local ret=0
+
+  echo "INFO: check controllers in cluster"
+  if ! output=`$SSH $NODE 'scli --query_cluster --approve_certificate' 2>/dev/null` ; then
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) The command 'scli --query_cluster --approve_certificate' failed"
+    echo "$output"
+    return 1
+  fi
+
+  # Check if all controllers are in cluster and active
+  if [[ `echo "$output" | awk '/Active:/ {print($6)}'` != "${controllers}/${controllers}," ]] ; then
+    ret=2
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Not all controllers are in the cluster or active"
+    echo "$output"
+  else
+    echo 'INFO: Success. All controllers are in cluster or active.'
+  fi
+
+  # Check if state of the cluster is "Normal"
+  echo "INFO: state of the cluster"
+  if [[ `echo "$output" | awk '/State:/ {print($4)}'` != "Normal," ]] ; then
+    ret=3
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) State of the cluster isn't Normal"
+    echo "$output"
+  else
+    echo 'INFO: Success. State of the cluster is Normal'
+  fi
+
+  # Check if all nodes status is "Normal"
+  local f_err=0
+  echo "INFO: check nodes status"
+  for status in `echo "$output" | grep "Status" | awk '{print $2}'` ; do
+    if [[ "$status" != "Normal," ]] ; then
+      ret=4
+      f_err=1
+      echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Not all controller statuses are Normal"
+      echo "$output"
+    fi
+  done
+  if [[ $f_err == 0 ]] ; then
+    echo 'INFO: Success. All controller statuses are Normal'
+  fi
+
+  return $ret
+}
+
+function check-performance() {
+  local SSH=$1
+  local NODE=$2
+  local USERNAME=$3
+  local PASSWORD=$4
+
+  local ret=0
+
+  echo "INFO: check cluster performance parameters"
+  if ! output=`$SSH $NODE "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_performance_parameters --all_sds --all_sdc" 2>/dev/null` ; then
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Login or command 'scli --query_performance_parameters --all_sds --all_sdc' failed"
+    echo "$output"
+    return 1
+  fi
+  #Check if all has high_performance
+  if echo "$output" | grep "Active profile:" | grep -q -v "high_performance" ; then
+    ret=2
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Not all services have high performance profile"
+    echo "$output"
+  else
+    echo "INFO: Success of checking performance profile"
+  fi
+
+  return $ret
+}
+
+function check-sdc() {
+  local SSH=$1
+  local NODE=$2
+  local USERNAME=$3
+  local PASSWORD=$4
+
+  local ret=0
+
+  echo "INFO: check connection of SDCs"
+  if ! output=`$SSH $NODE "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_all_sdc" 2>/dev/null` ; then
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Login and command 'scli --query_all_sdc' failed"
+    echo "$output"
+    return 1
+  fi
+  #Check if all SDS are connected
+  if echo "$output" | grep "SDC ID" | grep -q -v "State: Connected" ; then
+    ret=2
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Not all sdc are connected"
+    echo "$output"
+  else
+    echo "INFO: Success. All sdc are connected."
+  fi
+
+  return $ret
+}
+
+function check-sds() {
+  local SSH=$1
+  local NODE=$2
+  local USERNAME=$3
+  local PASSWORD=$4
+  local DEVICE_PATH=$5
+
+  local ret=0
+
+  # Check if scli --query_all_sds works
+  echo "INFO: check connection of SDSs"
+  if ! output=`$SSH $NODE "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_all_sds" 2>/dev/null` ; then
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Login or command 'scli --query_all_sds --approve_certificate' failed"
+    echo "$output"
+    return 1
+  fi
+  #Check if all SDS are connected
+  if echo "$output" | grep "SDS ID" | grep -q -v "State: Connected" ; then
+    ret=2
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Not all sds are connected"
+    echo "$output"
+  else
+    echo "INFO: Success. All sds are connected."
+  fi
+
+  # For all nodes check that roles contain SDC Only & SDS Only and path contains defined path
+  echo "INFO: SDS nodes"
+  for node_name in $(echo "$output" | grep "SDS ID" | awk '{print $5}') ; do
+    local node_errors=0
+    local node_details=`$SSH $NODE "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_sds --sds_name $node_name" 2>/dev/null`
+    if ! [[ "`echo '$node_details' | grep 'Role:'`" =~ "All (SDS and SDC)" ]] ; then
+      ((++node_errors))
+      echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) $node_name does not contain required roles"
+    fi
+    if ! [[ "`echo '$node_details' | grep 'Path:'`" =~ "Path: $DEVICE_PATH" ]] ; then
+      ((++node_errors))
+      echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) $node_name does not contain $DEVICE_PATH path"
+    fi
+
+    if [[ $node_errors == 0 ]] ; then
+      echo "INFO: Success checking of $node_name"
+    else
+      (( ret += node_errors ))
+      echo "$node_details"
+    fi
+  done
+
+  return $ret
+}

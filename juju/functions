@@ -1,6 +1,7 @@
 #!/bin/bash
 
 function wait_absence_status_for_services() {
+  sleep 10
   check_str=$1
   local max_iter=${2:-30}
   # waiting for services
@@ -24,6 +25,7 @@ function wait_absence_status_for_services() {
 }
 
 function wait_for_removed() {
+  sleep 10
   check_str=$1
   local max_iter=${2:-5}
   # waiting for services
@@ -95,6 +97,6 @@ function wait_status() {
     echo "---------------------------------------------------------------------------"
     juju status
     echo "---------------------------------------------------------------------------"
-    exit 2
+    return 2
   fi
 }
