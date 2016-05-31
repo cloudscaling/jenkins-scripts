@@ -133,13 +133,13 @@ function check-sds() {
   for node_name in $(echo "$output" | grep "SDS ID" | awk '{print $5}') ; do
     local node_errors=0
     local node_details=`$SSH $NODE "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_sds --sds_name $node_name" 2>/dev/null`
-    if ! [[ "`echo '$node_details' | grep 'Role:'`" =~ "All (SDS and SDC)" ]] ; then
+    if ! echo "$node_details" | grep -q 'Role: All (SDS and SDC)' ; then
       ((++node_errors))
-      echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) $node_name does not contain required roles"
+      echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) query_sds for $node_name does not contain required roles"
     fi
-    if ! [[ "`echo '$node_details' | grep 'Path:'`" =~ "Path: $DEVICE_PATH" ]] ; then
+    if ! echo "$node_details" | grep -q "Path: $DEVICE_PATH" ; then
       ((++node_errors))
-      echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) $node_name does not contain $DEVICE_PATH path"
+      echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) query_sds for $node_name does not contain $DEVICE_PATH path"
     fi
 
     if [[ $node_errors == 0 ]] ; then
