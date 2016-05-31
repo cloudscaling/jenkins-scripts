@@ -205,7 +205,7 @@ check_volume_creation ha2_gw1
 
 trap - ERR
 
-$my_dir/save_logs.sh
+$my_dir/../scaleio-openstack/save_logs.sh
 
 if [ -s errors ] ; then
   cat errors
