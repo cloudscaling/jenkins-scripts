@@ -30,8 +30,8 @@ function save_logs() {
   for mch in $m3 $m4 $m5 ; do
     mdir="$cdir/logs/$mch"
     mkdir -p "$mdir"
-    juju ssh $mch 'cat /var/log/puppet-scaleio.log' > "$mdir/puppet-scaleio.log" 2>/dev/null
-    juju ssh $mch 'cat /var/lib/hiera/defaults.yaml' > "$mdir/var-lib-hiera-defaults.log" 2>/dev/null
+    juju ssh $mch 'cat /var/log/fuel-plugin-scaleio.log' > "$mdir/var_log_fuel-plugin-scaleio.log" 2>/dev/null
+    juju ssh $mch 'cat /var/lib/hiera/defaults.yaml' > "$mdir/var_lib_hiera_defaults.log" 2>/dev/null
   done
 }
 
