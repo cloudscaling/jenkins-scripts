@@ -42,5 +42,6 @@ function run-test() {
 run-test "$my_dir"/__check-capacity-alerts.sh
 run-test "$my_dir"/__check-mdm-password.sh
 run-test "$my_dir"/__check-protection-domains.sh $m1 $m2
+run-test "$my_dir"/__check-storage-pool-parameters.sh $m1 $m2
 
 if (( errors > 0 )) ; then /bin/false ; fi
