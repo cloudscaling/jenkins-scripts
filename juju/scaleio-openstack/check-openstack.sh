@@ -3,15 +3,15 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
-master_mdm=`get_master_mdm`
-echo "Master MDM found at $master_mdm"
-
 rm -f errors
 touch errors
 export MAX_FAIL=30
 
 source $my_dir/../functions
 source $my_dir/../functions-openstack
+
+master_mdm=`get_master_mdm`
+echo "Master MDM found at $master_mdm"
 
 # check installed cloud
 rm -rf .venv
