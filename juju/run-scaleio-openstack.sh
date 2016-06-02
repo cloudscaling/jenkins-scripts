@@ -16,7 +16,7 @@ if ! juju bootstrap ; then
   exit 1
 fi
 
-trap catch_errors ERR
+trap catch_errors ERR EXIT
 
 function catch_errors() {
   local exit_code=$?
@@ -42,7 +42,9 @@ check-sds "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdb' || ((++errors))
 check-sdc "juju ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
 check-performance "juju ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
 
-if (( errors > 0 )) ; then /bin/false ; fi
+if (( errors > 0 )) ; then
+  exit $errors
+fi
 
 $my_dir/scaleio-openstack/check-openstack.sh
 

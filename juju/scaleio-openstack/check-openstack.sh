@@ -104,7 +104,7 @@ nova show $iname
 # check existing volumes type
 current_type=`juju get scaleio-openstack | grep -A 15 provisioning-type | grep "value:" | head -1 | awk '{print $2}'`
 echo "------------------------------ Check that all volumes in ScaleIO has type: $current_type"
-volumes=`juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume | grep 'Volume ID:'" 2>/dev/null`
+volumes=`juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume" 2>/dev/null | grep 'Volume ID:'`
 vcount=`echo "$volumes" | wc -l`
 vtcount=`echo "$volumes" | grep -i "$current_type\-provisioned" | wc -l`
 if [[ $vcount != $vtcount ]] ; then

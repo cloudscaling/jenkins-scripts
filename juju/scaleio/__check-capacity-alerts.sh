@@ -2,6 +2,7 @@
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
+my_name="$(basename "$0")"
 
 source $my_dir/../functions
 
@@ -41,11 +42,11 @@ ret=0
 
 if [[ "$current_capacity_threshold_high" != "$new_capacity_threshold_high" ]] ; then
   ret=1
-  echo "ERROR: Current capacity alert threshold high is expected $new_capacity_thr_high, but got $current_capacity_thr_high"
+  echo "ERROR: ($my_name:$LINENO) Current capacity alert threshold high is expected $new_capacity_thr_high, but got $current_capacity_thr_high"
 fi
 if [[ "$current_capacity_threshold_critical" != "$new_capacity_threshold_critical" ]] ; then
   ret=2
-  echo "ERROR: Current capacity alert threshold high is expected $new_capacity_threshold_critical, but got $current_capacity_threshold_critical"
+  echo "ERROR: ($my_name:$LINENO) Current capacity alert threshold high is expected $new_capacity_threshold_critical, but got $current_capacity_threshold_critical"
 fi
 echo "INFO: Success. New capacity thresholds are $current_capacity_threshold_high and $current_capacity_threshold_critical."
 
