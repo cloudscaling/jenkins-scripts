@@ -16,11 +16,11 @@ if ! juju bootstrap ; then
   exit 1
 fi
 
-trap catch_errors ERR EXIT
+trap 'catch_errors $LINENO' ERR EXIT
 
 function catch_errors() {
   local exit_code=$?
-  echo "Errors!" $exit_code $@
+  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
 
   $my_dir/scaleio-openstack/save_logs.sh
 
@@ -28,6 +28,7 @@ function catch_errors() {
     juju destroy-environment -y amazon
   fi
 
+  trap - ERR EXIT
   exit $exit_code
 }
 
@@ -53,3 +54,5 @@ $my_dir/scaleio-openstack/save_logs.sh
 if [[ $CLEAN_ENV != 'false' ]] ; then
   juju destroy-environment -y amazon
 fi
+
+trap - ERR EXIT

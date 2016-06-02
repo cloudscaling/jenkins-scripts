@@ -14,7 +14,7 @@ if ! juju bootstrap ; then
   exit 1
 fi
 
-trap catch_errors ERR
+trap 'catch_errors $LINENO' ERR
 
 function save_logs() {
   # save status to file
@@ -24,7 +24,7 @@ function save_logs() {
 
 function catch_errors() {
   local exit_code=$?
-  echo "Errors!" $exit_code $@
+  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
 
   # sleep some time to flush logs
   sleep 20
@@ -47,3 +47,5 @@ save_logs
 if [[ $CLEAN_ENV != 'false' ]] ; then
   juju destroy-environment -y amazon
 fi
+
+trap - ERR

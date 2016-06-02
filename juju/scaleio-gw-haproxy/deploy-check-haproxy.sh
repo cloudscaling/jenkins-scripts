@@ -149,11 +149,11 @@ function check_haproxy_responses() {
   echo "INFO: Check server HA2($gw_ip2) response: $resp"
 }
 
-trap catch_errors ERR
+trap 'catch_errors $LINENO' ERR
 
 function catch_errors() {
   local exit_code=$?
-  echo "ERROR: error catched: " $exit_code $@
+  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
 
   $my_dir/save_logs.sh
   exit $exit_code

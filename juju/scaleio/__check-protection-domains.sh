@@ -22,6 +22,7 @@ function catch_errors() {
   juju remove-service scaleio-sds-pd1 || /bin/true
   juju remove-service scaleio-sds-pd2 || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
+  trap - ERR EXIT
   exit $exit_code
 }
 

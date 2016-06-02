@@ -13,6 +13,7 @@ function catch_errors() {
   local exit_code=$?
   juju remove-service scaleio-mdm || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
+  trap - ERR EXIT
   exit $exit_code
 }
 
