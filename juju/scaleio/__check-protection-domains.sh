@@ -7,7 +7,14 @@ source $my_dir/../functions
 
 cd juju-scaleio
 
-trap catch_errors ERR
+m1="$1"
+m2="$2"
+if [[ -z "$m1" && -z "$m2" ]] ; then
+  echo "ERROR: script takes machine1 and machine2 as parameters"
+  exit 1
+fi
+
+trap catch_errors ERR EXIT
 function catch_errors() {
   local exit_code=$?
   juju remove-service scaleio-mdm || /bin/true
@@ -16,13 +23,6 @@ function catch_errors() {
   wait_for_removed "scaleio-mdm" || /bin/true
   exit $exit_code
 }
-
-m1="$1"
-m2="$2"
-if [[ -z "$m1" && -z "$m2" ]] ; then
-  echo "ERROR: script takes machine1 and machine2 as parameters"
-  exit 1
-fi
 
 echo "INFO: Deploy MDM"
 juju deploy local:trusty/scaleio-mdm --to 0
@@ -103,11 +103,14 @@ for i in 1 2 ; do
   fi
 done
 
+if [[ $ret == 0 ]] ; then
+  echo "INFO: Check successed"
+fi
+
 juju remove-service scaleio-mdm
 juju remove-service scaleio-sds-pd1
 juju remove-service scaleio-sds-pd2
 wait_for_removed "scaleio-mdm"
 
-echo "INFO: Success"
-
-cd ..
+trap - ERR EXIT
+exit $ret

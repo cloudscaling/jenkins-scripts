@@ -7,7 +7,7 @@ source $my_dir/../functions
 
 cd juju-scaleio
 
-trap catch_errors ERR
+trap catch_errors ERR EXIT
 function catch_errors() {
   local exit_code=$?
   juju remove-service scaleio-mdm || /bin/true
@@ -37,10 +37,14 @@ query_all=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/
 current_capacity_threshold_high=`echo "$query_all" | grep 'Capacity alert thresholds' | awk '{print$5}' | sed "s/,//"`
 current_capacity_threshold_critical=`echo "$query_all" | grep 'Capacity alert thresholds' | awk '{print$7}' | sed "s/\r//"`
 
+ret=0
+
 if [[ "$current_capacity_threshold_high" != "$new_capacity_threshold_high" ]] ; then
+  ret=1
   echo "ERROR: Current capacity alert threshold high is expected $new_capacity_thr_high, but got $current_capacity_thr_high"
 fi
 if [[ "$current_capacity_threshold_critical" != "$new_capacity_threshold_critical" ]] ; then
+  ret=2
   echo "ERROR: Current capacity alert threshold high is expected $new_capacity_threshold_critical, but got $current_capacity_threshold_critical"
 fi
 echo "INFO: Success. New capacity thresholds are $current_capacity_threshold_high and $current_capacity_threshold_critical."
@@ -48,4 +52,5 @@ echo "INFO: Success. New capacity thresholds are $current_capacity_threshold_hig
 juju remove-service scaleio-mdm
 wait_for_removed "scaleio-mdm"
 
-cd ..
+trap - ERR EXIT
+exit $ret
