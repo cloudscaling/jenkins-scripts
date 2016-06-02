@@ -11,8 +11,6 @@ source $my_dir/scaleio/static-checks
 USERNAME="admin"
 PASSWORD="Default_password"
 
-#aws ec2 delete-security-group --group-name juju-amazon || /bin/true
-
 if ! juju bootstrap ; then
   echo "Bootstrap error. exiting..."
   exit 1

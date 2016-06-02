@@ -107,7 +107,7 @@ echo "------------------------------ Check that all volumes in ScaleIO has type:
 volumes=`juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume | grep 'Volume ID:'" 2>/dev/null`
 vcount=`echo "$volumes" | wc -l`
 vtcount=`echo "$volumes" | grep -i "$current_type\-provisioned" | wc -l`
-if [[ vcount != vtcount ]] ; then
+if [[ $vcount != $vtcount ]] ; then
   echo "------------------------------ ERROR: Some volume has another type"
   echo '' >> errors
   echo "ERROR: Some volumes has different type" >> errors
