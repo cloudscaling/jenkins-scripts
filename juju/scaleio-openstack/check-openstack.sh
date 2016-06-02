@@ -148,7 +148,7 @@ if `cinder snapshot-list | grep $snapshot_id ` ; then
 fi
 cinder delete $volume_id
 
-# Something is wrong with this code...
+# glance/api.log - Image storage media is full: None
 # echo "------------------------------  Creating instance"
 # iname="instance_for_snaps" 
 # nova boot --flavor 51 --image cirros $iname
