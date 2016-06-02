@@ -3,6 +3,9 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+master_mdm=`get_master_mdm`
+echo "Master MDM found at $master_mdm"
+
 rm -f errors
 touch errors
 export MAX_FAIL=30
@@ -67,7 +70,7 @@ nova show $iname
 host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
 if [[ "$host1" == "$host2" ]] ; then
   echo '' >> errors
-  echo "\n""ERROR: Host is not changed after live migration." >> errors
+  echo "ERROR: Host is not changed after live migration." >> errors
 fi
 
 echo "------------------------------  Run instance from ephemeral"
@@ -88,7 +91,7 @@ nova show $iname
 host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
 if [[ "$host1" == "$host2" ]] ; then
   echo '' >> errors
-  echo "\n""ERROR: Host is not changed after live migration." >> errors
+  echo "ERROR: Host is not changed after live migration." >> errors
 fi
 
 echo "------------------------------  Check flavor with Ephemeral and swap "
@@ -97,6 +100,27 @@ nova boot --flavor 53 --image cirros $iname
 instance_id=`nova list | grep " $iname " | awk '{print $2}'`
 wait_instance $instance_id
 nova show $iname
+
+# check existing volumes type
+current_type=`juju get scaleio-openstack | grep -A 15 provisioning-type | grep "value:" | head -1 | awk '{print $2}'`
+echo "------------------------------ Check that all volumes in ScaleIO has type: $current_type"
+volumes=`juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume | grep 'Volume ID:'" 2>/dev/null`
+vcount=`echo "$volumes" | wc -l`
+vtcount=`echo "$volumes" | grep -i "$current_type\-provisioned" | wc -l`
+if [[ vcount != vtcount ]] ; then
+  echo "------------------------------ ERROR: Some volume has another type"
+  echo '' >> errors
+  echo "ERROR: Some volumes has different type" >> errors
+  echo "$volumes" >> errors
+else
+  echo "------------------------------ All volumes in ScaleIO has type: $current_type"
+fi
+
+# remove OpenStack objects
+cinder delete simple_volume || /bin/true
+nova delete inst_from_volume || /bin/true
+nova delete instance_01 || /bin/true
+nova delete instance_02 || /bin/true
 
 # check snapshots
 echo "------------------------------  Creating volume"
@@ -120,10 +144,11 @@ cinder snapshot-delete $snapshot_id
 sleep 5
 if `cinder snapshot-list | grep $snapshot_id ` ; then
   echo '' >> errors
-  echo "\n""Snapshot $snapshot_id wasn't deleted." >> errors
+  echo "Snapshot $snapshot_id wasn't deleted." >> errors
 fi
 cinder delete $volume_id
 
+# Something is wrong with this code...
 # echo "------------------------------  Creating instance"
 # iname="instance_for_snaps" 
 # nova boot --flavor 51 --image cirros $iname
@@ -147,7 +172,7 @@ cinder delete $volume_id
 # sleep 5
 # if `openstack image list | grep $snapshot_id ` ; then
 #   echo '' >> errors
-#   echo "\n""Snapshot wasn't deleted." >> errors
+#   echo "Snapshot wasn't deleted." >> errors
 # fi
 # nova delete instance_for_snaps
 # nova delete from_snapshot
@@ -157,14 +182,14 @@ cinder delete $volume_id
 set +e
 
 # here we try to list all infos from ScaleIO
-master_mdm=`get_master_mdm`
-echo "Master MDM found at $master_mdm"
 if [ -n $master_mdm ] ; then
   set -x
-  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume --approve_certificate" 2>/dev/null
-  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_sds --approve_certificate" 2>/dev/null
-  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_sdc --approve_certificate" 2>/dev/null
+  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume" 2>/dev/null
+  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_sds" 2>/dev/null
+  juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_sdc" 2>/dev/null
   juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_performance_parameters --all_sds --all_sdc" 2>/dev/null
+  nova list
+  cinder list
   set +x
 fi
 
