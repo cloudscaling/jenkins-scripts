@@ -83,22 +83,22 @@ for i in 1 2 ; do
     echo "ERROR: ($my_name:$LINENO) Error in devices number in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
-  if ! echo "$sds_output" | grep "Path: /dev/xvdb" >/dev/null ; then
+  if ! echo "$sds_output" | grep "Path: /dev/xvdf" >/dev/null ; then
     (( ++ret ))
     echo "ERROR: ($my_name:$LINENO) Error in device path in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
-  if ! echo "$sds_output" | sed -n '/Path: \/dev\/xvdb/{n;p}' | grep -q "Storage Pool: sp$i" ; then
+  if ! echo "$sds_output" | sed -n '/Path: \/dev\/xvdf/{n;p}' | grep -q "Storage Pool: sp$i" ; then
     (( ++ret ))
     echo "ERROR: ($my_name:$LINENO) Error in storage pool $i in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
-  if ! echo "$sds_output" | grep -q "Path: /dev/xvdc" ; then
+  if ! echo "$sds_output" | grep -q "Path: /dev/xvdg" ; then
     (( ++ret ))
     echo "ERROR: ($my_name:$LINENO) Error in device path in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
-  if ! echo "$sds_output" | sed -n '/Path: \/dev\/xvdc/{n;p}' | grep -q "Storage Pool: sp$((3-i))" ; then
+  if ! echo "$sds_output" | sed -n '/Path: \/dev\/xvdg/{n;p}' | grep -q "Storage Pool: sp$((3-i))" ; then
     (( ++ret ))
     echo "ERROR: ($my_name:$LINENO) Error in storage pool $((3-i)) in scaleio_sds_pd$i"
     echo "$sds_output"
