@@ -7,7 +7,14 @@ source $my_dir/../functions
 
 cd juju-scaleio
 
-trap catch_errors ERR
+m1="$1"
+m2="$2"
+if [[ -z "$m1" && -z "$m2" ]] ; then
+  echo "ERROR: script takes machine1 and machine2 as parameters"
+  exit 1
+fi
+
+trap catch_errors ERR EXIT
 function catch_errors() {
   local exit_code=$?
   juju remove-service scaleio-mdm || /bin/true
@@ -17,24 +24,17 @@ function catch_errors() {
   exit $exit_code
 }
 
-m1="$1"
-m2="$2"
-if [[ -z "$m1" && -z "$m2" ]] ; then
-  echo "ERROR: script takes machine1 and machine2 as parameters"
-  exit 1
-fi
-
 echo "INFO: Deploy MDM"
 juju deploy local:trusty/scaleio-mdm --to 0
 
-echo "INFO: Deploy SDS 1 (pd1; fs1; sp1,sp2; /dev/xvdb,/dev/xvdc)"
+echo "INFO: Deploy SDS 1 (pd1; fs1; sp1,sp2; /dev/xvdf,/dev/xvdg)"
 juju deploy local:trusty/scaleio-sds scaleio-sds-pd1 --to $m1
-juju set scaleio-sds-pd1 zero-padding-policy=enable protection-domain="pd1" fault-set="fs1" storage-pools="sp1,sp2" device-paths="/dev/xvdb,/dev/xvdc"
+juju set scaleio-sds-pd1 zero-padding-policy=enable protection-domain="pd1" fault-set="fs1" storage-pools="sp1,sp2" device-paths="/dev/xvdf,/dev/xvdg"
 juju add-relation scaleio-sds-pd1 scaleio-mdm
 
-echo "INFO: Deploy SDS 2 (pd1; fs1; sp2,sp1; /dev/xvdb,/dev/xvdc)"
+echo "INFO: Deploy SDS 2 (pd1; fs1; sp2,sp1; /dev/xvdf,/dev/xvdg)"
 juju deploy local:trusty/scaleio-sds scaleio-sds-pd2 --to $m2
-juju set scaleio-sds-pd2 protection-domain="pd2" fault-set="fs2" storage-pools="sp2,sp1" device-paths="/dev/xvdb,/dev/xvdc"
+juju set scaleio-sds-pd2 protection-domain="pd2" fault-set="fs2" storage-pools="sp2,sp1" device-paths="/dev/xvdf,/dev/xvdg"
 juju add-relation scaleio-sds-pd2 scaleio-mdm
 
 wait_status
@@ -81,33 +81,36 @@ for i in 1 2 ; do
     echo "ERROR: Error in devices number in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
-  if ! echo "$sds_output" | grep "Path: /dev/xvdb" >/dev/null ; then
+  if ! echo "$sds_output" | grep "Path: /dev/xvdf" >/dev/null ; then
     (( ++ret ))
     echo "ERROR: Error in device path in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
-  if ! echo "$sds_output" | sed -n '/Path: \/dev\/xvdb/{n;p}' | grep -q "Storage Pool: sp$i" ; then
+  if ! echo "$sds_output" | sed -n '/Path: \/dev\/xvdf/{n;p}' | grep -q "Storage Pool: sp$i" ; then
     (( ++ret ))
     echo "ERROR: Error in storage pool $i in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
-  if ! echo "$sds_output" | grep -q "Path: /dev/xvdc" ; then
+  if ! echo "$sds_output" | grep -q "Path: /dev/xvdg" ; then
     (( ++ret ))
     echo "ERROR: Error in device path in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
-  if ! echo "$sds_output" | sed -n '/Path: \/dev\/xvdc/{n;p}' | grep -q "Storage Pool: sp$((3-i))" ; then
+  if ! echo "$sds_output" | sed -n '/Path: \/dev\/xvdg/{n;p}' | grep -q "Storage Pool: sp$((3-i))" ; then
     (( ++ret ))
     echo "ERROR: Error in storage pool $((3-i)) in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
 done
 
+if [[ $ret == 0 ]] ; then
+  echo "INFO: Check successed"
+fi
+
 juju remove-service scaleio-mdm
 juju remove-service scaleio-sds-pd1
 juju remove-service scaleio-sds-pd2
 wait_for_removed "scaleio-mdm"
 
-echo "INFO: Success"
-
-cd ..
+trap - ERR EXIT
+exit $ret

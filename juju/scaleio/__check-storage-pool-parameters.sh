@@ -44,14 +44,14 @@ fi
 echo "INFO: Deploy MDM to 0"
 juju deploy local:trusty/scaleio-mdm --to 0
 
-echo "INFO: Deploy SDS with disabled zero-padding to 1"
+echo "INFO: Deploy SDS with disabled zero-padding to $m1"
 juju deploy local:trusty/scaleio-sds --to $m1
-juju set scaleio-sds protection-domain='pd' fault-set='fs1' storage-pools='sp1' device-paths='/dev/xvdb' zero-padding-policy='disable' checksum-mode='disable' scanner-mode='disable' spare-percentage='10'
+juju set scaleio-sds protection-domain='pd' fault-set='fs1' storage-pools='sp1' device-paths='/dev/xvdf' zero-padding-policy='disable' checksum-mode='disable' scanner-mode='disable' spare-percentage='10'
 juju add-relation scaleio-sds scaleio-mdm
 
-echo "INFO: Deploy SDS with enabled zero-padding to 2"
+echo "INFO: Deploy SDS with enabled zero-padding to $m2"
 juju deploy local:trusty/scaleio-sds scaleio-sds-zp --to $m2
-juju set scaleio-sds-zp protection-domain='pd' fault-set='fs2' storage-pools='sp2' device-paths='/dev/xvdb' zero-padding-policy='enable'
+juju set scaleio-sds-zp protection-domain='pd' fault-set='fs2' storage-pools='sp2' device-paths='/dev/xvdf' zero-padding-policy='enable'
 juju add-relation scaleio-sds-zp scaleio-mdm
 trap catch_errors ERR EXIT
 wait_status
