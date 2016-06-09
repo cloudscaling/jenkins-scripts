@@ -50,8 +50,22 @@ for instance in $instances ; do
       sleep 10
       ((++fail))
     done
-    aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdf\",\"Ebs\":{\"DeleteOnTermination\":true}}]" 1>/dev/null
-    aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdg\",\"Ebs\":{\"DeleteOnTermination\":true}}]" 1>/dev/null
+    while ! output=`aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdf\",\"Ebs\":{\"DeleteOnTermination\":true}}]" 1>/dev/null` ; do
+      if ((fail >= 12)); then
+        echo "ERROR: $output"
+        break
+      fi
+      sleep 10
+      ((++fail))
+    done
+    while ! output=`aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdf\",\"Ebs\":{\"DeleteOnTermination\":true}}]" 1>/dev/null` ; do
+      if ((fail >= 12)); then
+        echo "ERROR: $output"
+        break
+      fi
+      sleep 10
+      ((++fail))
+    done
   fi
   ((++i))
 done
