@@ -1,5 +1,7 @@
 #!/bin/bash
 
+INSTANCE_TYPE="instance-type=t2.medium"
+
 function wait_absence_status_for_services() {
   sleep 10
   check_str=$1
@@ -123,10 +125,10 @@ function create_attach_volume() {
     instance=$1
     volume_size=$2
     path=$3
-    zone=$4
-    local region=`echo $zone | sed 's/.$//'`
-    if [[ -z "$instance" && -z "$volume_size" && -z "$path" && -z "$zone" ]] ; then
-      echo "ERROR: script takes instance_id, volume_size, path and zone as parameters"
+    zone=`aws ec2 describe-instance-status --instance-ids $instance | grep "AvailabilityZone" | sed 's/[,\"]//g' | awk '{print$2}'`
+    region=`echo $zone | sed 's/.$//'`
+    if [[ -z "$instance" && -z "$volume_size" && -z "$path" ]] ; then
+      echo "ERROR: script takes instance_id, volume_size and path as parameters"
       exit 1
     fi
 
