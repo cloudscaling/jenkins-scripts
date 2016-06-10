@@ -97,7 +97,7 @@ function deploy_node_service() {
     machine=${machines[$1]}
     name=fuel-node$1
     roles=$2
-    service_info="`juju service get ${name}` || echo failed"
+    service_info="`juju service get ${name} || echo failed`"
     if [[ "${service_info}" == "failed" ]]; then
         juju deploy local:trusty/fuel-node $name --to $machine
         juju add-relation fuel-master $name
