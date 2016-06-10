@@ -104,7 +104,7 @@ function wait_status() {
 }
 
 # Waits amazon volume state
-function wait_state() {
+function wait_volume_state() {
   volume_id=$1
   state=$2
   local fail=0
@@ -134,10 +134,10 @@ function create_attach_volume() {
 
     echo "Creating and attaching volume to instance $instance"
     volume=$(aws ec2 create-volume --size 100 --region $region --availability-zone $zone --volume-type gp2 | grep 'VolumeId' | sed 's/[,\"]//g' | awk '{print$2}')
-    wait_state $volume "available"
+    wait_volume_state $volume "available"
 
     aws ec2 attach-volume --volume-id $volume --instance-id $instance --device $path 1>/dev/null
-    wait_state $volume "attached"
+    wait_volume_state $volume "attached"
 
     aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"$path\",\"Ebs\":{\"DeleteOnTermination\":true}}]" 1>/dev/null
 }
