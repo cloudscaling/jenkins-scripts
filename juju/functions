@@ -100,3 +100,42 @@ function wait_status() {
     return 2
   fi
 }
+
+# Waits amazon volume state
+function wait_state() {
+  volume_id=$1
+  state=$2
+  local fail=0
+  while ! aws ec2 describe-volumes --volume-id $volume_id | grep "State" | grep -q $state ; do
+    if ((fail >= 12)); then
+      echo "ERROR: Volume $volume_id isn't $state"
+      echo aws ec2 describe-volumes --volume-id $volume_id
+      exit 1
+    fi
+    sleep 10
+    ((++fail))
+  done
+}
+
+# Creates volume on amazon and attaches it to the instance
+# Path must be in range xvdf - xvdp for amazon
+function create_attach_volume() {
+    instance=$1
+    volume_size=$2
+    path=$3
+    zone=$4
+    local region=`echo $zone | sed 's/.$//'`
+    if [[ -z "$instance" && -z "$volume_size" && -z "$path" && -z "$zone" ]] ; then
+      echo "ERROR: script takes instance_id, volume_size, path and zone as parameters"
+      exit 1
+    fi
+
+    echo "Creating and attaching volume to instance $instance"
+    volume=$(aws ec2 create-volume --size 100 --region $region --availability-zone $zone --volume-type gp2 | grep 'VolumeId' | sed 's/[,\"]//g' | awk '{print$2}')
+    wait_state $volume "available"
+
+    aws ec2 attach-volume --volume-id $volume --instance-id $instance --device $path 1>/dev/null
+    wait_state $volume "attached"
+
+    aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"$path\",\"Ebs\":{\"DeleteOnTermination\":true}}]" 1>/dev/null
+}
