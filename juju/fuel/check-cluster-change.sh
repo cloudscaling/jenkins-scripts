@@ -70,10 +70,14 @@ trap catch_errors ERR
 function save_logs() {
   # save status to file
   for mch in ${machines[@]} ; do
-    mdir="$cdir/logs/$mch"
-    mkdir -p "$mdir"
-    juju ssh $mch 'cat /var/log/fuel-puppet-scaleio.log' > "$mdir/puppet-scaleio.log" 2>/dev/null
-    juju ssh $mch 'cat /var/lib/hiera/defaults.yaml' > "$mdir/var-lib-hiera-defaults.log" 2>/dev/null
+    name=fuel-node${mch}
+    service_info="`juju service get ${name} || echo failed`"
+    if [[ "${service_info}" != "failed" ]]; then
+        mdir="$cdir/logs/$mch"
+        mkdir -p "$mdir"
+        juju ssh $mch 'cat /var/log/fuel-puppet-scaleio.log' > "$mdir/puppet-scaleio.log" 2>/dev/null
+        juju ssh $mch 'cat /var/lib/hiera/defaults.yaml' > "$mdir/var-lib-hiera-defaults.log" 2>/dev/null
+    fi
   done
 }
 
