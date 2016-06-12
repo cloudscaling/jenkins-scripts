@@ -12,9 +12,9 @@ export PASSWORD="Default_password"
 echo "INFO: start $(date)"
 
 echo "Create machines"
-m1=$(juju add-machine --constraints "$INSTANCE_TYPE" 2>&1 | awk '{print $3}')
+m1=$(juju add-machine --constraints "instance-type=r3.large" | awk '{print $3}')
 echo "Machine created: $m1"
-m2=$(juju add-machine --constraints "$INSTANCE_TYPE" 2>&1 | awk '{print $3}')
+m2=$(juju add-machine --constraints "$INSTANCE_TYPE" | awk '{print $3}')
 echo "Machine created: $m2"
 m3=$(juju add-machine --constraints "$INSTANCE_TYPE" 2>&1 | awk '{print $3}')
 echo "Machine created: $m3"
