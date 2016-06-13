@@ -69,10 +69,10 @@ trap catch_errors ERR
 
 function save_logs() {
   # save status to file
-  for mch in ${machines[@]} ; do
+  for mch in ${machines[@]:1} ; do
     name=fuel-node${mch}
-    service_info="`juju service get ${name} || echo failed`"
-    if [[ "${service_info}" != "failed" ]]; then
+    service_info="`juju service get ${name} || echo not_exists`"
+    if [[ "${service_info}" != "not_exists" ]]; then
         mdir="$cdir/logs/$mch"
         mkdir -p "$mdir"
         juju ssh $mch 'cat /var/log/fuel-puppet-scaleio.log' > "$mdir/puppet-scaleio.log" 2>/dev/null
@@ -101,8 +101,8 @@ function deploy_node_service() {
     machine=${machines[$1]}
     name=fuel-node$1
     roles=$2
-    service_info="`juju service get ${name} || echo failed`"
-    if [[ "${service_info}" == "failed" ]]; then
+    service_info="`juju service get ${name} || echo not_exists`"
+    if [[ "${service_info}" == "not_exists" ]]; then
         juju deploy local:trusty/fuel-node $name --to $machine
         juju add-relation fuel-master $name
     fi
