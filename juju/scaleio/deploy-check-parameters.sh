@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
@@ -12,9 +12,9 @@ export PASSWORD="Default_password"
 echo "INFO: start $(date)"
 
 echo "Create machines"
-m1=$(juju add-machine --constraints "instance-type=r3.large" 2>&1 | awk '{print $3}')
+m1=$(juju add-machine --constraints "$INSTANCE_TYPE" 2>&1 | awk '{print $3}')
 echo "Machine created: $m1"
-m2=$(juju add-machine --constraints "instance-type=t2.medium" 2>&1 | awk '{print $3}')
+m2=$(juju add-machine --constraints "$INSTANCE_TYPE" 2>&1 | awk '{print $3}')
 echo "Machine created: $m2"
 m3=$(juju add-machine --constraints "$INSTANCE_TYPE" 2>&1 | awk '{print $3}')
 echo "Machine created: $m3"
