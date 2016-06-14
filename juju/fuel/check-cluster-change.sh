@@ -105,7 +105,7 @@ function deploy_node_service() {
     machine=${machines[$1]}
     name=fuel-node$1
     roles=$2
-    if juju service get ${name} ; then
+    if ! juju service get ${name} ; then
         juju deploy local:trusty/fuel-node $name --to $machine
         juju add-relation fuel-master $name
     fi
