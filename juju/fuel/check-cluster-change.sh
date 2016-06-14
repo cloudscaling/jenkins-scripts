@@ -42,7 +42,7 @@ function provision_machines() {
             juju ssh $i "for p in ${paths}; do sudo rm -f \$p && sudo truncate --size 100G \$p; done" 2>/dev/null
             juju ssh $i "sudo sed -i 's/\(juju-\)\(.*\)\(machine.*\)/\1\3/g' /etc/hostname && sudo hostname -F /etc/hostname" 2>/dev/null
         done
-    fi    
+    fi
     
     # check kernel at one machine
     rm -f index.html
@@ -63,6 +63,11 @@ function provision_machines() {
       wait_for_machines ${new_mx[@]}
     fi
     rm -f index.html
+    
+    # deploy fake module to avoid removal of machines in case of remove last service
+    for i in ${new_mx[@]}; do
+        juju deploy ubuntu fuel-null-service${i} --to ${i}
+    done    
 }
 
 trap catch_errors ERR
@@ -71,8 +76,7 @@ function save_logs() {
   # save status to file
   for mch in ${machines[@]:1} ; do
     name=fuel-node${mch}
-    service_info="`juju service get ${name} || echo not_exists`"
-    if [[ "${service_info}" != "not_exists" ]]; then
+    if juju service get ${name} ; then
         mdir="$cdir/logs/$mch"
         mkdir -p "$mdir"
         juju ssh $mch 'cat /var/log/fuel-puppet-scaleio.log' > "$mdir/puppet-scaleio.log" 2>/dev/null
@@ -101,8 +105,7 @@ function deploy_node_service() {
     machine=${machines[$1]}
     name=fuel-node$1
     roles=$2
-    service_info="`juju service get ${name} || echo not_exists`"
-    if [[ "${service_info}" == "not_exists" ]]; then
+    if juju service get ${name} ; then
         juju deploy local:trusty/fuel-node $name --to $machine
         juju add-relation fuel-master $name
     fi
@@ -171,22 +174,21 @@ function configure_cluster() {
 }
 
 
+# provision machines
+provision_machines 0 1 2 3 4 5 6 7
+
 # prepare fuel node
-provision_machines 0
 juju deploy local:trusty/fuel-master --to ${machines[0]}
 juju set fuel-master device-paths=${device_paths}
 
 
 # 1+2 cluster
-provision_machines 1 2 3
 configure_cluster mode 1 primary-controller 1 compute 2,3
 
 # 2+2 cluster
-provision_machines 4
 configure_cluster mode 1 primary-controller 1 compute 2,3 controller 4
 
 # 3+2 cluster
-provision_machines 5
 configure_cluster mode 3 primary-controller 1 compute 2,3 controller 4,5
 
 # 2+2 cluster
@@ -194,15 +196,12 @@ remove_node_service 1
 configure_cluster mode 1 primary-controller 4 compute 2,3 controller 5
 
 # 3+2 cluster
-provision_machines 1
 configure_cluster mode 3 primary-controller 4 compute 2,3 controller 1,5
 
 # 4+2 cluster
-provision_machines 6
 configure_cluster mode 3 primary-controller 4 compute 2,3 controller 1,5,6
 
 # 5+2 cluster
-provision_machines 7
 configure_cluster mode 5 primary-controller 4 compute 2,3 controller 1,5,6,7
 
 # 4+2 cluster
