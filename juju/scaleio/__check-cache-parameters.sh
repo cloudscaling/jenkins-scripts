@@ -85,29 +85,29 @@ wait_status
 echo "INFO: Check RMCache write-mode"
 check_cache 'RAM Read Cache write handling mode' "cached"
 
+rfcache_path='/dev/xvdg'
 echo "INFO: Enable RFCache"
-juju set scaleio-sds rfcache-usage=use rfcache-device-paths=/dev/xvdg
+juju set scaleio-sds rfcache-usage=use rfcache-device-paths=$rfcache_path
 wait_status
 echo "INFO: Check RFCache"
 check_cache 'Flash Read Cache' "Uses"
 
 echo "INFO: Check RFCache path"
-if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds" 2>/dev/null` ; then
-  echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Login and command 'scli --query_all_sds' failed"
+if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null ; scli --query_all_sds" 2>/dev/null` ; then
+  echo "ERROR: ($my_name:$LINENO) Login and command 'scli --query_all_sds' failed"
   echo "$output"
   exit 1
 fi
 
-rfcache_path='/dev/xvdg'
-sds_ids=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null ; scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$3}'`
-for sds_id in $sds_ids ; do
-  rfcache_device=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null ; scli --query_sds --sds_id $sds_id | sed -n '/Rfcache device information/{n;p;}'" 2>/dev/null`
+sds_names=`echo "$output" | grep 'SDS ID:' | awk '{print$5}'`
+for sds_name in $sds_names ; do
+  rfcache_device=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null ; scli --query_sds --sds_name $sds_name | sed -n '/Rfcache device information/{n;p;}'" 2>/dev/null`
   if ! echo "$rfcache_device" | awk '{print$5}' | grep -q "$rfcache_path" ; then
-    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Path of RFCache device isn't $rfcache_path"
+    echo "ERROR: ($my_name:$LINENO) Path of RfCache device on $sds_name isn't $rfcache_path"
     echo "$rfcache_device"
     (( ++ret ))
   else
-    echo "INFO: Success. Path of RFCache device is $rfcache_path."
+    echo "INFO: Success. Path of RFCache device on $sds_name is $rfcache_path."
   fi
 done
 
@@ -118,4 +118,3 @@ wait_for_removed "scaleio-mdm"
 
 trap - ERR EXIT
 exit $ret
-
