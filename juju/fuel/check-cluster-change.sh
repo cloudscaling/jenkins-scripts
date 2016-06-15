@@ -1,6 +1,9 @@
 #!/bin/bash -eux
 
-source functions
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
+
+source $my_dir/functions
 
 # provision machines
 provision_machines 0 1 2 3 4 5 6 7
