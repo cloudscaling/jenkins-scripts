@@ -94,19 +94,22 @@ function catch_errors() {
 function remove_node_service() {
     echo Remove service from machines $@
     while (( "$#" )); do
-        echo Remove service from machine $1/${machines[$1]}
-        name=fuel-node$1
-        juju remove-service $name
+        mch=${machines[$1]}
+        name=fuel-node${mch}
+        echo Remove EMC packages from from machine $1/${mch}
+        juju ssh $mch 'sudo apt-get purge emc-scaleio-*'
+        echo Remove service ${name} from machine $1/${mch}
+        juju remove-service ${name}
         shift
     done    
  }
 
 function deploy_node_service() {
-    machine=${machines[$1]}
-    name=fuel-node$1
+    mch=${machines[$1]}
+    name=fuel-node${mch}
     roles=$2
     if ! juju service get ${name} ; then
-        juju deploy local:trusty/fuel-node $name --to $machine
+        juju deploy local:trusty/fuel-node $name --to $mch
         juju add-relation fuel-master $name
     fi
     juju set $name roles="${roles}"
