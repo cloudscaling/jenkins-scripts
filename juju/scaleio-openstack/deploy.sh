@@ -11,8 +11,32 @@ juju status
 
 cd juju-scaleio
 
-# this script will change current bundle and it must be called here...
-$my_dir/fix_scini_problems.sh
+# ---------------------------------------- juju-deployer hack start
+# due to inability to create instances with additional disks via bundle
+# script will create machines before bundle
+m1=$(create_machine 1 0)
+echo "Machine created: $m1"
+m2=$(create_machine 1 0)
+echo "Machine created: $m2"
+m3=$(create_machine 0 1)
+echo "Machine created: $m3"
+m4=$(create_machine 0 1)
+echo "Machine created: $m4"
+m5=$(create_machine 0 1)
+echo "Machine created: $m5"
+
+wait_for_machines $m1 $m2 $m3 $m4 $m5
+
+# change machine name in bundle to numbers
+sed -i -e "s/\"compute-1\"/\"$m1\"/m" $BUNDLE
+sed -i -e "s/\"compute-2\"/\"$m2\"/m" $BUNDLE
+sed -i -e "s/\"io-1\"/\"$m3\"/m" $BUNDLE
+sed -i -e "s/\"io-2\"/\"$m4\"/m" $BUNDLE
+sed -i -e "s/\"io-3\"/\"$m5\"/m" $BUNDLE
+sed -i -e "s/xvdb/xvdf/m" $BUNDLE
+# ---------------------------------------- juju-deployer hack end
+
+$my_dir/fix_scini_problems.sh $m1 $m2
 
 if [ -n "$VERSION" ] ; then
   echo "Change version to $VERSION"

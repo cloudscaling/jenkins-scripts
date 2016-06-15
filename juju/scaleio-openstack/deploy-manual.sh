@@ -24,6 +24,8 @@ echo "Machine created: $m5"
 
 wait_for_machines $m1 $m2 $m3 $m4 $m5
 
+$my_dir/fix_scini_problems.sh $m1 $m2
+
 echo "Deploy cinder"
 juju deploy local:trusty/cinder --to $m1
 juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-liberty" "overwrite=true"
