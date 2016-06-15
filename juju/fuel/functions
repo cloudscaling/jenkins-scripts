@@ -114,6 +114,10 @@ function prepare_fuel_master() {
     juju set fuel-master device-paths=${device_paths}
 }
 
+function set_fuel_options() {
+    juju set fuel-master $*
+}
+
 function deploy_node_service() {
     mch=${machines[$1]}
     name=fuel-node${mch}
@@ -183,3 +187,21 @@ function configure_cluster() {
     
     check-cluster "juju ssh" $master_mdm $mode
 }
+
+#TODO: remove duplication of code: re-use the check functions from common code when it appears
+function check_storage_pool {
+    local mch=${machines[$1]}
+    local key_to_check=$2
+    local expected_value=$3
+    
+    local sp=`config-get storage-pools`
+    local pd=`config-get protection-domain`
+    local username='admin'
+    local password=`config-get password`
+    
+    local login_cmd="scli --login --username $username --password $password --approve_certificate"
+    local query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
+    juju ssh $mch "$login_cmd && $query_cmd" | grep "$key_to_check" | grep -q "$expected_value"
+    echo "INFO: Success. Parameter $key_to_check is $expected_value."
+}
+
