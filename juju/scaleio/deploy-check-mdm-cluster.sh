@@ -12,15 +12,15 @@ echo "--------------------------------------------------------------------------
 
 # create machines
 echo "Create machines"
-m1=$(juju add-machine 2>&1 | awk '{print $3}')
+m1=$(create_machine 0 0)
 echo "Machine created: $m1"
-m2=$(juju add-machine 2>&1 | awk '{print $3}')
+m2=$(create_machine 0 0)
 echo "Machine created: $m2"
-m3=$(juju add-machine 2>&1 | awk '{print $3}')
+m3=$(create_machine 0 0)
 echo "Machine created: $m3"
-m4=$(juju add-machine 2>&1 | awk '{print $3}')
+m4=$(create_machine 0 0)
 echo "Machine created: $m4"
-m5=$(juju add-machine 2>&1 | awk '{print $3}')
+m5=$(create_machine 0 0)
 echo "Machine created: $m5"
 
 wait_for_machines $m1 $m2 $m3 $m4 $m5

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-INSTANCE_TYPE="instance-type=r3.large"
-
 function wait_absence_status_for_services() {
   sleep 10
   check_str=$1
@@ -103,41 +101,26 @@ function wait_status() {
   fi
 }
 
-# Waits amazon volume state
-function wait_volume_state() {
-  volume_id=$1
-  state=$2
-  local fail=0
-  while ! aws ec2 describe-volumes --volume-id $volume_id | grep "State" | grep -q $state ; do
-    if ((fail >= 12)); then
-      echo "ERROR: Volume $volume_id isn't $state"
-      echo aws ec2 describe-volumes --volume-id $volume_id
-      exit 1
-    fi
-    sleep 10
-    ((++fail))
-  done
-}
+function create_machine() {
+  is_compute="$1" # 0 or 1
+  sds_disks_count="$2" # how many disks SDS should have
+  shift ; shift
+  additional_constraints="$@"
 
-# Creates volume on amazon and attaches it to the instance
-# Path must be in range xvdf - xvdp for amazon
-function create_attach_volume() {
-    instance=$1
-    volume_size=$2
-    path=$3
-    zone=`aws ec2 describe-instance-status --instance-ids $instance | grep "AvailabilityZone" | sed 's/[,\"]//g' | awk '{print$2}'`
-    region=`echo $zone | sed 's/.$//'`
-    if [[ -z "$instance" && -z "$volume_size" && -z "$path" ]] ; then
-      echo "ERROR: script takes instance_id, volume_size and path as parameters"
-      exit 1
-    fi
+  instance_type="m3.medium"
+  if [[ "$is_compute" != 0 ]] ; then
+    # will try this. if it will be bad then change it to c4.xlarge
+    instance_type="m3.large"
+  fi
 
-    echo "Creating and attaching volume to instance $instance"
-    volume=$(aws ec2 create-volume --size 100 --region $region --availability-zone $zone --volume-type gp2 | grep 'VolumeId' | sed 's/[,\"]//g' | awk '{print$2}')
-    wait_volume_state $volume "available"
+  disks=''
+  if (( sds_disks_count > 0 )) ; then
+    da=()
+    for (( i=0; i<sds_disks_count; ++i)) ; do da=(${da[@]} 100G) ; done
+    disks="${da[@]}"
 
-    aws ec2 attach-volume --volume-id $volume --instance-id $instance --device $path 1>/dev/null
-    wait_volume_state $volume "attached"
-
-    aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"$path\",\"Ebs\":{\"DeleteOnTermination\":true}}]" 1>/dev/null
+    juju machine add --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" --disks "$disks" 2>&1 | awk '{print $3}'
+  else
+    juju machine add --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" 2>&1 | awk '{print $3}'
+  fi
 }

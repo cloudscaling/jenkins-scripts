@@ -2,13 +2,25 @@
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
+my_name="$(basename "$0")"
 
 source $my_dir/../functions
 
+m1="$1"
+m2="$2"
+m3="$3"
+if [[ -z "$m1" || -z "$m2" || -z "$m3" ]] ; then
+  echo "ERROR: script takes machine1, machine2 and machine3 as parameters"
+  exit 1
+fi
+
 cd juju-scaleio
 
+trap 'catch_errors $LINENO' ERR EXIT
 function catch_errors() {
   local exit_code=$?
+  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
+
   juju remove-service scaleio-sds || /bin/true
   juju remove-service scaleio-mdm || /bin/true
   wait_for_removed "scaleio-sds" || /bin/true
@@ -16,29 +28,7 @@ function catch_errors() {
   exit $exit_code
 }
 
-function check_cache {
-  if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp" 2>/dev/null` ; then
-    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Login and command 'scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp' failed"
-    echo "$output"
-    return 1
-  fi
-
-  if ! echo "$output" | grep "$1" | grep -q "$2" ; then
-    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Parameter $1 is in wrong state"
-    echo "$output" | grep "$1"
-    (( ++ret ))
-  else
-    echo "INFO: Success. Parameter $1 is in state $2."
-  fi
-}
-
-m1="$1"
-m2="$2"
-m3="$3"
-if [[ -z "$m1" && -z "$m2" && -z "$m3" ]] ; then
-  echo "ERROR: script takes machine1, machine2 and machine3 as parameters"
-  exit 1
-fi
+ret=0
 
 echo "INFO: Deploy MDM to 0"
 juju deploy local:trusty/scaleio-mdm --to 0
@@ -51,45 +41,53 @@ juju set scaleio-sds protection-domain='pd' storage-pools='sp' device-paths='/de
 juju add-relation scaleio-sds scaleio-mdm
 wait_status
 
-trap catch_errors ERR EXIT
 
-ret=0
+function check_cache() {
+  local param_name=$1
+  local param_value=$2
+
+  if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp" 2>/dev/null` ; then
+    echo "ERROR: ($my_name:$LINENO) Login and command 'scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp' failed"
+    echo "$output"
+    return 1
+  fi
+
+  if ! echo "$output" | grep "$param_name" | grep -q "$param_value" ; then
+    echo "ERROR: ($my_name:$LINENO) Parameter '$param_name' is not in state '$param_value'"
+    echo "$output" | grep "$param_name"
+    (( ++ret ))
+  else
+    echo "INFO: Success. Parameter '$param_name' is in state '$param_value'"
+  fi
+}
 
 echo "INFO: Check RMCache"
 check_cache 'RAM Read Cache' "Doesn't use"
 echo "INFO: Check RFCache"
-check_cache 'RAM Read Cache' "Doesn't use"
+check_cache 'Flash Read Cache' "Doesn't use"
 
 echo "INFO: Enable RMCache"
 juju set scaleio-sds rmcache-usage=use
-sleep 5
 wait_status
-
 echo "INFO: Check RMCache"
 check_cache 'RAM Read Cache' "Uses"
 check_cache 'RAM Read Cache write handling mode' "cached"
 
-echo "INFO: Change caching write-mode to passthrough"
+echo "INFO: Set caching write-mode to passthrough"
 juju set scaleio-sds rmcache-write-handling-mode=passthrough
-sleep 5
 wait_status
-
 echo "INFO: Check RMCache write-mode"
 check_cache 'RAM Read Cache write handling mode' "passthrough"
 
-echo "INFO: Change caching write-mode to cached"
+echo "INFO: Set caching write-mode to cached"
 juju set scaleio-sds rmcache-write-handling-mode=cached
-sleep 5
 wait_status
-
 echo "INFO: Check RMCache write-mode"
 check_cache 'RAM Read Cache write handling mode' "cached"
 
 echo "INFO: Enable RFCache"
 juju set scaleio-sds rfcache-usage=use rfcache-device-paths=/dev/xvdg
-sleep 5
 wait_status
-
 echo "INFO: Check RFCache"
 check_cache 'Flash Read Cache' "Uses"
 
@@ -100,3 +98,4 @@ wait_for_removed "scaleio-mdm"
 
 trap - ERR EXIT
 exit $ret
+

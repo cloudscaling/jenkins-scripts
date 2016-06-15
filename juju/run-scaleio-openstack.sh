@@ -39,7 +39,7 @@ master_mdm=`get_master_mdm`
 cluster_mode=`get_cluster_mode`
 errors=0
 check-cluster "juju ssh" $master_mdm $cluster_mode || ((++errors))
-check-sds "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdb' || ((++errors))
+check-sds "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdf' || ((++errors))
 check-sdc "juju ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
 check-performance "juju ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
 

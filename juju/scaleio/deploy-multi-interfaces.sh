@@ -13,7 +13,8 @@ export PASSWORD="Default_password"
 
 echo "INFO: start $(date)"
 
-# hard-coded. (already created)
+# hard-coded in account of Pavlov Andrey. (already created)
+# TODO: rework it
 subnet0="subnet-6e0d0407"
 subnet1="subnet-740d041d"
 subnet2="subnet-5b0d0432"
@@ -30,11 +31,11 @@ juju subnet add 172.31.102.0/24 net2 || /bin/true
 juju space create net3 || /bin/true
 juju subnet add 172.31.103.0/24 net3 || /bin/true
 
-m1=$(juju add-machine --constraints "spaces=net0 instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
+m1=$(create_machine 0 0 "spaces=net0")
 echo "Machine created: $m1"
-m2=$(juju add-machine --constraints "spaces=net0 instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
+m2=$(create_machine 0 0 "spaces=net0")
 echo "Machine created: $m2"
-m3=$(juju add-machine --constraints "spaces=net0 instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
+m3=$(create_machine 0 0 "spaces=net0")
 echo "Machine created: $m3"
 
 wait_for_machines $m1 $m2 $m3

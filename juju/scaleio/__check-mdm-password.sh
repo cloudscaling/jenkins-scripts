@@ -8,9 +8,11 @@ source $my_dir/../functions
 
 cd juju-scaleio
 
-trap catch_errors ERR EXIT
+trap 'catch_errors $LINENO' ERR EXIT
 function catch_errors() {
   local exit_code=$?
+  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
+
   juju remove-service scaleio-mdm || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
   trap - ERR EXIT
@@ -29,7 +31,7 @@ if ! mdm_output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSW
 fi
 echo "INFO: Success"
 
-echo "INFO: change password"
+echo "INFO: Set another password"
 new_password="No_password"
 juju set scaleio-mdm password=$new_password
 wait_status
@@ -63,3 +65,4 @@ wait_for_removed "scaleio-mdm"
 
 trap - ERR EXIT
 exit $ret
+

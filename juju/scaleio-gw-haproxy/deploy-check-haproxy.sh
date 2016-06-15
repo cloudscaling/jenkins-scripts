@@ -12,13 +12,13 @@ source $my_dir/../functions-openstack
 
 cd juju-scaleio
 
-m1=$(juju add-machine --constraints "instance-type=r3.large" 2>&1 | awk '{print $3}')
+m1=$(create_machine 1 0)
 echo "Machine created: $m1"
-m2=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
+m2=$(create_machine 0 1)
 echo "Machine created: $m2"
-m3=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
+m3=$(create_machine 0 1)
 echo "Machine created: $m3"
-m4=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
+m4=$(create_machine 0 1)
 echo "Machine created: $m4"
 
 wait_for_machines $m1 $m2 $m3 $m4
@@ -58,7 +58,7 @@ echo "Deploy SDS"
 juju deploy local:trusty/scaleio-sds --to $m2
 juju service add-unit scaleio-sds --to $m3
 juju service add-unit scaleio-sds --to $m4
-juju set scaleio-sds "device-paths=/dev/xvdb"
+juju set scaleio-sds "device-paths=/dev/xvdf"
 
 cd ..
 

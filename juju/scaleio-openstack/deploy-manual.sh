@@ -11,33 +11,18 @@ juju status
 
 cd juju-scaleio
 
-m1=$(juju add-machine --constraints "instance-type=r3.large" 2>&1 | awk '{print $3}')
+m1=$(create_machine 1 0)
 echo "Machine created: $m1"
-m2=$(juju add-machine --constraints "instance-type=r3.large" 2>&1 | awk '{print $3}')
+m2=$(create_machine 1 0)
 echo "Machine created: $m2"
-m3=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
+m3=$(create_machine 0 1)
 echo "Machine created: $m3"
-m4=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
+m4=$(create_machine 0 1)
 echo "Machine created: $m4"
-m5=$(juju add-machine --constraints "instance-type=i2.xlarge" 2>&1 | awk '{print $3}')
+m5=$(create_machine 0 1)
 echo "Machine created: $m5"
 
-echo "Wait for machines"
-for mch in $m1 $m2 $m3 $m4 $m5 ; do
-  iter=0
-  while ! juju status | grep "\"$mch\"" &>/dev/null ; do
-    echo "Waiting for machine $mch - $iter/12"
-    if ((iter >= 12)); then
-      echo "ERROR: Machine $mch didn't up."
-      juju status
-      exit 1
-    fi
-    ((++iter))
-    sleep 10
-  done
-done
-echo "Post-Wait for machines for 30 seconds"
-sleep 30
+wait_for_machines $m1 $m2 $m3 $m4 $m5
 
 echo "Deploy cinder"
 juju deploy local:trusty/cinder --to $m1
@@ -92,7 +77,7 @@ echo "Deploy SDS"
 juju deploy local:trusty/scaleio-sds --to $m3
 juju service add-unit scaleio-sds --to $m4
 juju service add-unit scaleio-sds --to $m5
-juju set scaleio-sds "device-paths=/dev/xvdb"
+juju set scaleio-sds "device-paths=/dev/xvdf"
 
 
 echo "Add relations"

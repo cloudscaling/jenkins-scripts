@@ -2,44 +2,36 @@
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
+my_name="$(basename "$0")"
 
 source $my_dir/../functions
 
+m1="$1"
+m2="$2"
+if [[ -z "$m1" || -z "$m2" ]] ; then
+  echo "ERROR: script takes machine1 and machine2 as parameters"
+  exit 1
+fi
+
 cd juju-scaleio
 
+trap 'catch_errors $LINENO' ERR EXIT
 function catch_errors() {
   local exit_code=$?
+  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
+
   juju remove-service scaleio-sds-zp || /bin/true
   juju remove-service scaleio-sds || /bin/true
   juju remove-service scaleio-mdm || /bin/true
   wait_for_removed "scaleio-sds-zp" || /bin/true
   wait_for_removed "scaleio-sds" || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
+
+  trap - ERR EXIT
   exit $exit_code
 }
 
-function check_storage_pool {
-  local sp=$3
-  if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd --storage_pool_name $sp" 2>/dev/null` ; then
-    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Login and command 'scli --query_storage_pool --protection_domain_name pd --storage_pool_name $sp' failed"
-    echo "$output"
-    return 1
-  fi
-
-  if echo "$output" | grep "$1" | grep -q -v "$2" ; then
-    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Parameter $1 is in wrong state"
-    echo "$output" | grep "$1"
-    (( ++ret ))
-  fi
-  echo "INFO: Success. Parameter $1 is $2."
-}
-
-m1="$1"
-m2="$2"
-if [[ -z "$m1" && -z "$m2" ]] ; then
-  echo "ERROR: script takes machine1 and machine2 as parameters"
-  exit 1
-fi
+ret=0
 
 echo "INFO: Deploy MDM to 0"
 juju deploy local:trusty/scaleio-mdm --to 0
@@ -55,9 +47,25 @@ juju set scaleio-sds-zp protection-domain='pd' fault-set='fs2' storage-pools='sp
 juju add-relation scaleio-sds-zp scaleio-mdm
 wait_status
 
-trap catch_errors ERR EXIT
 
-ret=0
+function check_storage_pool {
+  local param_name=$1
+  local param_value=$2
+  local sp=$3
+  if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd --storage_pool_name $sp" 2>/dev/null` ; then
+    echo "ERROR: ($my_name:$LINENO) Login and command 'scli --query_storage_pool --protection_domain_name pd --storage_pool_name $sp' failed"
+    echo "$output"
+    return 1
+  fi
+
+  if ! echo "$output" | grep "$param_name" | grep -q "$param_value" ; then
+    echo "ERROR: ($my_name:$LINENO) Parameter '$param_name' is not in state '$param_value'"
+    echo "$output" | grep "$param_name"
+    (( ++ret ))
+  else
+    echo "INFO: Success. Parameter $param_name is '$param_value'"
+  fi
+}
 
 # Zero padding test
 echo 'INFO: Check zero-padding policy on SP1'
@@ -71,34 +79,33 @@ juju set scaleio-sds zero-padding-policy='enable'
 wait_absence_status_for_services "executing|blocked|waiting|allocating"
 
 echo "INFO: Check for errors"
-if juju status | grep "current" | grep error >/dev/null ; then
-  error_status='Status: This operation is only allowed when there are no devices in the Storage Pool.'
-  error_output=`juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null`
-  if [[ "$error_output" != *"$error_status"* ]] ; then
+if juju status | grep "current" | grep -q error ; then
+  mdm_unit=`juju status | grep "scaleio-mdm/" | sed "s/[:\r]//" | sed -e 's/^[[:space:]]*//'`
+  mdm_unit_log_name="unit-${mdm_unit//\//-}"
+  log_items=`juju ssh 0 sudo grep "$mdm_unit_log_name" /var/log/juju/all-machines.log 2>/dev/null`
+  error_status='Error: MDM failed command.  Status: This operation is only allowed when there are no devices in the Storage Pool. Please remove all devices from the Storage Pool.'
+  if ! echo "$log_items" | grep -q "$error_status" ; then
     (( ++ret ))
-    echo "ERROR: Unexpected error has occurred"
-    echo $error_output
+    echo "ERROR: Unexpected error has occurred. Please check all-machines.log after test. Current date: $(date)"
   else
-    echo "INFO: Expected behavior. $error_status"
-    mdm_unit=`juju status | grep "scaleio-mdm/" | sed "s/[:\r]//"`
-    echo "INFO: Resolve"
-    juju resolved $mdm_unit
-    wait_status
+    echo "INFO: Expected error"
     juju set scaleio-sds zero-padding-policy='disable'
-    wait_status
   fi
+
+  echo "INFO: Resolve error and continue checking"
+  juju resolved $mdm_unit
+  wait_status
 else
   (( ++ret ))
-  echo "ERROR: Unexpected behavior."
+  echo "ERROR: Error expected but all services are ok."
 fi
 
 # Checksum mode test
 echo 'INFO: Check checksum mode (disabled)'
 check_storage_pool 'Checksum mode' 'disabled' 'sp1'
 
-echo 'INFO: Change checksum mode'
+echo 'INFO: Set checksum mode to "enable"'
 juju set scaleio-sds checksum-mode='enable'
-sleep 5
 wait_status
 echo 'INFO: Check checksum mode (enabled)'
 check_storage_pool 'Checksum mode' 'enabled' 'sp1'
@@ -107,9 +114,8 @@ check_storage_pool 'Checksum mode' 'enabled' 'sp1'
 echo 'INFO: Check scanner mode (disabled)'
 check_storage_pool 'Background device scanner' 'Disabled' 'sp1'
 
-echo 'INFO: Change scanner mode'
+echo 'INFO: Set scanner mode to "enable"'
 juju set scaleio-sds scanner-mode='enable'
-sleep 5
 wait_status
 echo 'INFO: Check scanner mode (enabled)'
 check_storage_pool 'Background device scanner' 'Mode: device_only' 'sp1'
@@ -118,9 +124,8 @@ check_storage_pool 'Background device scanner' 'Mode: device_only' 'sp1'
 echo 'INFO: Check spare percentage (10%)'
 check_storage_pool 'Spare policy' '10%' 'sp1'
 
-echo 'INFO: Change spare percentage'
+echo 'INFO: Set spare percentage to 15'
 juju set scaleio-sds spare-percentage='15'
-sleep 5
 wait_status
 echo 'INFO: Check spare percentage (15%)'
 check_storage_pool 'Spare policy' '15%' 'sp1'
@@ -134,3 +139,4 @@ wait_for_removed "scaleio-mdm"
 
 trap - ERR EXIT
 exit $ret
+

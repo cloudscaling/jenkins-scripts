@@ -8,9 +8,11 @@ source $my_dir/../functions
 
 cd juju-scaleio
 
-trap catch_errors ERR EXIT
+trap 'catch_errors $LINENO' ERR EXIT
 function catch_errors() {
   local exit_code=$?
+  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
+
   juju remove-service scaleio-mdm || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
   trap - ERR EXIT
@@ -30,7 +32,7 @@ echo "INFO: Current capacity thresholds are $current_capacity_threshold_high and
 new_capacity_threshold_high=79
 new_capacity_threshold_critical=89
 
-echo "INFO: change capacity alert thresholds"
+echo "INFO: set another capacity alert thresholds"
 juju set scaleio-mdm capacity-high-alert-threshold="$new_capacity_threshold_high" capacity-critical-alert-threshold="$new_capacity_threshold_critical"
 wait_status
 
@@ -56,3 +58,4 @@ wait_for_removed "scaleio-mdm"
 
 trap - ERR EXIT
 exit $ret
+

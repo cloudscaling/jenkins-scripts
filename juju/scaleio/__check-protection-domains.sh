@@ -6,18 +6,20 @@ my_name="$(basename "$0")"
 
 source $my_dir/../functions
 
-cd juju-scaleio
-
 m1="$1"
 m2="$2"
-if [[ -z "$m1" && -z "$m2" ]] ; then
+if [[ -z "$m1" || -z "$m2" ]] ; then
   echo "ERROR: ($my_name:$LINENO) script takes machine1 and machine2 as parameters"
   exit 1
 fi
 
-trap catch_errors ERR EXIT
+cd juju-scaleio
+
+trap 'catch_errors $LINENO' ERR EXIT
 function catch_errors() {
   local exit_code=$?
+  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
+
   juju remove-service scaleio-mdm || /bin/true
   juju remove-service scaleio-sds-pd1 || /bin/true
   juju remove-service scaleio-sds-pd2 || /bin/true
@@ -116,3 +118,4 @@ wait_for_removed "scaleio-mdm"
 
 trap - ERR EXIT
 exit $ret
+
