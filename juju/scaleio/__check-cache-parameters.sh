@@ -91,6 +91,26 @@ wait_status
 echo "INFO: Check RFCache"
 check_cache 'Flash Read Cache' "Uses"
 
+echo "INFO: Check RFCache path"
+if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_all_sds" 2>/dev/null` ; then
+  echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Login and command 'scli --query_all_sds' failed"
+  echo "$output"
+  exit 1
+fi
+
+rfcache_path='/dev/xvdg'
+sds_ids=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null ; scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$3}'`
+for sds_id in $sds_ids ; do
+  rfcache_device=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null ; scli --query_sds --sds_id $sds_id | sed -n '/Rfcache device information/{n;p;}'" 2>/dev/null`
+  if ! echo "$rfcache_device" | awk '{print$5}' | grep -q "$rfcache_path" ; then
+    echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) Path of RFCache device isn't $rfcache_path"
+    echo "$rfcache_device"
+    (( ++ret ))
+  else
+    echo "INFO: Success. Path of RFCache device is $rfcache_path."
+  fi
+done
+
 juju remove-service scaleio-sds
 juju remove-service scaleio-mdm
 wait_for_removed "scaleio-sds"
