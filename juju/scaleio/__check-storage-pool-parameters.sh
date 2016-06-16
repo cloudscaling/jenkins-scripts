@@ -52,7 +52,7 @@ function check_storage_pool {
   local param_name=$1
   local param_value=$2
   local sp=$3
-  if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd --storage_pool_name $sp" 2>/dev/null` ; then
+  if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_storage_pool --protection_domain_name pd --storage_pool_name $sp" 2>/dev/null` ; then
     echo "ERROR: ($my_name:$LINENO) Login and command 'scli --query_storage_pool --protection_domain_name pd --storage_pool_name $sp' failed"
     echo "$output"
     return 1
