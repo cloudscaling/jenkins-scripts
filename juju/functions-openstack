@@ -7,16 +7,17 @@ function image_status() { openstack image show $1 | awk '/ status / {print $4}';
 
 function wait_instance() {
   local instance_id=$1
+  local max_fail=$2
   echo "------------------------------  Wait for instance: $instance_id"
   local fail=0
   while [[ true ]] ; do
-    if ((fail >= MAX_FAIL)); then
+    if ((fail >= max_fail)); then
       echo '' >> errors
       echo "ERROR: Instance active status wait timeout occured" >> errors
       nova show $instance_id >> errors
       return 0
     fi
-    echo "attempt $fail of $MAX_FAIL"
+    echo "attempt $fail of $max_fail"
     status=$(instance_status $instance_id)
     if [[ "$status" == "ACTIVE" ]]; then
       break
@@ -34,16 +35,17 @@ function wait_instance() {
 
 function wait_volume() {
   local volume_id=$1
+  local max_fail=$2
   echo "------------------------------  Wait for volume: $volume_id"
   local fail=0
   while [[ true ]] ; do
-    if ((fail >= MAX_FAIL)); then
+    if ((fail >= max_fail)); then
       echo '' >> errors
       echo "ERROR: Volume creation fails (timeout)" >> errors
       cinder show $volume_id >> errors
       return
     fi
-    echo "attempt $fail of $MAX_FAIL"
+    echo "attempt $fail of $max_fail"
     status=$(volume_status $volume_id)
     if [[ $status == "available" ]]; then
       break
@@ -61,16 +63,17 @@ function wait_volume() {
 
 function wait_snapshot() {
   local snapshot_id=$1
+  local max_fail=$2
   echo "----------------------------  Wait for snapshot: $volume_id"
   local fail=0
   while [[ true ]] ; do
-    if ((fail >= MAX_FAIL)); then
+    if ((fail >= max_fail)); then
       echo '' >> errors
       echo "ERROR: Snapshot creation fails (timeout)" >> errors
       cinder snapshot-show $snapshot_id >> errors
       return
     fi
-    echo "attempt $fail of $MAX_FAIL"
+    echo "attempt $fail of $max_fail"
     status=$(snapshot_status $snapshot_id)
     if [[ $status == "available" ]]; then
       break
@@ -88,16 +91,17 @@ function wait_snapshot() {
 
 function wait_image() {
   local snapshot_id=$1
+  local max_fail=$2
   echo "------------------------------  Wait for snapshot: $snapshot_id"
   local fail=0
   while [[ true ]] ; do
-    if ((fail >= MAX_FAIL)); then
+    if ((fail >= max_fail)); then
       echo '' >> errors
       echo "ERROR: Snapshot active status wait timeout occured" >> errors
       openstack image show $snapshot_id >> errors
       return 0
     fi
-    echo "attempt $fail of $MAX_FAIL"
+    echo "attempt $fail of $max_fail"
     status=$(image_status $snapshot_id)
     echo $status
     if [[ "$status" == "ACTIVE" ]]; then

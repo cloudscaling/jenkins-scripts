@@ -114,7 +114,7 @@ function check_volume_creation() {
 
   volume_id=`cinder create --display_name $volume_name 1 | grep " id " | awk '{print $4}'`
   echo "INFO: Volume created. Name: $volume_name  Id: $volume_id"
-  wait_volume $volume_id
+  wait_volume $volume_id $MAX_FAIL
 
   status=`cinder show $volume_id | awk '/ status / {print $4}'`
   if [[ $status == "available" ]]; then

@@ -37,13 +37,13 @@ echo "------------------------------  Check cinder volumes"
 echo "------------------------------  Check simple volume"
 cinder create --display_name simple_volume 1
 volume_id=`cinder list | grep " simple_volume " | awk '{print $2}'`
-wait_volume $volume_id
+wait_volume $volume_id $MAX_FAIL
 
 echo "------------------------------  Check cinder volumes"
 echo "------------------------------  Check volume from image"
 cinder create --image-id $image_id --display_name volume_from_image 1
 volume_id=`cinder list | grep " volume_from_image " | awk '{print $2}'`
-wait_volume $volume_id
+wait_volume $volume_id $MAX_FAIL
 
 cinder list
 
@@ -58,14 +58,14 @@ echo "------------------------------  Run instance from bootable volume"
 iname='inst_from_volume'
 nova boot --flavor 1 --block-device "device=/dev/vda,id=$volume_id,shutdown=remove,source=volume,dest=volume,bootindex=0" $iname
 instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-wait_instance $instance_id
+wait_instance $instance_id $MAX_FAIL
 nova show $iname
 echo "------------------------------  Console log"
 nova console-log $iname | tail -10
 echo "------------------------------  Check live migration"
 nova live-migration $iname
 sleep 20
-wait_instance $instance_id
+wait_instance $instance_id $MAX_FAIL
 nova show $iname
 host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
 if [[ "$host1" == "$host2" ]] ; then
@@ -77,7 +77,7 @@ echo "------------------------------  Run instance from ephemeral"
 iname="instance_01"
 nova boot --flavor 51 --image cirros $iname
 instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-wait_instance $instance_id
+wait_instance $instance_id $MAX_FAIL
 nova show $iname
 host_attr='OS-EXT-SRV-ATTR:host'
 host1=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
@@ -86,7 +86,7 @@ nova console-log $iname | tail
 echo "------------------------------  Check live migration"
 nova live-migration $iname
 sleep 20
-wait_instance $instance_id
+wait_instance $instance_id $MAX_FAIL
 nova show $iname
 host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
 if [[ "$host1" == "$host2" ]] ; then
@@ -94,11 +94,11 @@ if [[ "$host1" == "$host2" ]] ; then
   echo "ERROR: Host is not changed after live migration." >> errors
 fi
 
-echo "------------------------------  Check flavor with Ephemeral and swap "
+echo "------------------------------  Check flavor with additional Ephemeral and swap "
 iname="instance_02"
 nova boot --flavor 53 --image cirros $iname
 instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-wait_instance $instance_id
+wait_instance $instance_id $((2*MAX_FAIL))
 nova show $iname
 
 # check existing volumes type
@@ -126,17 +126,17 @@ nova delete instance_02 || /bin/true
 echo "------------------------------  Creating volume"
 cinder create --display_name volume_for_snaps 1
 volume_id=`cinder list | grep " volume_for_snaps " | awk '{print $2}'`
-wait_volume $volume_id
+wait_volume $volume_id $MAX_FAIL
 
 echo "------------------------------  Creating snapshot"
 cinder snapshot-create volume_for_snaps
 snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
-wait_snapshot $snapshot_id
+wait_snapshot $snapshot_id $MAX_FAIL
 
 echo "------------------------------  Creating volume from snapshot"
 cinder create --snapshot_id $snapshot_id --name from_snapshot
 snap_volume_id=`cinder list | grep " from_snapshot " | awk '{print $2}'`
-wait_volume $snap_volume_id
+wait_volume $snap_volume_id $MAX_FAIL
 
 cinder delete $snap_volume_id
 echo "------------------------------ Deleting snapshot"
@@ -148,34 +148,33 @@ if `cinder snapshot-list | grep $snapshot_id ` ; then
 fi
 cinder delete $volume_id
 
-# glance/api.log - Image storage media is full: None
-# echo "------------------------------  Creating instance"
-# iname="instance_for_snaps" 
-# nova boot --flavor 51 --image cirros $iname
-# instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-# wait_instance $instance_id
+echo "------------------------------  Creating instance"
+iname="instance_for_snaps"
+nova boot --flavor 51 --image cirros $iname
+instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+wait_instance $instance_id $MAX_FAIL
 
-# echo "------------------------------  Creating snapshot"
-# nova image-create $instance_id snapshot_image
-# snapshot_id=`openstack image show snapshot_image | grep " id " | awk '{print $4}'`
-# wait_image $snapshot_id
+echo "------------------------------  Creating snapshot"
+nova image-create $instance_id snapshot_image
+snapshot_id=`openstack image show snapshot_image | grep " id " | awk '{print $4}'`
+wait_image $snapshot_id $MAX_FAIL
 
-# echo "------------------------------  Creating instance from snapshot"
-# iname="from_snapshot"
-# snapshot_id=`openstack image show from_snapshot | grep " id " | awk '{print $4}'`
-# nova boot --flavor 51 --image $snapshot_id $iname
-# instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-# wait_instance $instance_id
+echo "------------------------------  Creating instance from snapshot"
+iname="from_snapshot"
+simage_id=`openstack image show from_snapshot | grep " id " | awk '{print $4}'`
+nova boot --flavor 51 --image $simage_id $iname
+instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+wait_instance $instance_id $((2*MAX_FAIL))
 
-# echo "------------------------------  Deleting snapshot"
-# openstack image delete $snapshot_id
-# sleep 5
-# if `openstack image list | grep $snapshot_id ` ; then
-#   echo '' >> errors
-#   echo "Snapshot wasn't deleted." >> errors
-# fi
-# nova delete instance_for_snaps
-# nova delete from_snapshot
+echo "------------------------------  Deleting snapshot"
+openstack image delete $simage_id
+sleep 5
+if `openstack image list | grep $simage_id ` ; then
+  echo '' >> errors
+  echo "Snapshot wasn't deleted." >> errors
+fi
+nova delete instance_for_snaps
+nova delete from_snapshot
 
 
 # all checks is done and we cant switch off traps
