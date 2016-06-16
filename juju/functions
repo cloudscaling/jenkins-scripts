@@ -108,7 +108,8 @@ function create_machine() {
   additional_constraints="$@"
 
   # general instance type
-  instance_type="t2.medium"
+  instance_type="r3.large"
+  #"t2.medium"
   if [[ "$is_compute" != 0 ]] ; then
     # instance type for compute hosts
     instance_type="c4.large"

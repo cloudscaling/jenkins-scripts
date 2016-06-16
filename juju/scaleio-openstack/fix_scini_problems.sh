@@ -25,9 +25,9 @@ echo "WARNING: driver for kernel $kernel not found on ftp.emc.com. Upgrade kerne
 
 created=0
 if [[ -z "$m1" && -z "$m2" ]] ; then
-  m1=$(juju add-machine --constraints "instance-type=c4.large root-disk=40G" 2>&1 | awk '{print $3}')
+  m1=$(create_machine 1 0)
   echo "Machine created: $m1"
-  m2=$(juju add-machine --constraints "instance-type=c4.large root-disk=40G" 2>&1 | awk '{print $3}')
+  m2=$(create_machine 1 0)
   echo "Machine created: $m2"
   # wait
   wait_for_machines $m1 $m2
