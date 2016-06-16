@@ -107,10 +107,11 @@ function create_machine() {
   shift ; shift
   additional_constraints="$@"
 
-  instance_type="m3.medium"
+  # general instance type
+  instance_type="t2.medium"
   if [[ "$is_compute" != 0 ]] ; then
-    # will try this. if it will be bad then change it to c4.xlarge
-    instance_type="m3.large"
+    # instance type for compute hosts
+    instance_type="m4.large"
   fi
 
   disks=''
