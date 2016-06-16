@@ -117,7 +117,7 @@ function create_machine() {
   disks=''
   if (( sds_disks_count > 0 )) ; then
     da=()
-    for (( i=0; i<sds_disks_count; ++i)) ; do da=(${da[@]} 100G) ; done
+    for (( i=0; i<sds_disks_count; ++i)) ; do da=(${da[@]} ebs-ssd,100G) ; done
     disks="${da[@]}"
 
     juju machine add --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" --disks "$disks" 2>&1 | awk '{print $3}'
