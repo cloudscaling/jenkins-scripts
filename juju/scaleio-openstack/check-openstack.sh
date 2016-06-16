@@ -33,6 +33,12 @@ openstack image create --public --file cirros-0.3.4-x86_64-disk.img cirros
 image_id=`openstack image show cirros | grep " id " | awk '{print $4}'`
 
 
+echo "------------------------------  Add specific flavors"
+nova flavor-create fl8gb 51 512 8 1
+nova flavor-create fl16gb 52 512 16 1
+nova flavor-create fl8gbext --ephemeral 8 --swap 8192 53 512 8 1
+sleep 2
+
 echo "------------------------------  Check cinder volumes"
 echo "------------------------------  Check simple volume"
 cinder create --display_name simple_volume 1
@@ -47,12 +53,6 @@ wait_volume $volume_id $MAX_FAIL
 
 cinder list
 
-
-echo "------------------------------  Add specific flavors"
-nova flavor-create fl8gb 51 512 8 1
-nova flavor-create fl16gb 52 512 16 1
-nova flavor-create fl8gbext --ephemeral 8 --swap 8192 53 512 8 1
-sleep 2
 
 echo "------------------------------  Run instance from bootable volume"
 iname='inst_from_volume'
@@ -148,25 +148,33 @@ if `cinder snapshot-list | grep $snapshot_id ` ; then
 fi
 cinder delete $volume_id
 
+
+echo "------------------------------  Checking creation of snapshot from instance and second instance from the created image"
 echo "------------------------------  Creating instance"
 iname="instance_for_snaps"
 nova boot --flavor 51 --image cirros $iname
 instance_id=`nova list | grep " $iname " | awk '{print $2}'`
 wait_instance $instance_id $MAX_FAIL
 
-echo "------------------------------  Creating snapshot"
+echo "------------------------------  Creating Image from Instance"
 nova image-create $instance_id snapshot_image
-snapshot_id=`openstack image show snapshot_image | grep " id " | awk '{print $4}'`
-wait_image $snapshot_id $MAX_FAIL
+simage_id=`openstack image show snapshot_image | grep " id " | awk '{print $4}'`
+openstack image show $simage_id
+echo "------------------------------  Status should be 'queued' now. Waiting for 'saving'"
+wait_image $simage_id $MAX_FAIL saving
+echo "------------------------------  Status should be 'saving' now. Waiting for 'active'"
+wait_image $simage_id $((2*MAX_FAIL)) active
+openstack image show $simage_id
 
-echo "------------------------------  Creating instance from snapshot"
+echo "------------------------------  Creating instance from created image"
 iname="from_snapshot"
-simage_id=`openstack image show from_snapshot | grep " id " | awk '{print $4}'`
 nova boot --flavor 51 --image $simage_id $iname
 instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-wait_instance $instance_id $((2*MAX_FAIL))
+wait_instance $instance_id $((3*MAX_FAIL))
 
-echo "------------------------------  Deleting snapshot"
+echo "------------------------------  Deleting artefacts"
+nova delete from_snapshot
+sleep 5
 openstack image delete $simage_id
 sleep 5
 if `openstack image list | grep $simage_id ` ; then
@@ -174,7 +182,20 @@ if `openstack image list | grep $simage_id ` ; then
   echo "Snapshot wasn't deleted." >> errors
 fi
 nova delete instance_for_snaps
-nova delete from_snapshot
+
+
+#echo "------------------------------  Checking resize from 'empty' flavor to flavor with set PD"
+#nova flavor-key 52 set sio:pd_name=default_protection_domain
+
+#echo "------------------------------  Creating instance"
+#iname="instance_for_resize"
+#nova boot --flavor 51 --image cirros $iname
+#instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+#wait_instance $instance_id $MAX_FAIL
+#echo "------------------------------  Resizing instance"
+#nova resize $instance_id 52
+#echo "------------------------------  Wating instance for resize"
+#wait_instance $instance_id $MAX_FAIL
 
 
 # all checks is done and we cant switch off traps

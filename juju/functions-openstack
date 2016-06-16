@@ -90,27 +90,27 @@ function wait_snapshot() {
 }
 
 function wait_image() {
-  local snapshot_id=$1
+  local image_id=$1
   local max_fail=$2
-  echo "------------------------------  Wait for snapshot: $snapshot_id"
+  local wait_status=$3
+  echo "------------------------------  Waiting for image: $image_id"
   local fail=0
   while [[ true ]] ; do
     if ((fail >= max_fail)); then
       echo '' >> errors
-      echo "ERROR: Snapshot active status wait timeout occured" >> errors
-      openstack image show $snapshot_id >> errors
+      echo "ERROR: Image status wait timeout occured" >> errors
+      openstack image show $image_id >> errors
       return 0
     fi
     echo "attempt $fail of $max_fail"
-    status=$(image_status $snapshot_id)
-    echo $status
-    if [[ "$status" == "ACTIVE" ]]; then
+    status=$(image_status $image_id)
+    if [[ "$status" == "$wait_status" || "$status" == 'active' ]]; then
       break
     fi
-    if [[ "$status" == "ERROR" || -z "$status" ]]; then
+    if [[ "$status" == "error" || -z "$status" ]]; then
       echo '' >> errors
-      echo 'ERROR: Snapshot creating error' >> errors
-      openstack image show $snapshot_id >> errors
+      echo 'ERROR: Image creation error' >> errors
+      openstack image show $image_id >> errors
       return 0
     fi
     sleep 10
