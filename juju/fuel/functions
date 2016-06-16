@@ -74,6 +74,15 @@ function provision_machines() {
     done    
 }
 
+function copy_log() {
+    mch=$1
+    log=$2
+    dst=$3
+    if juju ssh $mch "test -f $log" ; then
+        juju ssh $mch "cat $log" > "$dst" 2>/dev/null
+    fi
+}
+
 function save_logs() {
     # save status to file
     for mch in ${machines[@]:1} ; do
@@ -81,8 +90,8 @@ function save_logs() {
         if juju service get ${name} ; then
             mdir="$cdir/logs/$mch"
             mkdir -p "$mdir"
-            juju ssh $mch 'cat /var/log/fuel-puppet-scaleio.log' > "$mdir/puppet-scaleio.log" 2>/dev/null
-            juju ssh $mch 'cat /var/lib/hiera/defaults.yaml' > "$mdir/var-lib-hiera-defaults.log" 2>/dev/null
+            copy_log $mch '/var/log/fuel-puppet-scaleio.log' "$mdir/fuel-puppet-scaleio.log"
+            copy_log $mch '/var/lib/hiera/defaults.yaml' "$mdir/var-lib-hiera-defaults.log"
         fi
     done
 }
