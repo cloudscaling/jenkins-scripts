@@ -98,7 +98,7 @@ echo "------------------------------  Check flavor with additional Ephemeral and
 iname="instance_02"
 nova boot --flavor 53 --image cirros $iname
 instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-wait_instance $instance_id $((2*MAX_FAIL))
+wait_instance $instance_id $((3*MAX_FAIL))
 nova show $iname
 
 # check existing volumes type
