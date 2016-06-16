@@ -111,7 +111,7 @@ function create_machine() {
   instance_type="t2.medium"
   if [[ "$is_compute" != 0 ]] ; then
     # instance type for compute hosts
-    instance_type="m4.large"
+    instance_type="c4.large"
   fi
 
   disks=''
