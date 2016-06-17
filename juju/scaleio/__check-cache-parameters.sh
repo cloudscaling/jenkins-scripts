@@ -46,7 +46,7 @@ function check_cache() {
   local param_name=$1
   local param_value=$2
 
-  if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null ; scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp" 2>/dev/null` ; then
+  if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp" 2>/dev/null` ; then
     echo "ERROR: ($my_name:$LINENO) Login and command 'scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp' failed"
     echo "$output"
     return 1
@@ -93,23 +93,29 @@ echo "INFO: Check RFCache"
 check_cache 'Flash Read Cache' "Uses"
 
 echo "INFO: Check RFCache path"
-if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null ; scli --query_all_sds" 2>/dev/null` ; then
+if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_all_sds" 2>/dev/null` ; then
   echo "ERROR: ($my_name:$LINENO) Login and command 'scli --query_all_sds' failed"
   echo "$output"
   exit 1
 fi
 
-sds_names=`echo "$output" | grep 'SDS ID:' | awk '{print$5}'`
-for sds_name in $sds_names ; do
-  rfcache_device=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null ; scli --query_sds --sds_name $sds_name | sed -n '/Rfcache device information/{n;p;}'" 2>/dev/null`
-  if ! echo "$rfcache_device" | awk '{print$5}' | grep -q "$rfcache_path" ; then
-    echo "ERROR: ($my_name:$LINENO) Path of RfCache device on $sds_name isn't $rfcache_path"
-    echo "$rfcache_device"
-    (( ++ret ))
-  else
-    echo "INFO: Success. Path of RFCache device on $sds_name is $rfcache_path."
-  fi
-done
+sds_names=(`echo "$output" | grep 'SDS ID:' | awk '{print$5}'`)
+
+if (( ${#sds_names[@]} > 0 )); then
+  for sds_name in ${sds_names[@]} ; do
+    rfcache_device=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_sds --sds_name $sds_name | sed -n '/Rfcache device information/{n;p;}'" 2>/dev/null`
+    if ! echo "$rfcache_device" | grep -q "$rfcache_path" ; then
+      echo "ERROR: ($my_name:$LINENO) Path of RfCache device on $sds_name isn't $rfcache_path"
+      echo "$rfcache_device"
+      (( ++ret ))
+    else
+      echo "INFO: Success. Path of RFCache device on $sds_name is $rfcache_path."
+    fi
+  done
+else
+  echo "ERROR: No SDS was found."
+  (( ++ret ))
+fi
 
 juju remove-service scaleio-sds
 juju remove-service scaleio-mdm
