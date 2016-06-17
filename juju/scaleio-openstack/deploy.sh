@@ -11,9 +11,10 @@ juju status
 
 cd juju-scaleio
 
-# ---------------------------------------- juju-deployer hack start
+# ---------------------------------------- pre-deployment stage start
 # due to inability to create instances with additional disks via bundle
 # script will create machines before bundle
+# also it will upgrade kernel if new machines have kernel that absent on ftp
 m1=$(create_machine 1 0)
 echo "Machine created: $m1"
 m2=$(create_machine 1 0)
@@ -34,9 +35,9 @@ sed -i -e "s/\"io-1\"/\"$m3\"/m" $BUNDLE
 sed -i -e "s/\"io-2\"/\"$m4\"/m" $BUNDLE
 sed -i -e "s/\"io-3\"/\"$m5\"/m" $BUNDLE
 sed -i -e "s/xvdb/xvdf/m" $BUNDLE
-# ---------------------------------------- juju-deployer hack end
+# ---------------------------------------- pre-deployment stage end
 
-$my_dir/fix_scini_problems.sh $m1 $m2
+$my_dir/fix_scini_problems.sh $m1 $m2 $m3 $m4 $m5
 
 if [ -n "$VERSION" ] ; then
   echo "Change version to $VERSION"
