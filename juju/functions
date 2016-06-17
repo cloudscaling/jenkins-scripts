@@ -102,18 +102,28 @@ function wait_status() {
 }
 
 function create_machine() {
-  is_compute="$1" # 0 or 1
+  # 0: general machine for parameters testing
+  # 1: compute machine for OpenStack
+  # 2: machine for MDM/SDS + OpenStack services
+  type="$1"
   sds_disks_count="$2" # how many disks SDS should have
   shift ; shift
   additional_constraints="$@"
 
-  # general instance type
-  instance_type="r3.large"
-  #"t2.medium"
-  if [[ "$is_compute" != 0 ]] ; then
-    # instance type for compute hosts
+  case "$type" in
+  "0")
+    instance_type="t2.medium"
+    ;;
+  "1")
     instance_type="c4.large"
-  fi
+    ;;
+  "2")
+    instance_type="r3.large"
+    ;;
+  *)
+    return 1
+    ;;
+  esac
 
   disks=''
   if (( sds_disks_count > 0 )) ; then

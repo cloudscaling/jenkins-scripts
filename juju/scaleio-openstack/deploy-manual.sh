@@ -15,11 +15,11 @@ m1=$(create_machine 1 0)
 echo "Machine created: $m1"
 m2=$(create_machine 1 0)
 echo "Machine created: $m2"
-m3=$(create_machine 0 1)
+m3=$(create_machine 2 1)
 echo "Machine created: $m3"
-m4=$(create_machine 0 1)
+m4=$(create_machine 2 1)
 echo "Machine created: $m4"
-m5=$(create_machine 0 1)
+m5=$(create_machine 2 1)
 echo "Machine created: $m5"
 
 wait_for_machines $m1 $m2 $m3 $m4 $m5
