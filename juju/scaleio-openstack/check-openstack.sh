@@ -184,7 +184,7 @@ fi
 nova delete instance_for_snaps
 
 
-#echo "------------------------------  Checking resize from 'empty' flavor to flavor with set PD"
+#echo "------------------------------  Checking resize from 'empty' flavor to flavor with set PD (resize to another host)"
 #nova flavor-key 52 set sio:pd_name=default_protection_domain
 
 #echo "------------------------------  Creating instance"
@@ -194,8 +194,13 @@ nova delete instance_for_snaps
 #wait_instance $instance_id $MAX_FAIL
 #echo "------------------------------  Resizing instance"
 #nova resize $instance_id 52
-#echo "------------------------------  Wating instance for resize"
+#echo "------------------------------  Wating instance for resize-confirm"
+#wait_instance $instance_id $MAX_FAIL VERIFY_RESIZE
+#nova resize-confirm $instance_id
 #wait_instance $instance_id $MAX_FAIL
+#echo "------------------------------  Volume list after resize"
+#sleep 5
+#juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume" 2>/dev/null
 
 
 # all checks is done and we cant switch off traps

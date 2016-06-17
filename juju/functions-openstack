@@ -8,18 +8,19 @@ function image_status() { openstack image show $1 | awk '/ status / {print $4}';
 function wait_instance() {
   local instance_id=$1
   local max_fail=$2
-  echo "------------------------------  Wait for instance: $instance_id"
+  local wait_status=${3:-ACTIVE}
+  echo "------------------------------  Wait for status '$wait_status' of instance '$instance_id'"
   local fail=0
   while [[ true ]] ; do
     if ((fail >= max_fail)); then
       echo '' >> errors
-      echo "ERROR: Instance active status wait timeout occured" >> errors
+      echo "ERROR: Instance status wait timeout occured" >> errors
       nova show $instance_id >> errors
       return 0
     fi
     echo "attempt $fail of $max_fail"
     status=$(instance_status $instance_id)
-    if [[ "$status" == "ACTIVE" ]]; then
+    if [[ "$status" == "$wait_status" ]]; then
       break
     fi
     if [[ "$status" == "ERROR" || -z "$status" ]]; then
