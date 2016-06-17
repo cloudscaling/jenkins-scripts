@@ -112,7 +112,7 @@ function create_machine() {
 
   case "$type" in
   "0")
-    instance_type="t2.medium"
+    instance_type="r3.large"
     ;;
   "1")
     instance_type="c4.large"
