@@ -47,16 +47,16 @@ juju set glance "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose glance
 
 echo "Deploy keystone"
-juju deploy local:trusty/keystone --to $m4
+juju deploy local:trusty/keystone --to $m2
 juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose keystone
 
 echo "Deploy rabbit mq"
-juju deploy cs:trusty/rabbitmq-server --to $m2
+juju deploy cs:trusty/rabbitmq-server --to $m4
 juju set rabbitmq-server "source=cloud:trusty-liberty"
 
 echo "Deploy mysql"
-juju deploy cs:trusty/mysql --to $m2
+juju deploy cs:trusty/mysql --to $m4
 
 echo "Deploy SDC"
 juju deploy local:trusty/scaleio-sdc --to $m1
@@ -66,7 +66,7 @@ echo "Deploy subordinate to OpenStack"
 juju deploy local:trusty/scaleio-openstack
 
 echo "Deploy gateway"
-juju deploy local:trusty/scaleio-gw --to $m2
+juju deploy local:trusty/scaleio-gw --to $m4
 juju expose scaleio-gw
 
 echo "Deploy MDM"
