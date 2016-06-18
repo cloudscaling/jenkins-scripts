@@ -100,20 +100,23 @@ if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD 
 fi
 
 sds_names=(`echo "$output" | grep 'SDS ID:' | awk '{print$5}'`)
-
-if (( ${#sds_names[@]} > 0 )); then
+if (( ${#sds_names[@]} == 3 )); then
+  devices_errors=0
   for sds_name in ${sds_names[@]} ; do
     rfcache_device=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_sds --sds_name $sds_name | sed -n '/Rfcache device information/{n;p;}'" 2>/dev/null`
     if ! echo "$rfcache_device" | grep -q "$rfcache_path" ; then
       echo "ERROR: ($my_name:$LINENO) Path of RfCache device on $sds_name isn't $rfcache_path"
       echo "$rfcache_device"
-      (( ++ret ))
-    else
-      echo "INFO: Success. Path of RFCache device on $sds_name is $rfcache_path."
+      (( ++devices_errors ))
     fi
   done
+  if [[ $devices_errors = 0 ]] ; then
+    echo "INFO: Success. All paths of RFCache devices are $rfcache_path."
+  else
+    (( ++ret ))
+  fi
 else
-  echo "ERROR: No SDS was found."
+  echo "ERROR: Wrong number of SDS."
   (( ++ret ))
 fi
 
