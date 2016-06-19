@@ -99,6 +99,13 @@ if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD 
   exit 1
 fi
 
+rfcache_info=`echo "$output" | grep 'Rfcache device information'`
+if `echo $rfcache_info | grep -v 'total 1 devices' ` ; then
+  echo "ERROR: Unexpected number of rfcache devices."
+  (( ++ret ))
+fi
+echo "$rfcache_info"
+
 sds_names=(`echo "$output" | grep 'SDS ID:' | awk '{print$5}'`)
 if (( ${#sds_names[@]} == 3 )); then
   devices_errors=0
