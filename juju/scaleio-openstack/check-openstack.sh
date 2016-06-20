@@ -184,26 +184,30 @@ fi
 nova delete instance_for_snaps
 
 
-#echo "------------------------------  Checking resize from 'empty' flavor to flavor with set PD (resize to another host)"
-#nova flavor-key 52 set sio:pd_name=default_protection_domain
+echo "------------------------------  Checking resize from 'empty' flavor to flavor with set PD (resize to another host)"
+if [[ $current_type == 'thin' ]] ; then otype='thick' ; else otype='thin' fi
+nova flavor-key 52 set sio:pd_name=default_protection_domain sio:provisioning_type=$otype
 
-#echo "------------------------------  Creating instance"
-#iname="instance_for_resize"
-#nova boot --flavor 51 --image cirros $iname
-#instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-#wait_instance $instance_id $MAX_FAIL
-#echo "------------------------------  Resizing instance"
-#nova resize $instance_id 52
-#echo "------------------------------  Wating instance for resize-confirm"
-#wait_instance $instance_id $MAX_FAIL VERIFY_RESIZE
-#nova resize-confirm $instance_id
-#wait_instance $instance_id $MAX_FAIL
-#echo "------------------------------  Volume list after resize"
-#sleep 5
-#juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume" 2>/dev/null
+echo "------------------------------  Creating instance"
+iname="instance_for_resize"
+nova boot --flavor 51 --image cirros $iname
+instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+wait_instance $instance_id $MAX_FAIL
+juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume" 2>/dev/null
+echo "------------------------------  Resizing instance"
+nova resize $instance_id 52
+echo "------------------------------  Wating instance for resize-confirm"
+wait_instance $instance_id $MAX_FAIL VERIFY_RESIZE
+nova resize-confirm $instance_id
+wait_instance $instance_id $MAX_FAIL
+echo "------------------------------  Volume list after resize"
+sleep 10
+juju ssh $master_mdm "scli --login --username admin --password Default_password --approve_certificate && scli --query_all_volume" 2>/dev/null
+# TODO: add checking that new volume was created and has different provisioning type
+nova delete $iname
+sleep 5
 
-
-# all checks is done and we cant switch off traps
+# all checks is done and we can switch off traps
 set +e
 
 # here we try to list all infos from ScaleIO
