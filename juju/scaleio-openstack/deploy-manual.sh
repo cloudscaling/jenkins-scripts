@@ -59,24 +59,24 @@ echo "Deploy mysql"
 juju deploy cs:trusty/mysql --to $m4
 
 echo "Deploy SDC"
-juju deploy local:trusty/scaleio-sdc --to $m1
+juju deploy cs:~apavlov-e/scaleio-sdc --to $m1
 juju service add-unit scaleio-sdc --to $m2
 
 echo "Deploy subordinate to OpenStack"
-juju deploy local:trusty/scaleio-openstack
+juju deploy cs:~apavlov-e/scaleio-openstack
 
 echo "Deploy gateway"
-juju deploy local:trusty/scaleio-gw --to $m4
+juju deploy cs:~apavlov-e/scaleio-gw --to $m4
 juju expose scaleio-gw
 
 echo "Deploy MDM"
-juju deploy local:trusty/scaleio-mdm --to $m3
+juju deploy cs:~apavlov-e/scaleio-mdm --to $m3
 juju set scaleio-mdm "cluster-mode=3"
 juju service add-unit scaleio-mdm --to $m4
 juju service add-unit scaleio-mdm --to $m5
 
 echo "Deploy SDS"
-juju deploy local:trusty/scaleio-sds --to $m3
+juju deploy cs:~apavlov-e/scaleio-sds --to $m3
 juju service add-unit scaleio-sds --to $m4
 juju service add-unit scaleio-sds --to $m5
 juju set scaleio-sds "device-paths=/dev/xvdf"
