@@ -55,7 +55,7 @@ function check_cache() {
   if ! echo "$output" | grep "$param_name" | grep -q "$param_value" ; then
     echo "ERROR: ($my_name:$LINENO) Parameter '$param_name' is not in state '$param_value'"
     echo "$output" | grep "$param_name"
-    (( ++ret ))
+    (( ret=1 ))
   else
     echo "INFO: Success. Parameter '$param_name' is in state '$param_value'"
   fi
@@ -100,25 +100,19 @@ if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD 
 fi
 
 sds_names=(`echo "$output" | grep 'SDS ID:' | awk '{print$5}'`)
-devices_errors=0
 for sds_name in ${sds_names[@]} ; do
   output_sds=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_sds --sds_name $sds_name" 2>/dev/null`
-  if `echo "$output_sds" | grep 'Rfcache device information' | grep -q -v 'total 1 devices' ` ; then
+  if ! echo "$output_sds" | grep 'Rfcache device information' | grep -q 'total 1 devices'  ; then
     echo "ERROR: Unexpected number of rfcache devices."
-    (( ++ret ))
-  fi
-  rfcache_device=`echo "$output_sds" | sed -n '/Rfcache device information/{n;p;}' 2>/dev/null`
-  if echo "$rfcache_device" | grep -q -v "$rfcache_path" ; then
+    (( ret=1 ))
+  elif ! echo "$output_sds" | sed -n '/Rfcache device information/{n;p;}' | grep -q "$rfcache_path" ; then
     echo "ERROR: ($my_name:$LINENO) Path of RfCache device on $sds_name isn't $rfcache_path"
     echo "$rfcache_device"
-    (( ++devices_errors ))
+    (( ret=1 ))
+  else
+    echo "INFO: Success. Path of RFCache device on $sds_name is $rfcache_path."
   fi
 done
-if [[ $devices_errors = 0 ]] ; then
-  echo "INFO: Success. All paths of RFCache devices are $rfcache_path."
-else
-  (( ++ret ))
-fi
 
 juju remove-service scaleio-sds
 juju remove-service scaleio-mdm
