@@ -81,7 +81,7 @@ function wait_and_check() {
   echo "--------------------------------------------------------------------------- $(date)"
   echo "----------------------------------------------------------- juju status ---"
   echo "---------------------------------------------------------------------------"
-  juju status scaleio-mdm
+  juju status scaleio-mdm --format tabular
 
   master_mdm=`get_master_mdm`
   echo "--------------------------------------------------------------------------- $(date)"
@@ -144,7 +144,7 @@ function scale_down() {
     mcount="$1"
     shift
 
-    machines=`echo "$output" | grep -A 10 "$mname" | grep "Name:" | head -$mcount | awk '{print $2}' | sed "s/.*\([0-9]\),/\1/"`
+    machines=`echo "$output" | grep -A 10 "$mname" | grep "Name:" | head -$mcount | awk '{gsub("[^0-9]","",$2); print $2}'`
     for m in $machines ; do
       mdm="scaleio-mdm/$m"
       echo "Removing $mdm"
@@ -175,15 +175,20 @@ scale_down 3 "Master MDM:" 1 "Tie-Breakers:" 1
 # to 1
 scale_down 1 "Master MDM:" 1
 # 1 spare unit left
-# to 5 (spare unit will be used)
-scale_up 5 3
-# to 1
-scale_down 1 "Master MDM:" 1 "Slave MDMs:" 1
-# 2 spare units should left
-# to 3
-scale_up 3 0
-# to 1
-scale_down 1 "Slave MDMs:" 1
+
+for (( i=0; i<4; ++i)) ; do
+  echo "------- Step $((i+1)) of 4"
+  # to 5 (spare unit will be used)
+  scale_up 5 3
+  # to 1
+  scale_down 1 "Master MDM:" 1 "Slave MDMs:" 1
+  # 2 spare units should left
+  # to 3
+  scale_up 3 0
+  # to 1
+  scale_down 1 "Slave MDMs:" 1
+  # 1 spare unit left
+done
 
 # to 5 (1 spare unit will be used)
 scale_up 5 3
