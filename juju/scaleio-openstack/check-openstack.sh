@@ -197,7 +197,7 @@ juju ssh $master_mdm "scli --login --username admin --password Default_password 
 echo "------------------------------  Resizing instance"
 nova resize $instance_id 52
 echo "------------------------------  Wating instance for resize-confirm"
-wait_instance $instance_id $MAX_FAIL VERIFY_RESIZE
+wait_instance $instance_id $((2*MAX_FAIL)) VERIFY_RESIZE
 nova resize-confirm $instance_id
 wait_instance $instance_id $MAX_FAIL
 echo "------------------------------  Volume list after resize"
