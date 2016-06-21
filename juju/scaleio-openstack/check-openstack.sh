@@ -185,7 +185,7 @@ nova delete instance_for_snaps
 
 
 echo "------------------------------  Checking resize from 'empty' flavor to flavor with set PD (resize to another host)"
-if [[ $current_type == 'thin' ]] ; then otype='thick' ; else otype='thin' fi
+if [[ $current_type == 'thin' ]] ; then otype='thick' ; else otype='thin' ; fi
 nova flavor-key 52 set sio:pd_name=default_protection_domain sio:provisioning_type=$otype
 
 echo "------------------------------  Creating instance"
