@@ -7,8 +7,7 @@ source $my_dir/../functions
 source $my_dir/../scaleio/static-checks
 
 echo "--------------------------------------------------------------------------- $(date)"
-echo "----------------------------------------------------------------- start ---"
-echo "---------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------- start"
 
 # create machines
 echo "Create machines"
@@ -34,9 +33,8 @@ juju service add-unit ubuntu --to $m5
 
 
 echo "--------------------------------------------------------------------------- $(date)"
-echo "-------------------------------------------------- full status at start ---"
-echo "---------------------------------------------------------------------------"
-juju status
+echo "--------------------------------------------------------------------------- full status at start"
+juju status --format tabular
 
 master_mdm=''
 
@@ -56,7 +54,7 @@ function wait_for_mode() {
       echo "ERROR: Some services went to error state"
       juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
       echo "---------------------------------------------------------------------------"
-      juju status
+      juju status --format tabular
       echo "---------------------------------------------------------------------------"
       return 2
     fi
@@ -64,7 +62,7 @@ function wait_for_mode() {
     echo "Waiting for new status ($check_str) - $iter/$max_iter"
     if ((iter >= max_iter)); then
       echo "ERROR: Satus didn't change."
-      juju status
+      juju status --format tabular
       return 1
     fi
     sleep 30
@@ -79,14 +77,12 @@ function wait_and_check() {
   wait_status
 
   echo "--------------------------------------------------------------------------- $(date)"
-  echo "----------------------------------------------------------- juju status ---"
-  echo "---------------------------------------------------------------------------"
+  echo "--------------------------------------------------------------------------- juju status"
   juju status scaleio-mdm --format tabular
 
   master_mdm=`get_master_mdm`
   echo "--------------------------------------------------------------------------- $(date)"
-  echo "-------------------------------------------------------- cluster status ---"
-  echo "---------------------------------------------------------------------------"
+  echo "--------------------------------------------------------------------------- cluster status"
   echo "Master MDM found at $master_mdm"
   juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null
 
@@ -100,8 +96,7 @@ function scale_up() {
   local new_units=$2
   local old_mode=`get_cluster_mode`
   echo "--------------------------------------------------------------------------- $(date)"
-  echo "-------------------------------------- Scale MDM's count up from $old_mode to $mode ---"
-  echo "---------------------------------------------------------------------------"
+  echo "--------------------------------------------------------------------------- Scale MDM's count up from $old_mode to $mode"
   if (( new_units > 0 )) ; then
     declare -a free_machines
     local mdm_machines=`get_mdm_machines`
@@ -134,8 +129,7 @@ function scale_down() {
 
   local old_mode=`get_cluster_mode`
   echo "--------------------------------------------------------------------------- $(date)"
-  echo "---------------------------------- Scale MDM's count down from $old_mode to $mode ---"
-  echo "---------------------------------------------------------------------------"
+  echo "--------------------------------------------------------------------------- Scale MDM's count down from $old_mode to $mode"
 
   local output=`juju ssh $master_mdm "sudo scli --query_cluster --approve_certificate" 2>/dev/null`
   while (( "$#" )); do
@@ -160,8 +154,7 @@ cd juju-scaleio
 
 # check one MDM
 echo "--------------------------------------------------------------------------- $(date)"
-echo "-------------------------------------------------------- Deploy one MDM ---"
-echo "---------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------- Deploy one MDM"
 juju deploy local:trusty/scaleio-mdm --to $m1
 wait_and_check 1
 
@@ -177,7 +170,7 @@ scale_down 1 "Master MDM:" 1
 # 1 spare unit left
 
 for (( i=0; i<4; ++i)) ; do
-  echo "------- Step $((i+1)) of 4"
+  echo "--------------------------------------------------------------------------- Step $((i+1)) of 4"
   # to 5 (spare unit will be used)
   scale_up 5 3
   # to 1
@@ -198,8 +191,7 @@ scale_up 5 3
 juju remove-service scaleio-mdm
 wait_for_removed "scaleio-mdm"
 
-juju status
+juju status --format tabular
 
 echo "--------------------------------------------------------------------------- $(date)"
-echo "------------------------------------------------------------------- end ---"
-echo "---------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------- end"
