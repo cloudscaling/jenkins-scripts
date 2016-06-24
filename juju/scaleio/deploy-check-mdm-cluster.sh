@@ -155,7 +155,7 @@ cd juju-scaleio
 # check one MDM
 echo "--------------------------------------------------------------------------- $(date)"
 echo "--------------------------------------------------------------------------- Deploy one MDM"
-juju deploy local:trusty/scaleio-mdm --to $m1
+juju deploy cs:~cloudscaling/scaleio-mdm --to $m1
 wait_and_check 1
 
 

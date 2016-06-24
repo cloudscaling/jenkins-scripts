@@ -31,10 +31,10 @@ function catch_errors() {
 ret=0
 
 echo "INFO: Deploy MDM to 0"
-juju deploy local:trusty/scaleio-mdm --to 0
+juju deploy cs:~cloudscaling/scaleio-mdm --to 0
 
 echo "INFO: Deploy SDS with disabled RMCache and RFCache"
-juju deploy local:trusty/scaleio-sds --to $m1
+juju deploy cs:~cloudscaling/scaleio-sds --to $m1
 juju add-unit scaleio-sds --to $m2
 juju add-unit scaleio-sds --to $m3
 juju set scaleio-sds protection-domain='pd' storage-pools='sp' device-paths='/dev/xvdf' rmcache-usage=dont_use rfcache-usage=dont_use

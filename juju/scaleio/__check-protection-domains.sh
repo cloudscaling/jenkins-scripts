@@ -29,15 +29,15 @@ function catch_errors() {
 }
 
 echo "INFO: Deploy MDM"
-juju deploy local:trusty/scaleio-mdm --to 0
+juju deploy cs:~cloudscaling/scaleio-mdm --to 0
 
 echo "INFO: Deploy SDS 1 (pd1; fs1; sp1,sp2; /dev/xvdf,/dev/xvdg)"
-juju deploy local:trusty/scaleio-sds scaleio-sds-pd1 --to $m1
+juju deploy cs:~cloudscaling/scaleio-sds scaleio-sds-pd1 --to $m1
 juju set scaleio-sds-pd1 zero-padding-policy=enable protection-domain="pd1" fault-set="fs1" storage-pools="sp1,sp2" device-paths="/dev/xvdf,/dev/xvdg"
 juju add-relation scaleio-sds-pd1 scaleio-mdm
 
 echo "INFO: Deploy SDS 2 (pd1; fs1; sp2,sp1; /dev/xvdf,/dev/xvdg)"
-juju deploy local:trusty/scaleio-sds scaleio-sds-pd2 --to $m2
+juju deploy cs:~cloudscaling/scaleio-sds scaleio-sds-pd2 --to $m2
 juju set scaleio-sds-pd2 protection-domain="pd2" fault-set="fs2" storage-pools="sp2,sp1" device-paths="/dev/xvdf,/dev/xvdg"
 juju add-relation scaleio-sds-pd2 scaleio-mdm
 
