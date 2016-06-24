@@ -1,7 +1,6 @@
 - job:
     name: ScaleIO-Fuel-Emulator-1-2-3-4-5-4-3-node
     defaults: global
-    display-name: 'Emulate fuel deployment'
     parameters:
       - bool:
           name: CLEAN_ENV

@@ -1,7 +1,6 @@
 - job:
     name: ec2api-aws
     defaults: global
-    display-name: 'Run ec2-api tests against Amazon'
     disabled: true
     properties:
       - build-discarder

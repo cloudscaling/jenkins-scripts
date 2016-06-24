@@ -1,7 +1,6 @@
 - job-template:
     name: devstack-{project}
     defaults: global
-    display-name: 'Deploys OpenStack {os_ver} with ScaleIO with Juju and checks it'
     properties:
       - build-discarder
     scm:

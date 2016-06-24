@@ -9,6 +9,7 @@
             - '*/master'
           clean:
               after: true
+              before: true
           prune: true
           wipe-workspace: true
           skip-tag: true
@@ -25,6 +26,7 @@
             - '*/master'
           clean:
               after: true
+              before: true
           prune: true
           wipe-workspace: true
           skip-tag: true

@@ -2,7 +2,6 @@
 
 jenkins_jobs ?= jenkins-jobs
 jenkins_jobs_ini ?= jenkins_jobs.ini
-configdir ?= ./jobs-configs
 outdir ?= ./generated_xml
 
 all: usage
@@ -26,4 +25,4 @@ test: clean
 	$(jenkins_jobs) --conf $(jenkins_jobs_ini) test -o $(outdir) jobs
 
 update: test
-	$(jenkins_jobs) --conf $(jenkins_jobs_ini) --ignore-cache update $(configdir)
+	$(jenkins_jobs) --conf $(jenkins_jobs_ini) --ignore-cache update jobs

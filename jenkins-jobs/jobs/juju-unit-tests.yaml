@@ -1,9 +1,8 @@
 - job:
     name: juju-unit-tests
     defaults: global
-    display-name: 'Juju Unit tests run'
     scm:
-      - cs-juju-scaleio
+      - emc-juju-scaleio
     triggers:
       - pollscm:
           cron: "H/5 * * * *"

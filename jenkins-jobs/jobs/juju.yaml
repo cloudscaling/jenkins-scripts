@@ -1,7 +1,6 @@
 - job:
     name: juju
     defaults: global
-    display-name: 'Deploys OpenStack with ScaleIO and checks it'
     parameters:
       - bool:
           name: CLEAN_ENV

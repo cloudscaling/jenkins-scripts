@@ -1,7 +1,6 @@
 - job-template:
     name: ScaleIO-OpenStack-{os_ver}
     defaults: global
-    display-name: 'Deploys OpenStack {os_ver} with ScaleIO with Juju and checks it'
     scm:
       - emc-juju-scaleio
       - cs-juju-scaleio

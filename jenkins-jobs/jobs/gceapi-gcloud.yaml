@@ -1,8 +1,6 @@
 - job:
-    name: gceapi-cloud
+    name: gceapi-gcloud
     defaults: global
-    display-name: 'Run ec2-api tests against Amazon'
-    disabled: true
     properties:
       - build-discarder
     scm:

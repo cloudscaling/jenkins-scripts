@@ -1,7 +1,6 @@
 - job-template:
     name: ScaleIO-{check_name}
     defaults: global
-    display-name: 'Deploys cluster with Juju and checks it'
     parameters:
       - bool:
           name: CLEAN_ENV
