@@ -9,8 +9,6 @@ juju deploy juju-gui --to 0
 juju expose juju-gui
 juju status
 
-cd juju-scaleio
-
 m1=$(create_machine 1 0)
 echo "Machine created: $m1"
 m2=$(create_machine 1 0)
@@ -27,7 +25,7 @@ wait_for_machines $m1 $m2 $m3 $m4 $m5
 $my_dir/fix_scini_problems.sh $m1 $m2 $m3 $m4 $m5
 
 echo "Deploy cinder"
-juju deploy local:trusty/cinder --to $m1
+juju deploy --repository juju-scaleio-tmp local:trusty/cinder --to $m1
 juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-liberty" "overwrite=true"
 juju expose cinder
 
@@ -37,7 +35,7 @@ juju set nova-cloud-controller "console-access-protocol=novnc" "debug=true" "ope
 juju expose nova-cloud-controller
 
 echo "Deploy nova-compute"
-juju deploy local:trusty/nova-compute --to $m1
+juju deploy --repository juju-scaleio-tmp local:trusty/nova-compute --to $m1
 juju service add-unit nova-compute --to $m2
 juju set nova-compute "debug=true" "openstack-origin=cloud:trusty-liberty" "virt-type=qemu" "enable-resize=True" "enable-live-migration=True" "migration-auth-type=ssh" "libvirt-image-backend=sio"
 
@@ -47,7 +45,7 @@ juju set glance "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose glance
 
 echo "Deploy keystone"
-juju deploy local:trusty/keystone --to $m2
+juju deploy --repository juju-scaleio-tmp local:trusty/keystone --to $m2
 juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose keystone
 
@@ -59,24 +57,24 @@ echo "Deploy mysql"
 juju deploy cs:trusty/mysql --to $m4
 
 echo "Deploy SDC"
-juju deploy cs:~apavlov-e/scaleio-sdc --to $m1
+juju deploy cs:~cloudscaling/scaleio-sdc --to $m1
 juju service add-unit scaleio-sdc --to $m2
 
 echo "Deploy subordinate to OpenStack"
-juju deploy cs:~apavlov-e/scaleio-openstack
+juju deploy cs:~cloudscaling/scaleio-openstack
 
 echo "Deploy gateway"
-juju deploy cs:~apavlov-e/scaleio-gw --to $m4
+juju deploy cs:~cloudscaling/scaleio-gw --to $m4
 juju expose scaleio-gw
 
 echo "Deploy MDM"
-juju deploy cs:~apavlov-e/scaleio-mdm --to $m3
+juju deploy cs:~cloudscaling/scaleio-mdm --to $m3
 juju set scaleio-mdm "cluster-mode=3"
 juju service add-unit scaleio-mdm --to $m4
 juju service add-unit scaleio-mdm --to $m5
 
 echo "Deploy SDS"
-juju deploy cs:~apavlov-e/scaleio-sds --to $m3
+juju deploy cs:~cloudscaling/scaleio-sds --to $m3
 juju service add-unit scaleio-sds --to $m4
 juju service add-unit scaleio-sds --to $m5
 juju set scaleio-sds "device-paths=/dev/xvdf"

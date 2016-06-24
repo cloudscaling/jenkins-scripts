@@ -6,8 +6,6 @@ my_name="$(basename "$0")"
 
 source $my_dir/../functions
 
-cd juju-scaleio
-
 trap 'catch_errors $LINENO' ERR EXIT
 function catch_errors() {
   local exit_code=$?

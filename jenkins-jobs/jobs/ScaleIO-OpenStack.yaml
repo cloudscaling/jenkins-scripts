@@ -1,0 +1,27 @@
+- job-template:
+    name: ScaleIO-OpenStack-{os_ver}
+    defaults: global
+    display-name: 'Deploys OpenStack {os_ver} with ScaleIO with Juju and checks it'
+    scm:
+      - emc-juju-scaleio
+      - cs-juju-scaleio
+      - jenkins-scripts
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          export VERSION="{version}"
+          export BUNDLE="bundles/openstack-scaleio-amazon.yaml"
+          export BUNDLE_VERSION="cloud:trusty-kilo"
+          ./jenkins-scripts/juju/run-scaleio-openstack.sh
+
+- project:
+   name: ScaleIO-OpenStack
+   os_ver:
+    - Juno:
+       version: 'cloud:trusty-juno'
+    - Kilo:
+       version: 'cloud:trusty-kilo'
+    - Liberty:
+       version: 'cloud:trusty-liberty'
+   jobs:
+    - 'ScaleIO-OpenStack-{os_ver}'

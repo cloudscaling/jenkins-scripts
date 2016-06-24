@@ -14,8 +14,6 @@ if [[ -z "$m1" || -z "$m2" || -z "$m3" ]] ; then
   exit 1
 fi
 
-cd juju-scaleio
-
 trap 'catch_errors $LINENO' ERR EXIT
 function catch_errors() {
   local exit_code=$?

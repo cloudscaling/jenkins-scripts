@@ -1,0 +1,76 @@
+- job:
+    name: ec2api-aws
+    defaults: global
+    display-name: 'Run ec2-api tests against Amazon'
+    disabled: true
+    properties:
+      - build-discarder
+    scm:
+      - github:
+          organization: openstack
+          repo: tempest
+      - github:
+          organization: openstack
+          repo: ec2-api
+      - jenkins-scripts
+    triggers:
+      - timed: "0 7 * * 1,4"
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          ./jenkins-scripts/tempest/install-tempest.sh
+      - shell: |
+          #!/bin/bash -e
+          cat << EOF > tempest/etc/tempest.conf
+          [DEFAULT]
+          debug = True
+          log_file = tempest.log
+          use_stderr = False
+          use_syslog = False
+          [aws]
+          build_timeout = 2400
+          ec2_url = https://ec2.amazonaws.com/
+          s3_url = https://s3.amazonaws.com/
+          aws_access =
+          aws_secret =
+          aws_region = us-east-1
+          aws_zone = us-east-1a
+          # instance store
+          image_id = ami-11f9aa74
+          image_id_ubuntu = ami-35025050
+          ebs_image_id = ami-35025050
+          instance_type = m1.small
+          instance_type_alt = m1.medium
+          run_incompatible_tests = True
+          image_user = ubuntu
+          run_long_tests = True
+          [service_available]
+          trove = False
+          ironic = False
+          sahara = False
+          horizon = False
+          ceilometer = False
+          heat = False
+          swift = False
+          cinder = False
+          neutron = False
+          nova = False
+          glance = False
+          key = False
+          EOF
+      - shell: |
+          #!/bin/bash -e
+          function creds () {
+            local key=$(cat ~/.aws/config | grep aws_access_key_id | cut -d '=' -f 2)
+            sed -i "s\^aws_access.*$\aws_access = $key\m" tempest/etc/tempest.conf
+            local key=$(cat ~/.aws/config | grep aws_secret_access_key | cut -d '=' -f 2)
+            sed -i "s\^aws_secret.*$\aws_secret = $key\m" tempest/etc/tempest.conf
+          }
+          creds
+          cd tempest
+          timeout -s 9 6h $WORKSPACE/jenkins-scripts/tempest/run-tempest.sh ec2api.tests.functional
+          aws ec2 describe-volumes
+          aws ec2 describe-instances --filters Name=instance-state-name,Values=running
+    publishers:
+      - junit:
+          results: tempest/test_result.xml

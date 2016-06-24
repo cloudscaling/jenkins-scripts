@@ -1,0 +1,63 @@
+- job:
+    name: gceapi-cloud
+    defaults: global
+    display-name: 'Run ec2-api tests against Amazon'
+    disabled: true
+    properties:
+      - build-discarder
+    scm:
+      - github:
+          organization: openstack
+          repo: tempest
+      - github:
+          organization: openstack
+          repo: ec2-api
+      - jenkins-scripts
+    triggers:
+      - timed: "0 0 * * 1,4"
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          ./jenkins-scripts/tempest/install-tempest.sh
+      - shell: |
+          #!/bin/bash -e
+          schema=$(readlink -f .)/gce-api/etc/gceapi/protocols/v1.json
+          cat << EOF > tempest/etc/tempest.conf
+          [DEFAULT]
+          debug = True
+          log_file = tempest.log
+          use_stderr = False
+          use_syslog = False
+          [gce]
+          schema = $schema
+          cred_type = gcloud_auth
+          protocol = https
+          host = www.googleapis.com
+          port = 443
+          project_id = woven-nova-116712
+          zone = europe-west1-c
+          networking = neutron
+          region = europe-west1
+          image = ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20151113
+          [service_available]
+          trove = False
+          ironic = False
+          sahara = False
+          horizon = False
+          ceilometer = False
+          heat = False
+          swift = False
+          cinder = False
+          neutron = False
+          nova = False
+          glance = False
+          key = False
+          EOF
+      - shell: |
+          #!/bin/bash -e
+          source '/var/lib/jenkins/google-cloud-sdk/path.bash.inc'
+          cd tempest
+          timeout -s 9 2h $WORKSPACE/jenkins-scripts/tempest/run-tempest.sh gceapi.tests.functional
+    publishers:
+      - junit:
+          results: tempest/test_result.xml

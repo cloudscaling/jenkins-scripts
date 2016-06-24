@@ -1,0 +1,25 @@
+- job:
+    name: juju
+    defaults: global
+    display-name: 'Deploys OpenStack with ScaleIO and checks it'
+    parameters:
+      - bool:
+          name: CLEAN_ENV
+          default: true
+      - choice:
+          name: VERSION
+          description: "Version of the OpenStack"
+          choices:
+            - cloud:trusty-juno
+            - cloud:trusty-kilo
+            - cloud:trusty-liberty
+    scm:
+      - emc-juju-scaleio
+      - cs-juju-scaleio
+      - jenkins-scripts
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          export BUNDLE="bundles/openstack-scaleio-amazon.yaml"
+          export BUNDLE_VERSION="cloud:trusty-kilo"
+          ./jenkins-scripts/juju/run-scaleio-openstack.sh

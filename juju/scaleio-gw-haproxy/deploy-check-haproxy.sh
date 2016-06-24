@@ -10,8 +10,6 @@ export MAX_FAIL=30
 source $my_dir/../functions
 source $my_dir/../functions-openstack
 
-cd juju-scaleio
-
 m1=$(create_machine 1 0)
 echo "Machine created: $m1"
 m2=$(create_machine 0 1)
@@ -24,12 +22,12 @@ echo "Machine created: $m4"
 wait_for_machines $m1 $m2 $m3 $m4
 
 echo "Deploy cinder"
-juju deploy local:trusty/cinder --to $m1
+juju deploy --repository juju-scaleio-tmp local:trusty/cinder --to $m1
 juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-liberty" "overwrite=true"
 juju expose cinder
 
 echo "Deploy keystone"
-juju deploy local:trusty/keystone --to $m3
+juju deploy --repository juju-scaleio-tmp local:trusty/keystone --to $m3
 juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose keystone
 
@@ -59,8 +57,6 @@ juju deploy cs:~cloudscaling/scaleio-sds --to $m2
 juju service add-unit scaleio-sds --to $m3
 juju service add-unit scaleio-sds --to $m4
 juju set scaleio-sds "device-paths=/dev/xvdf"
-
-cd ..
 
 sleep 10
 ip_addresses=(`juju status scaleio-gw | grep public-address | awk '{print $2}'`)

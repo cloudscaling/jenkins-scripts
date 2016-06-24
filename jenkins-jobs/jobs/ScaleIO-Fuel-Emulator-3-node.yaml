@@ -1,0 +1,19 @@
+- job:
+    name: ScaleIO-Fuel-Emulator-3-node
+    defaults: global
+    display-name: 'Emulate simple fuel deployment'
+    parameters:
+      - bool:
+          name: CLEAN_ENV
+          default: true
+    scm:
+      - fuel-charms
+      - jenkins-scripts
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          ./jenkins-scripts/juju/run-scaleio.sh fuel/deploy-fuel.sh
+    publishers:
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: 'true'

@@ -1,0 +1,59 @@
+# Open repository in specified organization
+- scm:
+    name: github
+    scm:
+      - git:
+          url: 'https://github.com/{organization}/{repo}.git'
+          basedir: '{repo}{suffix}'
+          branches:
+            - '*/master'
+          clean:
+              after: true
+          prune: true
+          wipe-workspace: true
+          skip-tag: true
+
+# Private repository in Cloudscaling github
+- scm:
+    name: cspgithub
+    scm:
+      - git:
+          url: 'ssh://github.com/cloudscaling/{repo}.git'
+          credentials-id: "{credentials-id}"
+          basedir: '{repo}'
+          branches:
+            - '*/master'
+          clean:
+              after: true
+          prune: true
+          wipe-workspace: true
+          skip-tag: true
+
+- scm:
+    name: jenkins-scripts
+    scm:
+      - cspgithub:
+          repo: "jenkins-scripts"
+          credentials-id: "e6c803b4-3d24-40ca-88b5-082f88f60f1f"
+
+- scm:
+    name: fuel-charms
+    scm:
+      - cspgithub:
+          repo: "fuel-charms"
+          credentials-id: "41a26b60-2237-462d-86c3-95e3180fdbaa"
+
+- scm:
+    name: cs-juju-scaleio
+    scm:
+      - github:
+          organization: cloudscaling
+          repo: juju-scaleio
+          suffix: '-tmp'
+
+- scm:
+    name: emc-juju-scaleio
+    scm:
+      - github:
+          organization: emccode
+          repo: juju-scaleio

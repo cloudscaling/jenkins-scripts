@@ -1,0 +1,11 @@
+- job:
+    name: juju-destroy-environment
+    defaults: global
+    display-name: 'Destroys existing Juju environment'
+    properties:
+      - build-discarder:
+          num-to-keep: 3
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          juju destroy-environment -y amazon

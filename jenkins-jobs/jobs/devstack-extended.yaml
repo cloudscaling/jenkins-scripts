@@ -1,0 +1,29 @@
+- job-template:
+    name: devstack-{project}
+    defaults: global
+    display-name: 'Deploys OpenStack {os_ver} with ScaleIO with Juju and checks it'
+    properties:
+      - build-discarder
+    scm:
+      - jenkins-scripts
+    triggers:
+      - timed: "{time}"
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          ./jenkins-scripts/devstack/run.sh devstack-{project} {project}api.tests.functional {concurrency}
+    publishers:
+      - junit:
+          results: test_result.xml
+
+- project:
+   name: devstack-extended
+   project:
+    - ec2:
+       concurrency: 2
+       time: "0 5 * * 1,4"
+    - gce:
+       concurrency: 1
+       time: "30 3 * * 1,4"
+   jobs:
+    - 'devstack-{project}'

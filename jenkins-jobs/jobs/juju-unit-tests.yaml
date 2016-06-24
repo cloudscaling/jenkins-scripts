@@ -1,0 +1,17 @@
+- job:
+    name: juju-unit-tests
+    defaults: global
+    display-name: 'Juju Unit tests run'
+    scm:
+      - cs-juju-scaleio
+    triggers:
+      - pollscm:
+          cron: "H/5 * * * *"
+    builders:
+      - shell: |
+          #!/bin/bash -ex
+          ./juju-scaleio/trusty/scaleio-mdm/unit_tests/test_common_cluster
+
+          echo "----------------------------- Validate yaml files"
+          cd juju-scaleio
+          for ff in `find . -name *.yaml` ; do ruby -e "require 'yaml'; puts '$ff'; YAML.load_file('$ff')" ; done

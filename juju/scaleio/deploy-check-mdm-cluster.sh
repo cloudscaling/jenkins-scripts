@@ -150,8 +150,6 @@ function scale_down() {
   wait_and_check $mode
 }
 
-cd juju-scaleio
-
 # check one MDM
 echo "--------------------------------------------------------------------------- $(date)"
 echo "--------------------------------------------------------------------------- Deploy one MDM"
