@@ -24,5 +24,5 @@ clean: $(outdir)
 test: clean
 	$(jenkins_jobs) --conf $(jenkins_jobs_ini) test -o $(outdir) jobs
 
-update: test
+update: clean
 	$(jenkins_jobs) --conf $(jenkins_jobs_ini) --ignore-cache update jobs

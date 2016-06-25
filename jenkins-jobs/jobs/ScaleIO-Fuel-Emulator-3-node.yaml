@@ -1,5 +1,6 @@
 - job:
     name: ScaleIO-Fuel-Emulator-3-node
+    description: 'Emulates fuel deployment with 3 nodes'
     defaults: global
     parameters:
       - bool:

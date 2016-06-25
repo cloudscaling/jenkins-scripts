@@ -1,5 +1,6 @@
 - job-template:
     name: devstack-{project}
+    description: "Deploys devstack with {project} and run projects' tests"
     defaults: global
     properties:
       - build-discarder

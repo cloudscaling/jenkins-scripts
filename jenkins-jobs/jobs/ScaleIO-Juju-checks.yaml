@@ -1,11 +1,13 @@
 - job-template:
     name: ScaleIO-{check_name}
+    description: "{description}"
     defaults: global
     parameters:
       - bool:
           name: CLEAN_ENV
           default: true
     scm:
+      - emc-juju-scaleio
       - cs-juju-scaleio
       - jenkins-scripts
     builders:
@@ -16,13 +18,17 @@
 - project:
    name: ScaleIO-checks
    check_name:
-    - check-1-3-5-3:
+    - Juju-check-mdm-cluster:
+       description: 'Deploys MDM service and checks cluster reconfiguration'
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio/deploy-check-mdm-cluster.sh'
     - Juju-check-parameters:
+       description: 'Deploys services and checks validity of config parameters'
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio/deploy-check-parameters.sh'
     - check-GW-haproxy:
+       description: 'Deploys ScaleIO cluster with cinder and keystone. Checks haproxy service of scaleio-gw.'
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio-gw-haproxy/deploy-check-haproxy.sh'
     - OpenStack-Manual-Liberty:
+       description: 'Deploys ScaleIO cluster with OpenStack without bundle from CharmStore and checks it.'
        script: './jenkins-scripts/juju/run-scaleio-openstack.sh deploy-manual.sh'
    jobs:
     - 'ScaleIO-{check_name}'

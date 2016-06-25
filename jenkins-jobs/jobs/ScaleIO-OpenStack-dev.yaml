@@ -1,5 +1,6 @@
 - job:
-    name: juju
+    name: ScaleIO-OpenStack-dev
+    description: "Deploys ScaleIO cluster(from bundle, from github) with OpenStack and checks it. Can be used for debug purposes."
     defaults: global
     parameters:
       - bool:
@@ -19,6 +20,10 @@
     builders:
       - shell: |
           #!/bin/bash -e
+          # while these charms are not in official repo - script copies them to one local juju repository
+          for charm in cinder keystone nova-compute ; do
+            cp -R juju-scaleio-tmp/trusty/$charm juju-scaleio/trusty/
+          done
           export BUNDLE="bundles/openstack-scaleio-amazon.yaml"
           export BUNDLE_VERSION="cloud:trusty-kilo"
           ./jenkins-scripts/juju/run-scaleio-openstack.sh

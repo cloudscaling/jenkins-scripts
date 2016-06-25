@@ -1,0 +1,22 @@
+- job:
+    name: update-jenkins-jobs
+    description: "Updates jenkins jobs"
+    defaults: global
+    scm:
+      - jenkins-scripts
+      - github:
+          organization: openstack
+          repo: jenkins-job-builder
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          cd jenkins-job-builder
+          virtualenv .venv
+          source .venv/bin/activate
+          pip install six pbr
+          pip install .
+          cd ../jenkins-scripts/jenkins-jobs
+          echo "--------------------------------------------------------------------- test"
+          make test
+          echo "--------------------------------------------------------------------- update"
+          make update

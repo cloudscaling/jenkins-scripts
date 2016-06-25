@@ -1,5 +1,6 @@
 - job:
     name: gceapi-gcloud
+    description: "Runs gce tests against Google cloud"
     defaults: global
     properties:
       - build-discarder

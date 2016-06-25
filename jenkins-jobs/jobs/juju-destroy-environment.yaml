@@ -1,5 +1,6 @@
 - job:
     name: juju-destroy-environment
+    description: "Destroys existing Juju environment"
     defaults: global
     properties:
       - build-discarder:
