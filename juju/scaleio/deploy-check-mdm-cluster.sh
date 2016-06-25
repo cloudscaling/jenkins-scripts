@@ -145,8 +145,10 @@ function scale_down() {
       juju remove-unit "$mdm"
     done
   done
+  sleep 10
 
   juju set scaleio-mdm cluster-mode=$mode
+  sleep 10
   wait_and_check $mode
 }
 
