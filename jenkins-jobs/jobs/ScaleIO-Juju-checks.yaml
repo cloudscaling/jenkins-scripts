@@ -14,6 +14,10 @@
       - shell: |
           #!/bin/bash -e
           {script}
+    publishers:
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: 'true'
 
 - project:
    name: ScaleIO-checks

@@ -5,7 +5,7 @@
     scm:
       - jenkins-scripts
       - github:
-          organization: openstack
+          organization: openstack-infra
           repo: jenkins-job-builder
     builders:
       - shell: |
