@@ -18,7 +18,7 @@ function catch_errors() {
 }
 
 echo "INFO: Deploy MDM to 0"
-juju deploy cs:~cloudscaling/scaleio-mdm --to 0
+juju deploy --repository juju-scaleio local:trusty/scaleio-mdm --to 0
 wait_status
 
 echo "INFO: check mdm password"
