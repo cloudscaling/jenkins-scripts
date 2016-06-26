@@ -28,7 +28,7 @@
     - Juju-check-parameters:
        description: 'Deploys services and checks validity of config parameters'
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio/deploy-check-parameters.sh'
-    - check-GW-haproxy:
+    - Juju-check-GW-haproxy:
        description: 'Deploys ScaleIO cluster with cinder and keystone. Checks haproxy service of scaleio-gw.'
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio-gw-haproxy/deploy-check-haproxy.sh'
     - OpenStack-Manual-Liberty:

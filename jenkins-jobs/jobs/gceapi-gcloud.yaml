@@ -10,7 +10,7 @@
           repo: tempest
       - github:
           organization: openstack
-          repo: ec2-api
+          repo: gce-api
       - jenkins-scripts
     triggers:
       - timed: "0 0 * * 1,4"
