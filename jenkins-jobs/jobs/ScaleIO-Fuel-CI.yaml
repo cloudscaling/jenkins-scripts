@@ -1,6 +1,6 @@
 - job:
     name: ScaleIO-Fuel-CI
-    description: 'Emulates fuel deployment with 3 nodes'
+    description: 'ScaleIO Fuel Plugin CI'
     defaults: global
     parameters:
       - bool:
@@ -14,7 +14,7 @@
           default: '6'
     scm:
       - jenkins-scripts
-      - openstack-fuel-plugin-scaleio
+#      - openstack-fuel-plugin-scaleio
     builders:
       - shell: |
           #!/bin/bash -e
