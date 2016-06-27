@@ -14,10 +14,10 @@ function check_kernel() {
   kernel=`echo $kernel | sed 's/\r//'`
 
   rm -f index.html
-  wget -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/
+  wget -t 2 -T 30 -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/
   if grep -q $kernel index.html ; then
     rm -f index.html
-    wget -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/${kernel}/
+    wget -t 2 -T 30 -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/${kernel}/
     if grep -q 'scini.tar' index.html ; then
       rm -f index.html
       return 0

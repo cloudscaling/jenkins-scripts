@@ -28,7 +28,7 @@ export OS_PASSWORD=password
 
 keystone catalog
 rm -f cirros-0.3.4-x86_64-disk.img
-wget -nv http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+wget -t 2 -T 60 -nv http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
 openstack image create --public --file cirros-0.3.4-x86_64-disk.img cirros
 image_id=`openstack image show cirros | grep " id " | awk '{print $4}'`
 

@@ -50,7 +50,7 @@ function provision_machines() {
 
     # check kernel at one machine
     rm -f index.html
-    wget -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/
+    wget -t 2 -T 30 -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/
     kernel=`juju ssh ${new_mx[0]} "uname -r" 2>/dev/null`
     kernel=`echo $kernel | sed 's/\r//'`
     if ! cat index.html | grep $kernel ; then
