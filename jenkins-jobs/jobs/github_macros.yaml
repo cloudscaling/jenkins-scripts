@@ -59,3 +59,10 @@
       - github:
           organization: emccode
           repo: juju-scaleio
+
+- scm:
+    name: openstack-fuel-plugin-scaleio
+    scm:
+      - github:
+          organization: openstack
+          repo: fuel-plugin-scaleio

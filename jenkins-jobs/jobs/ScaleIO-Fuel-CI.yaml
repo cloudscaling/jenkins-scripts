@@ -1,0 +1,25 @@
+- job:
+    name: ScaleIO-Fuel-CI
+    description: 'Emulates fuel deployment with 3 nodes'
+    defaults: global
+    parameters:
+      - bool:
+          name: CLEAN_ENV
+          default: true
+      - string:
+          name: FUEL_VERSION
+          default: '8.0'
+      - string:
+          name: FUEL_NODES
+          default: '6'
+    scm:
+      - jenkins-scripts
+      - openstack-fuel-plugin-scaleio
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          ./jenkins-scripts/fuel/run-scaleio.sh test-cluster-stub.sh
+    publishers:
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: 'true'
