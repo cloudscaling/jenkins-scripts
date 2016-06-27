@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
+
+source $my_dir/../functions
+
 deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
   params="--repository juju-scaleio local:trusty"
@@ -9,12 +14,7 @@ else
 fi
 
 VERSION=${VERSION:-"cloud:trusty-liberty"}
-echo "---------------------------------------------------- From: $JUJU_REPO  Version: $VERSION"
-
-my_file="$(readlink -e "$0")"
-my_dir="$(dirname $my_file)"
-
-source $my_dir/../functions
+echo "---------------------------------------------------- From: $deploy_from  Version: $VERSION"
 
 juju deploy juju-gui --to 0
 juju expose juju-gui
