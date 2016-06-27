@@ -18,7 +18,7 @@ echo "---------------------------------------------------- From: $deploy_from  V
 
 juju deploy juju-gui --to 0
 juju expose juju-gui
-juju status
+juju status --format tabular
 
 m1=$(create_machine 1 0)
 echo "Machine created: $m1"

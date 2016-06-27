@@ -11,12 +11,12 @@ function wait_absence_status_for_services() {
     echo "Waiting for all service to be active - $iter/$max_iter"
     if ((iter >= max_iter)); then
       echo "ERROR: Services didn't up."
-      juju status
+      juju status --format tabular
       return 1
     fi
     if juju status | grep "current" | grep error ; then
       echo "ERROR: Some services went to error state"
-      juju status
+      juju status --format tabular
       return 1
     fi
     sleep 30
@@ -35,12 +35,12 @@ function wait_for_removed() {
     echo "Waiting for all units to be removed - $iter/$max_iter"
     if ((iter >= max_iter)); then
       echo "ERROR: Units didn't removed."
-      juju status
+      juju status --format tabular
       return 1
     fi
     if juju status | grep "current" | grep error ; then
       echo "ERROR: Some services went to error state"
-      juju status
+      juju status --format tabular
       return 1
     fi
     sleep 30
@@ -96,7 +96,7 @@ function wait_status() {
     echo "ERROR: Some services went to error state"
     juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
     echo "---------------------------------------------------------------------------"
-    juju status
+    juju status --format tabular
     echo "---------------------------------------------------------------------------"
     return 2
   fi

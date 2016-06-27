@@ -19,7 +19,7 @@ echo "---------------------------------------------------- From: $JUJU_REPO  Ver
 
 juju deploy juju-gui --to 0
 juju expose juju-gui
-juju status
+juju status --format tabular
 
 # ---------------------------------------- pre-deployment stage start
 # due to inability to create instances with additional disks via bundle
