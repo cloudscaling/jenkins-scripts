@@ -1,6 +1,8 @@
 #!/bin/bash -e
 
 inner_script="${1:-deploy.sh}"
+shift
+script_params="$@"
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
@@ -33,7 +35,7 @@ function catch_errors() {
 }
 
 echo "--------------------------------------------- Run deploy script: $inner_script"
-$my_dir/scaleio-openstack/$inner_script
+$my_dir/scaleio-openstack/$inner_script $script_params
 
 master_mdm=`get_master_mdm`
 cluster_mode=`get_cluster_mode`

@@ -53,6 +53,7 @@ function get_mdm_machines() {
 }
 
 function get_master_mdm() {
+  # $1 - this is a COMMAND/FUNCTION to get list of machines to check
   get_mdms=${1:-get_mdm_machines}
   master_mdm=''
   for mch in `$get_mdms` ; do

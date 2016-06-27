@@ -7,6 +7,7 @@
           name: CLEAN_ENV
           default: true
     scm:
+      # remove this when OpenStack release new charms
       - emc-juju-scaleio
       - cs-juju-scaleio
       - jenkins-scripts
@@ -23,16 +24,13 @@
    name: ScaleIO-checks
    check_name:
     - Juju-check-mdm-cluster:
-       description: 'Deploys MDM service and checks cluster reconfiguration'
+       description: 'Deploys MDM service and checks cluster reconfiguration (using github/emccode charms) '
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio/deploy-check-mdm-cluster.sh'
     - Juju-check-parameters:
-       description: 'Deploys services and checks validity of config parameters'
+       description: 'Deploys services and checks validity of config parameters (using github/emccode charms) '
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio/deploy-check-parameters.sh'
     - Juju-check-GW-haproxy:
-       description: 'Deploys ScaleIO cluster with cinder and keystone. Checks haproxy service of scaleio-gw.'
+       description: 'Deploys ScaleIO cluster with cinder and keystone. Checks haproxy service of scaleio-gw. (using github/emccode charms) '
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio-gw-haproxy/deploy-check-haproxy.sh'
-    - OpenStack-Manual-Liberty:
-       description: 'Deploys ScaleIO cluster with OpenStack without bundle from CharmStore and checks it.'
-       script: './jenkins-scripts/juju/run-scaleio-openstack.sh deploy-manual.sh'
    jobs:
     - 'ScaleIO-{check_name}'

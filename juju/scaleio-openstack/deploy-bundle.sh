@@ -5,11 +5,21 @@ my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
 
+deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
+if [[ "$deploy_from" == github ]] ; then
+  JUJU_REPO="local:trusty"
+else
+  # deploy_from=charmstore
+  JUJU_REPO="cs:~cloudscaling"
+fi
+
+BUNDLE="$my_dir/openstack-scaleio-amazon.yaml"
+VERSION=${VERSION:-"cloud:trusty-liberty"}
+echo "---------------------------------------------------- From: $JUJU_REPO  Version: $VERSION"
+
 juju deploy juju-gui --to 0
 juju expose juju-gui
 juju status
-
-cd juju-scaleio
 
 # ---------------------------------------- pre-deployment stage start
 # due to inability to create instances with additional disks via bundle
@@ -28,22 +38,16 @@ echo "Machine created: $m5"
 
 wait_for_machines $m1 $m2 $m3 $m4 $m5
 
-# change machine name in bundle to numbers
-sed -i -e "s/\"compute-1\"/\"$m1\"/m" $BUNDLE
-sed -i -e "s/\"compute-2\"/\"$m2\"/m" $BUNDLE
-sed -i -e "s/\"io-1\"/\"$m3\"/m" $BUNDLE
-sed -i -e "s/\"io-2\"/\"$m4\"/m" $BUNDLE
-sed -i -e "s/\"io-3\"/\"$m5\"/m" $BUNDLE
-sed -i -e "s/xvdb/xvdf/m" $BUNDLE
+$my_dir/fix_scini_problems.sh $m1 $m2 $m3 $m4 $m5
 # ---------------------------------------- pre-deployment stage end
 
-$my_dir/fix_scini_problems.sh $m1 $m2 $m3 $m4 $m5
+# change bundles' variables
+echo "Change version to $VERSION"
+sed -i -e "s/%VERSION%/$VERSION/m" $BUNDLE
+sed -i -e "s/%JUJU_REPO%/$JUJU_REPO/m" $BUNDLE
 
-if [ -n "$VERSION" ] ; then
-  echo "Change version to $VERSION"
-  sed -i -e "s/\"$BUNDLE_VERSION\"/\"$VERSION\"/m" $BUNDLE
-fi
-
+# script needs to change directory to local charms repository
+cd juju-scaleio
 juju-deployer -c $BUNDLE
 
 echo "Wait for services start: $(date)"

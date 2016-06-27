@@ -1,11 +1,5 @@
-- job-template:
-    name: ScaleIO-OpenStack-{os_ver}
-    description: "Deploys ScaleIO cluster(from bundle, from github) with OpenStack({os_ver}) and checks it"
-    defaults: global
-    scm:
-      - emc-juju-scaleio
-      - cs-juju-scaleio
-      - jenkins-scripts
+- builder:
+    name: use-openstack-updated-charms
     builders:
       - shell: |
           #!/bin/bash -e
@@ -13,10 +7,22 @@
           for charm in cinder keystone nova-compute ; do
             cp -R juju-scaleio-tmp/trusty/$charm juju-scaleio/trusty/
           done
+
+
+- job-template:
+    name: ScaleIO-OpenStack-{os_ver}
+    description: "Deploys ScaleIO cluster(from bundle, from github/emccode) with OpenStack({os_ver}) and checks it"
+    defaults: global
+    scm:
+      - emc-juju-scaleio
+      - cs-juju-scaleio
+      - jenkins-scripts
+    builders:
+      - use-openstack-updated-charms
+      - shell: |
+          #!/bin/bash -e
           export VERSION="{version}"
-          export BUNDLE="bundles/openstack-scaleio-amazon.yaml"
-          export BUNDLE_VERSION="cloud:trusty-kilo"
-          ./jenkins-scripts/juju/run-scaleio-openstack.sh
+          ./jenkins-scripts/juju/run-scaleio-openstack.sh deploy.sh github
 
 - project:
    name: ScaleIO-OpenStack
@@ -29,3 +35,41 @@
        version: 'cloud:trusty-liberty'
    jobs:
     - 'ScaleIO-OpenStack-{os_ver}'
+
+
+- job:
+    name: ScaleIO-OpenStack-dev
+    description: "Deploys ScaleIO cluster(from bundle) with OpenStack and checks it. Can be used for debug purposes."
+    defaults: global
+    parameters:
+      - bool:
+          name: CLEAN_ENV
+          default: true
+      - choice:
+          name: VERSION
+          description: "Version of the OpenStack"
+          choices:
+            - cloud:trusty-juno
+            - cloud:trusty-kilo
+            - cloud:trusty-liberty
+      - choice:
+          name: DEPLOY_FROM
+          description: "A place where to get ScaleIO charms"
+          choices:
+            - github
+            - charmstore
+      - choice:
+          name: DEPLOY_TYPE
+          description: "A method of deployment"
+          choices:
+            - bundle
+            - manual
+    scm:
+      - emc-juju-scaleio
+      - cs-juju-scaleio
+      - jenkins-scripts
+    builders:
+      - use-openstack-updated-charms
+      - shell: |
+          #!/bin/bash -e
+          ./jenkins-scripts/juju/run-scaleio-openstack.sh deploy-$DEPLOY_TYPE.sh $DEPLOY_FROM
