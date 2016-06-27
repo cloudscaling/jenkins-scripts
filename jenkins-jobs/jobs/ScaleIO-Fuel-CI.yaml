@@ -2,6 +2,7 @@
     name: ScaleIO-Fuel-CI
     description: 'ScaleIO Fuel Plugin CI'
     defaults: global
+    node: fuel-ci-slave
     parameters:
       - bool:
           name: CLEAN_ENV
