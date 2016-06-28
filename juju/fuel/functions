@@ -15,8 +15,8 @@ if [[ "${cloud}" == "gce" ]]; then
     instance_type="n1-standard-1"
     device_paths="/var/scaleio_disk"
 else
-    instance_type="i2.xlarge"
-    device_paths="/dev/xvdb"
+    instance_type="r3.large"
+    device_paths="/dev/xvdf"
 fi
 machines=()
 deploy_counter=1
@@ -27,11 +27,16 @@ function provision_machines() {
     local new_mx=()
     echo "Provision machines: $*"
     while (( "$#" )); do
-        local mx=$(juju add-machine --constraints "instance-type=${instance_type}" 2>&1 | awk '{print $3}')
-        echo "Machine $1 created: $mx"
-        machines[$1]=${mx}
-        new_mx+=(${mx})
-        shift
+      disks=''
+      da=()
+      for (( i=0; i<2; ++i)) ; do da=(${da[@]} ebs-ssd,100G) ; done
+      disks="${da[@]}"
+      
+      local mx=$(juju machine add --constraints "instance-type=${instance_type} root-disk=40G" --disks "$disks" 2>&1 | awk '{print $3}')
+      echo "Machine $1 created: $mx"
+      machines[$1]=${mx}
+      new_mx+=(${mx})
+      shift
     done
 
     # wait for machines up
@@ -106,12 +111,13 @@ function catch_errors() {
 
 function remove_node_service() {
     echo Remove service from machines $@
+    machs="$#"
     while (( "$#" )); do
         mch=${machines[$1]}
         name=fuel-node${mch}
-        echo Remove EMC packages from from machine $1/${mch}
-        juju ssh $mch 'sudo apt-get purge -yf emc-scaleio-*'
-        echo Remove service ${name} from machine $1/${mch}
+        echo Remove EMC packages from machine $1/$machs
+        juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -yf emc-scaleio-*'
+        echo Remove service ${name} from machine $1/$machs
         juju remove-service ${name}
         shift
     done
@@ -183,7 +189,7 @@ function configure_cluster() {
     echo "Wait for services end: $(date)"
 
     # check query_cluster output before exit on error if exists
-    master_mdm=`get_master_mdm "echo ${mdms}"`
+    master_mdm=`get_master_mdm "echo $mdms"`
     echo "INFO: query cluster on machine $master_mdm"
     juju ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
 
@@ -197,19 +203,69 @@ function configure_cluster() {
     check-cluster "juju ssh" $master_mdm $mode
 }
 
+function get_config() {
+  juju get fuel-master | grep -A 5 "$1" | grep "value:" | head -1 | awk '{print $2}'
+}
+
 #TODO: remove duplication of code: re-use the check functions from common code when it appears
 function check_storage_pool {
     local mch=${machines[$1]}
     local key_to_check=$2
     local expected_value=$3
 
-    local sp=`config-get storage-pools`
-    local pd=`config-get protection-domain`
+    local sp=`get_config " storage-pools"`
+    local pd=`get_config protection-domain`
     local username='admin'
-    local password=`config-get password`
+    local password=`get_config " password"`
 
     local login_cmd="scli --login --username $username --password $password --approve_certificate"
     local query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-    juju ssh $mch "$login_cmd && $query_cmd" | grep "$key_to_check" | grep -q "$expected_value"
+    juju ssh $mch "$login_cmd && $query_cmd" | grep "$key_to_check" | grep -q "$expected_value" >/dev/null
     echo "INFO: Success. Parameter $key_to_check is $expected_value."
+}
+
+function check_capacity_alerts {
+    local mch=${machines[$1]}
+    local high_alert=$2
+    local critical_alert=$3
+
+    local sp=`get_config " storage-pools"`
+    local pd=`get_config protection-domain`
+    local username='admin'
+    local password=`get_config " password"`
+
+    local login_cmd="scli --login --username $username --password $password --approve_certificate"
+    local query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
+    juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$5}' | grep -q "$high_alert" >/dev/null
+    juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$7}' | grep -q "$critical_alert" >/dev/null
+    echo "INFO: Success. Capacity alert thresholds: high is $high_alert, critical is $critical_alert"
+}
+
+function check_cache {
+    local mch=${machines[$1]}
+    local rfcache_path=$2
+
+    local sp='default' #`config-get storage-pools`
+    local pd='default' #`config-get protection-domain`
+    local username='admin'
+    local password='Default_password' #`config-get password`
+
+    local login_cmd="scli --login --username $username --password $password --approve_certificate"
+    local query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
+    sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds"| grep 'SDS ID:' | awk '{print$5}'`)
+
+    for sds_name in ${sds_names[@]} ; do
+      output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
+      if ! echo "$output_sds" | grep 'Rfcache device information' | grep -q 'total 1 devices'  ; then
+        echo "ERROR: ($my_name:$LINENO) Unexpected number of rfcache devices."
+        echo "$output_sds" | grep 'Rfcache device information'
+        (( ++ret ))
+      elif ! echo "$output_sds" | sed -n '/Rfcache device information/{n;p;}' | grep -q "$rfcache_path" ; then
+        echo "ERROR: ($my_name:$LINENO) Path of RfCache device on $sds_name isn't $rfcache_path"
+        echo "$output_sds" | sed -n '/Rfcache device information/{n;p;}'
+        (( ++ret ))
+      else
+        echo "INFO: Success. Path of RFCache device on $sds_name is $rfcache_path."
+      fi
+    done
 }
