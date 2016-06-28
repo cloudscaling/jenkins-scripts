@@ -22,7 +22,7 @@
       - shell: |
           #!/bin/bash -e
           export VERSION="{version}"
-          ./jenkins-scripts/juju/run-scaleio-openstack.sh deploy.sh github
+          ./jenkins-scripts/juju/run-scaleio-openstack.sh deploy-bundle.sh github
 
 - project:
    name: ScaleIO-OpenStack
