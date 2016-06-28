@@ -10,14 +10,6 @@ if [ -z "$inner_script" ] ; then
   exit 1
 fi
 
-#TODO: use provisioning from fuel-qa/fuel-devops or somthing like that
-if ! sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${FUEL_VERSION}.iso" ${FUEL_NODES} ; then
-  echo "Provisioning error. exiting..."
-  exit 1
-fi
-
-trap 'catch_errors $LINENO' ERR
-
 function save_logs() {
   #TODO: save logs from fuel nodes
   return 0
@@ -26,6 +18,7 @@ function save_logs() {
 function destroy_env() {
   if [[ $CLEAN_ENV != 'false' ]] ; then
     #TODO: delete fuel VMs
+    return 0
   fi
   return 0
 }
@@ -38,6 +31,14 @@ function catch_errors() {
   destroy_env
   exit $exit_code
 }
+
+#TODO: use provisioning from fuel-qa/fuel-devops or somthing like that
+if ! sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${FUEL_VERSION}.iso" ${FUEL_NODES} ; then
+  echo "Provisioning error. exiting..."
+  exit 1
+fi
+
+trap 'catch_errors $LINENO' ERR
 
 rm -rf logs
 mkdir logs
