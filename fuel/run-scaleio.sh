@@ -32,10 +32,12 @@ function catch_errors() {
   exit $exit_code
 }
 
-#TODO: use provisioning from fuel-qa/fuel-devops or somthing like that
-if ! sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${FUEL_VERSION}.iso" ${FUEL_NODES} ; then
-  echo "Provisioning error. exiting..."
-  exit 1
+if [[ $CLEAN_ENV != 'false' ]] ; then
+  #TODO: use provisioning from fuel-qa/fuel-devops or somthing like that
+  if ! sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${FUEL_VERSION}.iso" ${FUEL_NODES} ; then
+    echo "Provisioning error. exiting..."
+    exit 1
+  fi
 fi
 
 trap 'catch_errors $LINENO' ERR
