@@ -16,11 +16,7 @@ function save_logs() {
 }
 
 function destroy_env() {
-  if [[ $CLEAN_ENV != 'false' ]] ; then
-    #TODO: delete fuel VMs
-    return 0
-  fi
-  return 0
+  sudo /home/jenkins/fuel_ci/cleanup_env.sh
 }
 
 function catch_errors() {
@@ -34,6 +30,7 @@ function catch_errors() {
 
 if [[ $CLEAN_ENV != 'false' ]] ; then
   #TODO: use provisioning from fuel-qa/fuel-devops or somthing like that
+  sudo /home/jenkins/fuel_ci/cleanup_env.sh
   if ! sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${FUEL_VERSION}.iso" ${FUEL_NODES} ; then
     echo "Provisioning error. exiting..."
     exit 1
