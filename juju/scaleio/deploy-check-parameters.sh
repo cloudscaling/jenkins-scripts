@@ -12,11 +12,11 @@ export PASSWORD="Default_password"
 echo "INFO: start $(date)"
 
 echo "Create machines"
-m1=$(create_machine 0 2)
+m1=$(create_machine 0 3)
 echo "Machine created: $m1"
-m2=$(create_machine 0 2)
+m2=$(create_machine 0 3)
 echo "Machine created: $m2"
-m3=$(create_machine 0 2)
+m3=$(create_machine 0 3)
 echo "Machine created: $m3"
 
 wait_for_machines $m1 $m2 $m3
@@ -38,6 +38,7 @@ run-test "$my_dir"/__check-mdm-password.sh
 run-test "$my_dir"/__check-protection-domains.sh $m1 $m2
 run-test "$my_dir"/__check-storage-pool-parameters.sh $m1 $m2
 run-test "$my_dir"/__check-cache-parameters.sh $m1 $m2 $m3
+run-test "$my_dir"/__check-storage-pools.sh $m1 $m2 $m3
 
 # machines are not removed. all environment will be destroyed by calling script.
 
