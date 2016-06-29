@@ -18,3 +18,5 @@ How to prepare stand:
    patch --backup-if-mismatch fuel_kvm.patch
    popd
 
+6. Download MOS iso file into ~/fuel_ci/.
+   Names are expected as 'MirantisOpenStack-x.y.iso', e.g. MirantisOpenStack-8.0.iso
