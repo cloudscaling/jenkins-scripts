@@ -6,7 +6,8 @@ my_dir="$(dirname $my_file)"
 
 #TODO: change it after reuse of other provisioning:
 fuel_master='10.20.0.2'
-scp -o StrictHostKeyChecking=no ${my_dir}/*.sh root@${fuel_master}:/root/
-scp -o StrictHostKeyChecking=no ${my_dir}/*.py root@${fuel_master}:/root/
-ssh -o StrictHostKeyChecking=no root@${fuel_master} '~/prepare_plugin.sh'
-ssh -o StrictHostKeyChecking=no root@${fuel_master} '~/test-cluster.sh'
+ssh_opts='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+scp ${ssh_opts} ${my_dir}/*.sh root@${fuel_master}:/root/
+scp ${ssh_opts} ${my_dir}/*.py root@${fuel_master}:/root/
+ssh ${ssh_opts} root@${fuel_master} 'cd /root && ./prepare_plugin.sh'
+ssh ${ssh_opts} root@${fuel_master} 'cd /root && ./test-cluster.sh'
