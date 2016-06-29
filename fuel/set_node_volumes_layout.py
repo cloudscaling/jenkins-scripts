@@ -30,9 +30,9 @@ def main(args):
     for i in config:
         for v in i['volumes']:
             if v['name'] == 'os':
-                set_volume_size('cinder', 16000, i['volumes'])
+                set_volume_size('cinder', 2000, i['volumes'])
                 if args.is_controller:
-                    set_volume_size('image', 25000, i['volumes'])
+                    set_volume_size('image', 20000, i['volumes'])
             if i['name'] in devices:
                 set_volume_size(None, 0, i['volumes'])
 
