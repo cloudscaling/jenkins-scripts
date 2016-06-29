@@ -44,6 +44,7 @@ if [[ $clean_env != 'false' ]] ; then
   sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${fuel_version}.iso" ${fuel_nodes}
 else
   #TODO: add check fuel_version in existing environment
+  echo WARN: check of version should be added in case of non-clean env
 fi
 
 $my_dir/$inner_script
