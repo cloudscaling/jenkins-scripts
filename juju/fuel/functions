@@ -31,7 +31,6 @@ function provision_machines() {
       da=()
       for (( i=0; i<2; ++i)) ; do da=(${da[@]} ebs-ssd,100G) ; done
       disks="${da[@]}"
-      
       local mx=$(juju machine add --constraints "instance-type=${instance_type} root-disk=40G" --disks "$disks" 2>&1 | awk '{print $3}')
       echo "Machine $1 created: $mx"
       machines[$1]=${mx}
@@ -92,7 +91,7 @@ function save_logs() {
     # save status to file
     for mch in ${machines[@]:1} ; do
         name=fuel-node${mch}
-        if juju service get ${name} ; then
+        if juju service get ${name} >/dev/null ; then
             mdir="$cdir/logs/$mch"
             mkdir -p "$mdir"
             copy_log $mch '/var/log/fuel-puppet-scaleio.log' "$mdir/fuel-puppet-scaleio.log"
@@ -116,9 +115,9 @@ function remove_node_service() {
         mch=${machines[$1]}
         name=fuel-node${mch}
         echo Remove EMC packages from machine $1/$machs
-        juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -yf emc-scaleio-*'
+        juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -yf emc-scaleio-*' >/dev/null
         echo Remove service ${name} from machine $1/$machs
-        juju remove-service ${name}
+        juju remove-service ${name} >/dev/null
         shift
     done
 }
@@ -137,7 +136,7 @@ function deploy_node_service() {
     mch=${machines[$1]}
     name=fuel-node${mch}
     roles=$2
-    if ! juju service get ${name} ; then
+    if ! juju service get ${name} 2>/dev/null ; then
         juju deploy local:trusty/fuel-node $name --to $mch
         juju add-relation fuel-master $name
     fi
@@ -203,22 +202,18 @@ function configure_cluster() {
     check-cluster "juju ssh" $master_mdm $mode
 }
 
-function get_config() {
-  juju get fuel-master | grep -A 5 "$1" | grep "value:" | head -1 | awk '{print $2}'
-}
-
 #TODO: remove duplication of code: re-use the check functions from common code when it appears
 function check_storage_pool {
     local mch=${machines[$1]}
     local key_to_check=$2
     local expected_value=$3
 
-    local sp=`get_config " storage-pools"`
+    local sp=`get_config storage-pools`
     local pd=`get_config protection-domain`
     local username='admin'
-    local password=`get_config " password"`
+    local password=`get_config password`
 
-    local login_cmd="scli --login --username $username --password $password --approve_certificate"
+    local login_cmd="scli --login --username $username --password $password --approve_certificate >/dev/null"
     local query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
     juju ssh $mch "$login_cmd && $query_cmd" | grep "$key_to_check" | grep -q "$expected_value" >/dev/null
     echo "INFO: Success. Parameter $key_to_check is $expected_value."
@@ -229,43 +224,94 @@ function check_capacity_alerts {
     local high_alert=$2
     local critical_alert=$3
 
-    local sp=`get_config " storage-pools"`
+    local sp=`get_config storage-pools`
     local pd=`get_config protection-domain`
     local username='admin'
-    local password=`get_config " password"`
+    local password=`get_config password`
 
-    local login_cmd="scli --login --username $username --password $password --approve_certificate"
+    local login_cmd="scli --login --username $username --password $password --approve_certificate >/dev/null"
     local query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
     juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$5}' | grep -q "$high_alert" >/dev/null
     juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$7}' | grep -q "$critical_alert" >/dev/null
     echo "INFO: Success. Capacity alert thresholds: high is $high_alert, critical is $critical_alert"
 }
 
-function check_cache {
+function check_path {
     local mch=${machines[$1]}
-    local rfcache_path=$2
+    local path_type=$2
+    local device_path=$3
 
-    local sp='default' #`config-get storage-pools`
-    local pd='default' #`config-get protection-domain`
     local username='admin'
-    local password='Default_password' #`config-get password`
+    local password=`get_config password`
 
-    local login_cmd="scli --login --username $username --password $password --approve_certificate"
-    local query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
+    local login_cmd="scli --login --username $username --password $password --approve_certificate >/dev/null"
     sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds"| grep 'SDS ID:' | awk '{print$5}'`)
 
     for sds_name in ${sds_names[@]} ; do
       output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
-      if ! echo "$output_sds" | grep 'Rfcache device information' | grep -q 'total 1 devices'  ; then
-        echo "ERROR: ($my_name:$LINENO) Unexpected number of rfcache devices."
-        echo "$output_sds" | grep 'Rfcache device information'
-        (( ++ret ))
-      elif ! echo "$output_sds" | sed -n '/Rfcache device information/{n;p;}' | grep -q "$rfcache_path" ; then
-        echo "ERROR: ($my_name:$LINENO) Path of RfCache device on $sds_name isn't $rfcache_path"
-        echo "$output_sds" | sed -n '/Rfcache device information/{n;p;}'
-        (( ++ret ))
+      if ! echo "$output_sds" | grep "$path_type" | grep -q 'total 1 devices'  ; then
+        echo "ERROR: ($my_name:$LINENO) Unexpected number of devices."
+        echo "$output_sds" | grep "$path_type"
+        return 1
+      elif ! echo "$output_sds" | sed -n "/$path_type/{n;p;}" | grep -q "$device_path" ; then
+        echo "ERROR: ($my_name:$LINENO) Path of $path_type on $sds_name isn't $device_path"
+        echo "$output_sds" | sed -n "/$path_type/{n;p;}"
+        return 1
       else
-        echo "INFO: Success. Path of RFCache device on $sds_name is $rfcache_path."
+        echo "INFO: Success. Path of $path_type on $sds_name is $device_path."
+      fi
+    done
+}
+
+function check_protection_domain {
+    local mch=${machines[$1]}
+    local pd_name=$2
+
+    local username='admin'
+    local password=`get_config password`
+
+    local login_cmd="scli --login --username $username --password $password --approve_certificate >/dev/null"
+    output_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds 2>/dev/null"`
+    if echo $output_sds | grep 'Protection Domain' | grep $pd_name  ; then
+      echo "INFO: Success. Protection domain name is $pd_name"
+    else
+      echo "ERROR: Wrong protection domain name."
+      echo $output_sds | grep 'Protection Domain'
+      return 1
+    fi
+}
+
+function check_password {
+  local mch=${machines[$1]}
+  local password=$2
+
+  local username='admin'
+  if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate >/dev/null" ; then
+      echo "INFO: Success. Password was changed to $current_password"
+  else
+    echo "ERROR: Wrong password. Please check."
+    return 1
+  fi
+}
+
+function check_sp_name {
+    local mch=${machines[$1]}
+    local sp_name=$2
+
+    local username='admin'
+    local password=`get_config password`
+
+    local login_cmd="scli --login --username $username --password $password --approve_certificate >/dev/null"
+    sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds"| grep 'SDS ID:' | awk '{print$5}'`)
+
+    for sds_name in ${sds_names[@]} ; do
+      output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
+      if ! echo "$output_sds" | grep -A 3 "Device information " | grep 'Storage Pool:' | grep -q $sp_name  ; then
+        echo "ERROR: Unexpected name of storage pool."
+        echo "$output_sds" | grep -A 3 "Device information"
+        return 1
+      else
+        echo "INFO: Success. Storage pool name is $sp_name."
       fi
     done
 }
