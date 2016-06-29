@@ -9,9 +9,9 @@ if [ -z "$inner_script" ] ; then
   exit 1
 fi
 
-clean_env=${CLEAN_ENV:'true'}
-fuel_version=${FUEL_VERSION:'8.0'}
-fuel_nodes=${FUEL_NODES:6}
+clean_env=${CLEAN_ENV:-'true'}
+fuel_version=${FUEL_VERSION:-'8.0'}
+fuel_nodes=${FUEL_NODES:-6}
 
 function save_logs() {
   #TODO: save logs from fuel nodes
