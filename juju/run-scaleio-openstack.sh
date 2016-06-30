@@ -38,7 +38,7 @@ echo "--------------------------------------------- Run deploy script: $inner_sc
 $my_dir/scaleio-openstack/$inner_script $script_params
 
 master_mdm=`get_master_mdm`
-cluster_mode=`get_cluster_mode`
+cluster_mode=`get_config scaleio-mdm cluster-mode`
 errors=0
 check-cluster "juju ssh" $master_mdm $cluster_mode || ((++errors))
 check-sds "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdf' || ((++errors))

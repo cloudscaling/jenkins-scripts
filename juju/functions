@@ -65,10 +65,6 @@ function get_master_mdm() {
   return 1
 }
 
-function get_cluster_mode() {
-  juju get scaleio-mdm | grep -A 5 cluster-mode | grep "value:" | head -1 | awk '{print $2}'
-}
-
 function wait_for_machines() {
   # wait for machines
   sleep 30
@@ -136,4 +132,10 @@ function create_machine() {
   else
     juju machine add --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" 2>&1 | awk '{print $3}'
   fi
+}
+
+function get_config() {
+  service_type="$1"
+  parameter_name=" $2"
+  juju get $service_type | grep -A 5 "$parameter_name" | grep "value:" | head -1 | awk '{print $2}'
 }
