@@ -18,7 +18,7 @@ configure_cluster mode 1 primary-controller 1 compute 2,3
 
 check_protection_domain 1 'default'
 check_sp_name 1 'default'
-check_path 1 'Device ' $device_path
+check_path 1 'Device ' $device_paths
 check_storage_pool 1 'Zero padding' 'disabled'
 check_storage_pool 1 'Checksum mode' 'disabled'
 check_storage_pool 1 'Background device scanner' 'Disabled'

@@ -16,7 +16,7 @@ if [[ "${cloud}" == "gce" ]]; then
   instance_type="n1-standard-1"
   device_paths="/var/scaleio_disk"
 else
-  device_path="/dev/xvdf"
+  device_paths="/dev/xvdf"
   rfcache_path="/dev/xvdg"
 fi
 machines=()
