@@ -64,7 +64,7 @@ function check_failed_tasks() {
     failed_tasks=`fuel task | grep -i 'error\|fail'`
     if [[ ! -z "$failed_tasks" ]]; then
         echo $failed_tasks
-        fail "Failed to execute task $failed_tasks for env $env_num
+        fail "Failed to execute task $failed_tasks for env $env_num"
     fi
 }
 
