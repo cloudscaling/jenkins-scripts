@@ -17,6 +17,8 @@ concurrency=${3:-1}
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+rm -rf logs
+
 trap catch_errors ERR;
 
 function catch_errors() {

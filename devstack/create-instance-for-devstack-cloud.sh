@@ -5,19 +5,6 @@ VM_CIDR="192.168.130.0/24"
 VM_TYPE="c4.xlarge"
 IMAGE_ID="ami-d05e75b8"
 
-rm -rf logs
-
-trap catch_errors ERR;
-
-function catch_errors() {
-  local exit_code=$?
-  echo "Errors!" $exit_code $@
-
-  /var/lib/jenkins/scripts/cleanup-devstack-cloud.sh
-
-  exit $exit_code
-}
-
 function get_value_from_json() {
   local cmd_out=$($1 | jq $2)
   eval "echo $cmd_out"
@@ -86,7 +73,5 @@ aws ec2 authorize-security-group-ingress --group-id $group_id --cidr $public_ip/
 for port in 8774 8776 8788 5000 9696 8080 9292 35357 ; do
   aws ec2 authorize-security-group-ingress --group-id $group_id --cidr 0.0.0.0/0 --protocol tcp --port $port
 done
-
-trap - ERR
 
 echo "Ready to install devstack"
