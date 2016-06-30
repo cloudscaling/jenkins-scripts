@@ -44,8 +44,8 @@ function provision_machines() {
   if [[ "${cloud}" == "gce" ]]; then
     for i in ${new_mx[@]}; do
       paths=$(echo ${device_paths} | sed 's/,/ /g')
-      juju ssh $i "for p in ${paths}; do sudo rm -f \$p && sudo truncate --size 100G \$p; done"
-      juju ssh $i "sudo sed -i 's/\(juju-\)\(.*\)\(machine.*\)/\1\3/g' /etc/hostname && sudo hostname -F /etc/hostname"
+      juju ssh $i "for p in ${paths}; do sudo rm -f \$p && sudo truncate --size 100G \$p; done" 2>/dev/null
+      juju ssh $i "sudo sed -i 's/\(juju-\)\(.*\)\(machine.*\)/\1\3/g' /etc/hostname && sudo hostname -F /etc/hostname" 2>/dev/null
     done
   fi
 
@@ -212,7 +212,7 @@ function check_storage_pool {
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
   query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-  juju ssh $mch "$login_cmd && $query_cmd" | grep "$key_to_check" | grep -q "$expected_value"
+  juju ssh $mch "$login_cmd && $query_cmd" | grep "$key_to_check" | grep -q "$expected_value" 2>/dev/null
   echo "INFO: Success. Parameter $key_to_check is $expected_value."
 }
 
@@ -228,8 +228,8 @@ function check_capacity_alerts {
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
   query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-  juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$5}' | grep -q "$high_alert"
-  juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$7}' | grep -q "$critical_alert"
+  juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$5}' | grep -q "$high_alert" 2>/dev/null
+  juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$7}' | grep -q "$critical_alert" 2>/dev/null
   echo "INFO: Success. Capacity alert thresholds: high is $high_alert, critical is $critical_alert"
 }
 
@@ -247,11 +247,11 @@ function check_path {
   for sds_name in ${sds_names[@]} ; do
     output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name"`
     if ! echo "$output_sds" | grep "$path_type" | grep -q 'total 1 devices'  ; then
-      echo "ERROR: ($my_name:$LINENO) Unexpected number of devices."
+      echo "ERROR: Unexpected number of devices."
       echo "$output_sds" | grep "$path_type"
       return 1
     elif ! echo "$output_sds" | sed -n "/$path_type/{n;p;}" | grep -q "$device_path" ; then
-      echo "ERROR: ($my_name:$LINENO) Path of $path_type on $sds_name isn't $device_path"
+      echo "ERROR: Path of $path_type on $sds_name isn't $device_path"
       echo "$output_sds" | sed -n "/$path_type/{n;p;}"
       return 1
     else

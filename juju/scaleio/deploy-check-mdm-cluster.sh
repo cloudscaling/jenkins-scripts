@@ -94,7 +94,7 @@ function scale_up() {
   local mode=$1
   # if we want to use spare units we will not add new units
   local new_units=$2
-  local old_mode=`get_cluster_mode`
+  local old_mode=`get_config scaleio-mdm cluster-mode`
   echo "--------------------------------------------------------------------------- $(date)"
   echo "--------------------------------------------------------------------------- Scale MDM's count up from $old_mode to $mode"
   if (( new_units > 0 )) ; then
@@ -127,7 +127,7 @@ function scale_down() {
   local mode=$1
   shift
 
-  local old_mode=`get_cluster_mode`
+  local old_mode=`get_config scaleio-mdm cluster-mode`
   echo "--------------------------------------------------------------------------- $(date)"
   echo "--------------------------------------------------------------------------- Scale MDM's count down from $old_mode to $mode"
 

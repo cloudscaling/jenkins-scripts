@@ -11,6 +11,8 @@ provision_machines 0 1 2 3
 # prepare fuel master
 prepare_fuel_master 0
 
+# TODO: Add paths for google.
+# The paths depends on type of instances provisioning in provision_machines function
 disk1="/dev/xvdb"
 disk2="/dev/xvdc"
 
