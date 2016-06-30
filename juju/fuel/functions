@@ -12,11 +12,12 @@ cd fuel-charms
 
 cloud=${1:-"ec2"}
 if [[ "${cloud}" == "gce" ]]; then
+  # TODO: Add paths for google.
   instance_type="n1-standard-1"
   device_paths="/var/scaleio_disk"
 else
-  instance_type="i2.2xlarge"
-  device_paths="/dev/xvdb"
+  device_path="/dev/xvdf"
+  rfcache_path="/dev/xvdg"
 fi
 machines=()
 deploy_counter=1
@@ -27,8 +28,8 @@ function provision_machines() {
   local new_mx=()
   echo "Provision machines: $*"
   while (( "$#" )); do
-    local mx=$(juju add-machine --constraints "instance-type=${instance_type}" 2>&1 | awk '{print $3}')
-#    local mx=$(create_machine 2 2)
+    # TODO: Change create machine to use google
+    local mx=$(create_machine 2 2)
     echo "Machine $1 created: $mx"
     machines[$1]=${mx}
     new_mx+=(${mx})
@@ -212,8 +213,13 @@ function check_storage_pool {
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
   query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-  juju ssh $mch "$login_cmd && $query_cmd" | grep "$key_to_check" | grep -q "$expected_value" 2>/dev/null
-  echo "INFO: Success. Parameter $key_to_check is $expected_value."
+  if output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null | grep "$key_to_check" | grep -q "$expected_value"` ; then
+    echo "INFO: Success. Parameter $key_to_check is $expected_value."
+  else
+    echo "ERROR: Parameter $key_to_check is in wrong state."
+    echo "$output"
+    return 1
+  fi
 }
 
 function check_capacity_alerts {
@@ -228,9 +234,20 @@ function check_capacity_alerts {
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
   query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-  juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$5}' | grep -q "$high_alert" 2>/dev/null
-  juju ssh $mch "$login_cmd && $query_cmd" | grep "Capacity alert thresholds" | awk '{print$7}' | grep -q "$critical_alert" 2>/dev/null
-  echo "INFO: Success. Capacity alert thresholds: high is $high_alert, critical is $critical_alert"
+  output_storage_pool=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null | grep "Capacity alert thresholds"`
+  if echo "$output_storage_pool" | awk '{print$5}' | grep -q "$high_alert" ; then
+    if echo "$output_storage_pool" | awk '{print$7}' | grep -q "$critical_alert" ; then
+      echo "INFO: Success. Capacity alert thresholds: high is $high_alert, critical is $critical_alert"
+    else
+      echo "ERROR: Wrong capacity critical alert thresholds"
+      echo "$output_storage_pool"
+      return 1
+    fi
+  else
+    echo "ERROR: Wrong capacity alert thresholds"
+    echo "$output_storage_pool"
+    return 1
+  fi
 }
 
 function check_path {
@@ -242,12 +259,12 @@ function check_path {
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds"| grep 'SDS ID:' | awk '{print$5}'`)
+  sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null| grep 'SDS ID:' | awk '{print$5}'`)
 
   for sds_name in ${sds_names[@]} ; do
-    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name"`
+    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
     if ! echo "$output_sds" | grep "$path_type" | grep -q 'total 1 devices'  ; then
-      echo "ERROR: Unexpected number of devices."
+      echo "ERROR: Unexpected number of devices on $sds_name."
       echo "$output_sds" | grep "$path_type"
       return 1
     elif ! echo "$output_sds" | sed -n "/$path_type/{n;p;}" | grep -q "$device_path" ; then
@@ -268,7 +285,7 @@ function check_protection_domain {
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  output_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds"`
+  output_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
   if echo $output_sds | grep 'Protection Domain' | grep $pd_name  ; then
     echo "INFO: Success. Protection domain name is $pd_name"
   else
@@ -299,16 +316,16 @@ function check_sp_name {
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds"| grep 'SDS ID:' | awk '{print$5}'`)
+  sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$5}'`)
 
   for sds_name in ${sds_names[@]} ; do
     output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name"`
     if ! echo "$output_sds" | grep -A 3 "Device information " | grep 'Storage Pool:' | grep -q $sp_name  ; then
-      echo "ERROR: Unexpected name of storage pool."
+      echo "ERROR: Unexpected name of storage pool on $sds_name."
       echo "$output_sds" | grep -A 3 "Device information"
       return 1
     else
-      echo "INFO: Success. Storage pool name is $sp_name."
+      echo "INFO: Success. Storage pool name on $sds_name is $sp_name."
     fi
   done
 }
