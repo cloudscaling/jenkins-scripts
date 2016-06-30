@@ -139,5 +139,7 @@ function create_machine() {
 }
 
 function get_config() {
-  juju get fuel-master | grep -A 5 " $1" | grep "value:" | head -1 | awk '{print $2}'
+  service_type="$1"
+  parameter_name=" $2"
+  juju get $service_type | grep -A 5 $parameter_name | grep "value:" | head -1 | awk '{print $2}'
 }
