@@ -13,8 +13,8 @@ prepare_fuel_master 0
 
 # TODO: Add paths for google.
 # The paths depends on type of instances provisioning in provision_machines function
-disk1="/dev/xvdb"
-disk2="/dev/xvdc"
+disk1="/dev/xvdf"
+disk2="/dev/xvdg"
 
 # 3+1 cluster with default parameters:
 #   zero-padding=false

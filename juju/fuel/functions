@@ -15,8 +15,8 @@ if [[ "${cloud}" == "gce" ]]; then
   instance_type="n1-standard-1"
   device_paths="/var/scaleio_disk"
 else
-  instance_type="i2.2xlarge"
-  device_paths="/dev/xvdb"
+  instance_type="r3.large"
+  device_paths="/dev/xvdf"
 fi
 machines=()
 deploy_counter=1
@@ -27,8 +27,7 @@ function provision_machines() {
   local new_mx=()
   echo "Provision machines: $*"
   while (( "$#" )); do
-    local mx=$(juju add-machine --constraints "instance-type=${instance_type}" 2>&1 | awk '{print $3}')
-#    local mx=$(create_machine 2 2)
+    local mx=$(create_machine 2 2)
     echo "Machine $1 created: $mx"
     machines[$1]=${mx}
     new_mx+=(${mx})
