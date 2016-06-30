@@ -22,6 +22,8 @@ fi
 machines=()
 deploy_counter=1
 
+branch=${BRANCH:-"master"}
+
 trap 'catch_errors $LINENO' ERR
 
 function provision_machines() {
@@ -122,8 +124,10 @@ function remove_node_service() {
 
 function prepare_fuel_master() {
   mch=${machines[$1]}
-  juju deploy local:trusty/fuel-master --to $mch
-  juju set fuel-master device-paths=${device_paths}
+  echo "fuel-master:
+    branch-name:  $branch
+    device-paths: $device_paths" >/tmp/config.yaml
+  juju deploy local:trusty/fuel-master --to $mch --config /tmp/config.yaml
 }
 
 function set_fuel_options() {
@@ -134,8 +138,11 @@ function deploy_node_service() {
   mch=${machines[$1]}
   name=fuel-node${mch}
   roles=$2
-  if ! juju service get ${name} ; then
-    juju deploy local:trusty/fuel-node $name --to $mch
+  echo "$name:
+    branch-name:  $branch" >>/tmp/config.yaml
+
+  if ! juju service get ${name} 2>/dev/null  ; then
+    juju deploy local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
     juju add-relation fuel-master $name
   fi
   juju set $name roles="${roles}"
