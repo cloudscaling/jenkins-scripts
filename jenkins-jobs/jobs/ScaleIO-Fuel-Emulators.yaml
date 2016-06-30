@@ -1,0 +1,53 @@
+- parameter:
+    name: fuel-plugin-scaleio-branch
+    parameters:
+      - choice:
+          name: BRANCH
+          description: "Version of the fuel-plugin-scaleio"
+          choices:
+            - master
+            - fuel-package-v2
+
+
+- job:
+    name: ScaleIO-Fuel-Emulator-3-node
+    description: 'Emulates fuel deployment with 3 nodes and Checks deployment'
+    defaults: global
+    parameters:
+      - bool:
+          name: CLEAN_ENV
+          default: true
+      - fuel-plugin-scaleio-branch
+    scm:
+      - fuel-charms
+      - jenkins-scripts
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          ./jenkins-scripts/juju/run-scaleio.sh fuel/deploy-fuel.sh
+    publishers:
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: 'true'
+
+
+- job:
+    name: ScaleIO-Fuel-Emulator-1-2-3-4-5-4-3-node
+    description: 'Emulates fuel deployment and cluster reconfiguration'
+    defaults: global
+    parameters:
+      - bool:
+          name: CLEAN_ENV
+          default: true
+      - fuel-plugin-scaleio-branch
+    scm:
+      - fuel-charms
+      - jenkins-scripts
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          ./jenkins-scripts/juju/run-scaleio.sh fuel/check-cluster-change.sh
+    publishers:
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: 'true'
