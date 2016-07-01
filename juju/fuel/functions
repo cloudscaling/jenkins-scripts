@@ -17,7 +17,7 @@ if [[ "${cloud}" == "gce" ]]; then
   device_paths="/var/scaleio_disk"
 else
   device_paths="/dev/xvdf"
-  rfcache_path="/dev/xvdg"
+  rfcache_paths="/dev/xvdh,/dev/xvdi"
 fi
 machines=()
 deploy_counter=1
@@ -31,7 +31,7 @@ function provision_machines() {
   echo "Provision machines: $*"
   while (( "$#" )); do
     # TODO: Change create machine to use google
-    local mx=$(create_machine 2 2)
+    local mx=$(create_machine 2 4)
     echo "Machine $1 created: $mx"
     machines[$1]=${mx}
     new_mx+=(${mx})
@@ -213,20 +213,24 @@ function check_storage_pool {
   key_to_check=$2
   expected_value=$3
 
-  sp=`get_config fuel-master storage-pools`
+  storage_pools=`get_config fuel-master storage-pools`
+  sp_list=(`echo "$storage_pools" | sed 's/,/ /'`)
   pd=`get_config fuel-master protection-domain`
   username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-  if output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null | grep "$key_to_check" | grep -q "$expected_value"` ; then
-    echo "INFO: Success. Parameter $key_to_check is $expected_value."
-  else
-    echo "ERROR: Parameter $key_to_check is in wrong state."
-    echo "$output"
-    return 1
-  fi
+  for sp in "${sp_list[@]}" ; do
+    query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
+    output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null`
+    if echo "$output" | grep "$key_to_check" | grep -q "$expected_value" ; then
+      echo "INFO: Success. Parameter $key_to_check in storage pool $sp is $expected_value."
+    else
+      echo "ERROR: Parameter $key_to_check in storage pool $sp is in wrong state."
+      echo "$output"
+      return 1
+    fi
+  done
 }
 
 function check_capacity_alerts {
@@ -234,33 +238,36 @@ function check_capacity_alerts {
   high_alert=$2
   critical_alert=$3
 
-  sp=`get_config fuel-master storage-pools`
+  storage_pools=`get_config fuel-master storage-pools`
+  sp_list=(`echo "$storage_pools" | sed 's/,/ /'`)
   pd=`get_config fuel-master protection-domain`
   username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-  output_storage_pool=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null | grep "Capacity alert thresholds"`
-  if echo "$output_storage_pool" | awk '{print$5}' | grep -q "$high_alert" ; then
-    if echo "$output_storage_pool" | awk '{print$7}' | grep -q "$critical_alert" ; then
-      echo "INFO: Success. Capacity alert thresholds: high is $high_alert, critical is $critical_alert"
+  for sp in "${sp_list[@]}" ; do
+    query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
+    output_storage_pool=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null | grep "Capacity alert thresholds"`
+    if echo "$output_storage_pool" | awk '{print$5}' | grep -q "$high_alert" ; then
+      if echo "$output_storage_pool" | awk '{print$7}' | grep -q "$critical_alert" ; then
+        echo "INFO: Success. Capacity alert thresholds: high is $high_alert, critical is $critical_alert"
+      else
+        echo "ERROR: Wrong capacity critical alert thresholds"
+        echo "$output_storage_pool"
+        return 1
+      fi
     else
-      echo "ERROR: Wrong capacity critical alert thresholds"
+      echo "ERROR: Wrong capacity alert thresholds"
       echo "$output_storage_pool"
       return 1
     fi
-  else
-    echo "ERROR: Wrong capacity alert thresholds"
-    echo "$output_storage_pool"
-    return 1
-  fi
+  done
 }
 
-function check_path {
+function check_rfcache {
   mch=${machines[$1]}
-  path_type=$2
-  local device_path=$3
+  rfcache_list=($2)
+  rfcache_number=${#rfcache_list[@]}
 
   username='admin'
   password=`get_config fuel-master password`
@@ -269,18 +276,22 @@ function check_path {
   sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null| grep 'SDS ID:' | awk '{print$5}'`)
 
   for sds_name in ${sds_names[@]} ; do
-    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
-    if ! echo "$output_sds" | grep "$path_type" | grep -q 'total 1 devices'  ; then
+    rfcache_output=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null | grep "Rfcache device information" -A (( $rfcache_number*2+1 ))`
+    if ! echo "$rfcache_output" | grep -q "total $rfcache_number devices"  ; then
       echo "ERROR: Unexpected number of devices on $sds_name."
-      echo "$output_sds" | grep "$path_type"
+      echo "$rfcache_output" | grep "Rfcache device information"
       return 1
-    elif ! echo "$output_sds" | sed -n "/$path_type/{n;p;}" | grep -q "$device_path" ; then
-      echo "ERROR: Path of $path_type on $sds_name isn't $device_path"
-      echo "$output_sds" | sed -n "/$path_type/{n;p;}"
-      return 1
-    else
-      echo "INFO: Success. Path of $path_type on $sds_name is $device_path."
     fi
+
+    for rfcache in ${rfcache_list[@]} ; do
+      if ! echo "$rfcache_output" | grep -q $rfcache ; then
+        echo "ERROR: No $rfcache RFCache path on $sds_name"
+        echo "$rfcache_output"
+        return 1
+      else
+        echo "INFO: Success. There is $rfcache RFCache path of on $sds_name."
+      fi
+    done
   done
 }
 
@@ -320,10 +331,10 @@ function check_password {
   fi
 }
 
-function check_sp_name {
+function check_sds_storage_pool {
   mch=${machines[$1]}
-  sp_name=$2
-
+  sp_list=($2)
+  device_paths_list=($3)
   username='admin'
   password=`get_config fuel-master password`
 
@@ -332,13 +343,27 @@ function check_sp_name {
 
   for sds_name in ${sds_names[@]} ; do
     output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
-    if ! echo "$output_sds" | grep -A 3 "Device information " | grep 'Storage Pool:' | grep -q $sp_name  ; then
-      echo "ERROR: Unexpected name of storage pool on $sds_name."
-      echo "$output_sds" | grep -A 3 "Device information"
+    if ! echo "$output_sds" | grep "Device information" | grep -q "total ${#device_paths_list[@]} devices" ; then
+      echo "ERROR: Error in devices number in $sds_name"
+      echo "$output_sds"
       return 1
-    else
-      echo "INFO: Success. Storage pool name on $sds_name is $sp_name."
     fi
+    i=0
+    for devpath in ${device_paths_list[@]} ; do
+      if ! device_info=`echo "$output_sds" | grep -A 2 "$devpath"`  ; then
+        echo "ERROR: Not found expected $devpath device path on $sds_name."
+        echo "$output_sds"
+        return 1
+      else
+        if ! echo "$device_info" | grep -q ${sp_list[$i]} ; then
+          echo "ERROR: Wrong storage pool on $devpath on $sds_name."
+          echo "$device_info"
+          return 1
+        fi
+      fi
+      echo "INFO: Success. There is ${sp_list[$i]} storage pool on $devpath on $sds_name."
+      ((++i))
+     done
   done
 }
 
