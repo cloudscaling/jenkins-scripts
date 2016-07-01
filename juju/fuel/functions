@@ -292,14 +292,19 @@ function check_protection_domain {
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  output_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
-  if echo $output_sds | grep 'Protection Domain' | grep $pd_name  ; then
-    echo "INFO: Success. Protection domain name is $pd_name"
-  else
-    echo "ERROR: Wrong protection domain name."
-    echo $output_sds | grep 'Protection Domain'
-    return 1
-  fi
+
+  sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$5}'`)
+
+  for sds_name in ${sds_names[@]} ; do
+    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name"`
+    if ! echo "$output_sds" | grep 'Protection Domain:' | grep -q $pd_name  ; then
+      echo "ERROR: Wrong protection domain on $sds_name."
+      echo "$output_sds" | grep "Protection Domain:"
+      return 1
+    else
+      echo "INFO: Success. Protection domain on $sds_name is $pd_name."
+    fi
+  done
 }
 
 function check_password {
