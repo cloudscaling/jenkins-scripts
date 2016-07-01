@@ -16,6 +16,7 @@ prepare_fuel_master 0
 #   TODO: add more parameters and check their default value
 configure_cluster mode 1 primary-controller 1 compute 2,3
 
+check_fuel_perfomance 1
 check_protection_domain 1 'default'
 check_sp_name 1 'default'
 check_path 1 'Device ' $device_paths
