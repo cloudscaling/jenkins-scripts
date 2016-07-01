@@ -3,7 +3,6 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
-rm -f /tmp/config.yaml
 source $my_dir/functions
 
 # provision machines

@@ -138,10 +138,10 @@ function deploy_node_service() {
   mch=${machines[$1]}
   name=fuel-node${mch}
   roles=$2
-  echo "$name:
-    branch-name:  $branch" >>/tmp/config.yaml
 
   if ! juju service get ${name} 2>/dev/null  ; then
+    echo "$name:
+      branch-name:  $branch" >/tmp/config.yaml
     juju deploy local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
     juju add-relation fuel-master $name
   fi
