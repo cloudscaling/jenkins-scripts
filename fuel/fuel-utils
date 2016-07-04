@@ -16,7 +16,7 @@ function execute_on_master() {
   ssh ${fuel_ssh_opts} root@${fuel_master} "cd /root && ${to_execute}"
 }
 
-function copy_to_node() {
+function copy_to_slave() {
   slave=$1
   shift
   to_copy=$@
@@ -35,9 +35,9 @@ function execute_on_slave() {
 }
 
 function get_slave_nodes() {
-  execute_on_master "fuel node | awk '/ready/ {print(\\$10)}'"
+  execute_on_master 'fuel node | awk "/ready/ {print(\$10)}"'
 }
 
 function get_controller_nodes() {
-  execute_on_master "fuel node | grep controller | awk '/ready/ {print(\\$10)}'"
+  execute_on_master 'fuel node | grep controller | awk "/ready/ {print(\$10)}"'
 }
