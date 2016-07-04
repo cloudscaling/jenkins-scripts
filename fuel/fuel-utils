@@ -1,0 +1,23 @@
+#!/bin/bash -ux
+
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
+
+fuel_master=${FUEL_MASTER_ADDR:-'10.20.0.2'}
+fuel_ssh_opts='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+function copy_to_master() {
+  to_copy=$@
+  scp ${fuel_ssh_opts} ${to_copy} root@${fuel_master}:/root/
+}
+
+function execute_on_master() {
+  to_execute=$@
+  ssh ${fuel_ssh_opts} root@${fuel_master} "cd /root && ${to_execute}"
+}
+
+function execute_on_slave() {
+  slave=$1
+  shift
+  execute_on_master "ssh ${fuel_ssh_opts} $slave \"$@\""
+}

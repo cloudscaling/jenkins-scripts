@@ -3,6 +3,8 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+source ${my_dir}/fuel-utils
+
 inner_script=${1:-}
 if [ -z "$inner_script" ] ; then
   echo "No script is specified but required"
@@ -14,7 +16,12 @@ fuel_version=${FUEL_VERSION:-'8.0'}
 fuel_nodes=${FUEL_NODES:-6}
 
 function save_logs() {
-  #TODO: save logs from fuel nodes
+  nodes=`execute_on_master "fuel node | awk '/ready/ {print(\\$10)}'"`
+  for i in ${nodes}; do
+    mkdir logs/$i
+    execute_on_slave $i 'cat /var/log/fuel-plugin-scaleio.log' > logs/${i}/fuel-plugin-scaleio.log 2>/dev/null
+    execute_on_slave $i 'cat /var/log/puppet.log' > logs/${i}/puppet.log 2>/dev/null
+  done
   return 0
 }
 
