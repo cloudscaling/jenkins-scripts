@@ -341,3 +341,11 @@ function check_sp_name {
     fi
   done
 }
+
+function check_fuel_perfomance {
+  mch=${machines[$1]}
+  username='admin'
+  password=`get_config fuel-master password`
+
+  check-performance "juju ssh" "$mch" "$username" "$password"
+}
