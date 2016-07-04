@@ -6,7 +6,7 @@ my_dir="$(dirname $my_file)"
 source $my_dir/functions
 
 # provision machines
-provision_machines 0 1 2 3
+provision_machines 0 1 2 3 4
 
 # prepare fuel master
 prepare_fuel_master 0
@@ -26,6 +26,7 @@ check_storage_pool 1 'Background device scanner' 'Disabled'
 check_storage_pool 1 'Spare policy' '10%'
 check_capacity_alerts 1 '80' '90'
 check_storage_pool 1 'Flash Read Cache' "Doesn't use"
+check_sds_on_controller 1 'true'
 
 remove_node_service 1 2 3
 set_fuel_options protection-domain='pd'
@@ -39,7 +40,8 @@ set_fuel_options capacity-high-alert-threshold='79'
 set_fuel_options capacity-critical-alert-threshold='89'
 set_fuel_options cached-storage-pools='sp'
 set_fuel_options rfcache-devices=$rfcache_path
-configure_cluster mode 1 primary-controller 1 compute 2,3
+set_fuel_options sds-on-controller='false'
+configure_cluster mode 1 primary-controller 1 compute 2,3,4
 
 check_password 1 'Other_password'
 check_protection_domain 1 'pd'
@@ -51,5 +53,6 @@ check_storage_pool 1 'Spare policy' '15%'
 check_capacity_alerts 1 '79' '89'
 check_storage_pool 1 'Flash Read Cache' "Uses"
 check_path 1 'Rfcache device ' $rfcache_path
+check_sds_on_controller 1 'false'
 
 save_logs
