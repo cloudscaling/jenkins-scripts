@@ -115,7 +115,7 @@ function remove_node_service() {
     mch=${machines[$1]}
     name=fuel-node${mch}
     echo Remove EMC packages from machine $1/$machs
-    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -yf emc-scaleio-*' 2>/dev/null
+    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' 2>/dev/null
     echo Remove service ${name} from machine $1/$machs
     juju remove-service ${name}
     shift
@@ -312,7 +312,7 @@ function check_password {
   password=$2
 
   username='admin'
-  if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate" ; then
+  if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate" 2>/dev/null ; then
     echo "INFO: Success. Password was changed to $password"
   else
     echo "ERROR: Wrong password. Please check."
