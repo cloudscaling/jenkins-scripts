@@ -82,7 +82,7 @@ function copy_log() {
   mch=$1
   log=$2
   dst=$3
-  if juju ssh $mch "test -f $log" ; then
+  if juju ssh $mch "test -f $log" 2>/dev/null ; then
     juju ssh $mch "cat $log" > "$dst" 2>/dev/null
   fi
 }
@@ -115,7 +115,7 @@ function remove_node_service() {
     mch=${machines[$1]}
     name=fuel-node${mch}
     echo Remove EMC packages from machine $1/$machs
-    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -yf emc-scaleio-*'
+    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' 2>/dev/null
     echo Remove service ${name} from machine $1/$machs
     juju remove-service ${name}
     shift
@@ -296,7 +296,7 @@ function check_protection_domain {
   sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$5}'`)
 
   for sds_name in ${sds_names[@]} ; do
-    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name"`
+    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
     if ! echo "$output_sds" | grep 'Protection Domain:' | grep -q $pd_name  ; then
       echo "ERROR: Wrong protection domain on $sds_name."
       echo "$output_sds" | grep "Protection Domain:"
@@ -312,7 +312,7 @@ function check_password {
   password=$2
 
   username='admin'
-  if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate" ; then
+  if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate" 2>/dev/null ; then
     echo "INFO: Success. Password was changed to $password"
   else
     echo "ERROR: Wrong password. Please check."
@@ -331,7 +331,7 @@ function check_sp_name {
   sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$5}'`)
 
   for sds_name in ${sds_names[@]} ; do
-    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name"`
+    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
     if ! echo "$output_sds" | grep -A 3 "Device information " | grep 'Storage Pool:' | grep -q $sp_name  ; then
       echo "ERROR: Unexpected name of storage pool on $sds_name."
       echo "$output_sds" | grep -A 3 "Device information"
