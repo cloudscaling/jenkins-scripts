@@ -51,7 +51,8 @@ check_storage_pool 1 'Checksum mode' 'enabled'
 check_storage_pool 1 'Background device scanner' 'Mode: device_only'
 check_storage_pool 1 'Spare policy' '15%'
 check_capacity_alerts 1 '79' '89'
-check_storage_pool 1 'Flash Read Cache' "Uses"
+check_storage_pool 1 'Flash Read Cache' "Doesn't use" 'sp1'
+check_storage_pool 1 'Flash Read Cache' "Uses" 'sp2'
 check_rfcache 1 "$rfcache"
 
 save_logs
