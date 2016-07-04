@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -ex
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
@@ -14,5 +14,8 @@ function exec_on_mdm() {
 function get_provisioning_type() {
   awk '/provisioning_type:/ {print($2)}' /etc/astute.yaml
 }
+
+easy_install pip
+pip install -q virtualenv
 
 run_os_checks exec_on_mdm get_provisioning_type 
