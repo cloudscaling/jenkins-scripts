@@ -16,8 +16,28 @@ function execute_on_master() {
   ssh ${fuel_ssh_opts} root@${fuel_master} "cd /root && ${to_execute}"
 }
 
+function copy_to_node() {
+  slave=$1
+  shift
+  to_copy=$@
+  scp ${fuel_ssh_opts} ${to_copy} root@${fuel_master}:/root/
+  to_copy2=""
+  for i in  ${to_copy} ; do
+    to_copy2+=" `basename $i`"
+  done
+  execute_on_master "scp ${fuel_ssh_opts} ${to_copy2} root@${slave}:/root/"
+}
+
 function execute_on_slave() {
   slave=$1
   shift
   execute_on_master "ssh ${fuel_ssh_opts} $slave \"$@\""
+}
+
+function get_slave_nodes() {
+  execute_on_master "fuel node | awk '/ready/ {print(\\$10)}'"
+}
+
+function get_controller_nodes() {
+  execute_on_master "fuel node | grep controller | awk '/ready/ {print(\\$10)}'"
 }

@@ -12,15 +12,11 @@ function exec_on_mdm() {
 }
 
 function get_provisioning_type() {
-  type=`awk '/provisioning_type:/ {print($2)}' /etc/astute.yaml` 2>/dev/null
-  if [[ "${type}" != 'thin' ]] ; then
-    echo Thick
-  else
-    echo Thin
-  fi
+  awk '/provisioning_type:/ {print($2)}' /etc/astute.yaml 2>/dev/null
 }
 
 easy_install pip
 pip install -q virtualenv
 
+export SCALEIO_PROTECTION_DOMAIN='default'
 run_os_checks exec_on_mdm get_provisioning_type 

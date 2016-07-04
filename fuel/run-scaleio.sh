@@ -16,7 +16,7 @@ fuel_version=${FUEL_VERSION:-'8.0'}
 fuel_nodes=${FUEL_NODES:-6}
 
 function save_logs() {
-  nodes=`execute_on_master "fuel node | awk '/ready/ {print(\\$10)}'"`
+  nodes=`get_slave_nodes`
   for i in ${nodes}; do
     mkdir logs/$i
     execute_on_slave $i 'cat /var/log/fuel-plugin-scaleio.log' > logs/${i}/fuel-plugin-scaleio.log 2>/dev/null
