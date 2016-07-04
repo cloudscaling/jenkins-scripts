@@ -64,10 +64,14 @@
           choices:
             - bundle
             - manual
+      - bool:
+          name: RUN_TEMPEST
+          default: false
     scm:
       - emc-juju-scaleio
       - cs-juju-scaleio
       - jenkins-scripts
+      - tempest
     builders:
       - use-openstack-updated-charms
       - shell: |
