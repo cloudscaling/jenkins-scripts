@@ -196,20 +196,20 @@ function run_os_checks() {
   echo "------------------------------  Check cinder volumes"
   echo "------------------------------  Check simple volume"
   cinder create --display_name simple_volume 1
-  volume_id=`cinder list | grep " simple_volume " | awk '{print $2}'`
+  volume_id=`cinder list | awk '/ simple_volume /{print $2}'`
   wait_volume $volume_id $MAX_FAIL
 
   echo "------------------------------  Check cinder volumes"
   echo "------------------------------  Check volume from image"
   cinder create --image-id $image_id --display_name volume_from_image 1
-  volume_id=`cinder list | grep " volume_from_image " | awk '{print $2}'`
+  volume_id=`cinder list | awk '/ volume_from_image /{print $2}'`
   wait_volume $volume_id $MAX_FAIL
 
   cinder list
 
   echo "------------------------------  Run instance from bootable volume"
   # in fuel env tehre is more than 1 network, so it's needed to specify network directly
-  net_id=`nova network-list | awk '/admin_internal_net/ {print($2)}'`
+  net_id=`nova network-list | awk '/admin_internal_net/{print $2}'`
   if [ -n "${net_id}" ] ; then
     nic_opts="--nic net-id=$net_id"
   else
@@ -217,7 +217,7 @@ function run_os_checks() {
   fi
   iname='inst_from_volume'
   nova boot --flavor 51 $nic_opts --block-device "device=/dev/vda,id=$volume_id,shutdown=remove,source=volume,dest=volume,bootindex=0" $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+  instance_id=`nova list | awk "/ $iname /{print $2}"`
   wait_instance $instance_id $MAX_FAIL
   nova show $iname
   echo "------------------------------  Console log"
@@ -227,7 +227,7 @@ function run_os_checks() {
   sleep 20
   wait_instance $instance_id $MAX_FAIL
   nova show $iname
-  host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
+  host2=`nova show $iname | awk "/$host_attr/{print $4}"`
   if [[ "$host1" == "$host2" ]] ; then
     echo '' >> errors
     echo "ERROR: Host is not changed after live migration." >> errors
@@ -236,11 +236,11 @@ function run_os_checks() {
   echo "------------------------------  Run instance from ephemeral"
   iname="instance_01"
   nova boot --flavor 51 $nic_opts --image cirros $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+  instance_id=`nova list | awk "/ $iname /{print $2}"`
   wait_instance $instance_id $MAX_FAIL
   nova show $iname
   host_attr='OS-EXT-SRV-ATTR:host'
-  host1=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
+  host1=`nova show $iname | awk "/$host_attr/{print $4}"`
   echo "------------------------------  Console log"
   nova console-log $iname | tail
   echo "------------------------------  Check live migration"
@@ -248,7 +248,7 @@ function run_os_checks() {
   sleep 20
   wait_instance $instance_id $MAX_FAIL
   nova show $iname
-  host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
+  host2=`nova show $iname | awk "/$host_attr/{print $4}"`
   if [[ "$host1" == "$host2" ]] ; then
     echo '' >> errors
     echo "ERROR: Host is not changed after live migration." >> errors
@@ -257,7 +257,7 @@ function run_os_checks() {
   echo "------------------------------  Check flavor with additional Ephemeral and swap "
   iname="instance_02"
   nova boot --flavor 53 $nic_opts --image cirros $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+  instance_id=`nova list | awk "/ $iname /{print $2}"`
   wait_instance $instance_id $((3*MAX_FAIL))
   nova show $iname
 
@@ -285,17 +285,17 @@ function run_os_checks() {
   # check snapshots
   echo "------------------------------  Creating volume"
   cinder create --display_name volume_for_snaps 1
-  volume_id=`cinder list | grep " volume_for_snaps " | awk '{print $2}'`
+  volume_id=`cinder list | awk '/ volume_for_snaps /{print $2}'`
   wait_volume $volume_id $MAX_FAIL
 
   echo "------------------------------  Creating snapshot"
   cinder snapshot-create volume_for_snaps
-  snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
+  snapshot_id=`cinder snapshot-list | awk "/$volume_id/{print$2}"`
   wait_snapshot $snapshot_id $MAX_FAIL
 
   echo "------------------------------  Creating volume from snapshot"
   cinder create --snapshot_id $snapshot_id --name from_snapshot
-  snap_volume_id=`cinder list | grep " from_snapshot " | awk '{print $2}'`
+  snap_volume_id=`cinder list | awk '/ from_snapshot /{print $2}'`
   wait_volume $snap_volume_id $MAX_FAIL
 
   cinder delete $snap_volume_id
@@ -312,12 +312,12 @@ function run_os_checks() {
   echo "------------------------------  Creating instance"
   iname="instance_for_snaps"
   nova boot --flavor 51 $nic_opts --image cirros $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+  instance_id=`nova list | awk "/ $iname /{print $2}"`
   wait_instance $instance_id $MAX_FAIL
 
   echo "------------------------------  Creating Image from Instance"
   nova image-create $instance_id snapshot_image
-  simage_id=`openstack image show snapshot_image | grep " id " | awk '{print $4}'`
+  simage_id=`openstack image show snapshot_image | awk '/ id /{print $4}'`
   openstack image show $simage_id
   echo "------------------------------  Status should be 'queued' now. Waiting for 'saving'"
   wait_image $simage_id $MAX_FAIL saving
@@ -328,7 +328,7 @@ function run_os_checks() {
   echo "------------------------------  Creating instance from created image"
   iname="from_snapshot"
   nova boot --flavor 51 $nic_opts --image $simage_id $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+  instance_id=`nova list | awk "/ $iname /{print $2}"`
   wait_instance $instance_id $((3*MAX_FAIL))
 
   echo "------------------------------  Deleting artefacts"
@@ -349,7 +349,7 @@ function run_os_checks() {
   echo "------------------------------  Creating instance"
   iname="instance_for_resize"
   nova boot --flavor 51 $nic_opts --image cirros $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
+  instance_id=`nova list | awk "/ $iname /{print $2}"`
   wait_instance $instance_id $MAX_FAIL
   $exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null
   echo "------------------------------  Resizing instance"
