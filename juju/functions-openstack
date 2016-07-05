@@ -132,12 +132,12 @@ function create_image() {
 
   source .venv/bin/activate
 
-  if ! image_id=`openstack image show $image_name | awk '/ id /{print $4}'` ; then
+  if ! output=`openstack image show $image_name` ; then
     rm -f cirros-0.3.4-x86_64-disk.img
     wget -t 2 -T 60 -nv http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-    openstack image create --public --file cirros-0.3.4-x86_64-disk.img $image_name
-    image_id=`openstack image show $image_name | awk '/ id /{print $4}'`
+    output=`openstack image create --public --file cirros-0.3.4-x86_64-disk.img $image_name`
   fi
+  image_id=`echo "$output" | awk '/ id /{print $4}'`
 
   deactivate
   echo $image_id
