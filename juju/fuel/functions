@@ -349,3 +349,28 @@ function check_fuel_perfomance {
 
   check-performance "juju ssh" "$mch" "$username" "$password"
 }
+
+function check_sds_on_controller {
+  mch=${machines[$1]}
+  expected=$2
+
+  username='admin'
+  password=`get_config fuel-master password`
+
+  login_cmd="scli --login --username $username --password $password --approve_certificate"
+  
+  #TODO: change check in case there are several mdms
+  mdm_ip=`juju ssh $mch "scli --query_cluster | grep 'Management IPs'" 2>/dev/null | awk '{print$5}' | sed 's/,//g'`
+  sds_on_controller='false'
+  all_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
+  if echo $all_sds | grep $mdm_ip ; then
+    sds_on_controller='true'
+  fi
+
+  if [[ $sds_on_controller == $expected ]] ; then
+    echo "INFO: Success. SDS on controller is $expected."
+  else
+    echo "ERROR: SDS on controller is $sds_on_controller, but is expected to be $expected."
+    return 1
+  fi
+}
