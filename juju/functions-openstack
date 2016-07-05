@@ -132,7 +132,7 @@ function create_image() {
 
   source .venv/bin/activate
 
-  if ! output=`openstack image show $image_name` ; then
+  if ! output=`openstack image show $image_name 2>/dev/null` ; then
     rm -f cirros-0.3.4-x86_64-disk.img
     wget -t 2 -T 60 -nv http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
     output=`openstack image create --public --file cirros-0.3.4-x86_64-disk.img $image_name`
@@ -161,7 +161,9 @@ function create_flavors() {
 }
 
 function create_network() {
-  nova network-create --fixed-range-v4 10.0.0.0/24 --gateway 10.0.0.1 --bridge br100 private
+  if ! nova network-show private &>/dev/null ; then
+    nova network-create --fixed-range-v4 10.0.0.0/24 --gateway 10.0.0.1 --bridge br100 private
+  fi
 }
 
 function run_os_checks() {
@@ -185,14 +187,15 @@ function run_os_checks() {
 
   # check installed cloud
   source .venv/bin/activate
-
   openstack catalog list
+  deactivate
 
   image_id=`create_image`
-
   echo "------------------------------  Add specific flavors"
   create_flavors
+  create_network
 
+  source .venv/bin/activate
   echo "------------------------------  Check cinder volumes"
   echo "------------------------------  Check simple volume"
   cinder create --display_name simple_volume 1
@@ -217,7 +220,7 @@ function run_os_checks() {
   fi
   iname='inst_from_volume'
   nova boot --flavor 51 $nic_opts --block-device "device=/dev/vda,id=$volume_id,shutdown=remove,source=volume,dest=volume,bootindex=0" $iname
-  instance_id=`nova list | awk "/ $iname /{print $2}"`
+  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $MAX_FAIL
   nova show $iname
   echo "------------------------------  Console log"
@@ -227,7 +230,7 @@ function run_os_checks() {
   sleep 20
   wait_instance $instance_id $MAX_FAIL
   nova show $iname
-  host2=`nova show $iname | awk "/$host_attr/{print $4}"`
+  host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
   if [[ "$host1" == "$host2" ]] ; then
     echo '' >> errors
     echo "ERROR: Host is not changed after live migration." >> errors
@@ -236,11 +239,11 @@ function run_os_checks() {
   echo "------------------------------  Run instance from ephemeral"
   iname="instance_01"
   nova boot --flavor 51 $nic_opts --image cirros $iname
-  instance_id=`nova list | awk "/ $iname /{print $2}"`
+  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $MAX_FAIL
   nova show $iname
   host_attr='OS-EXT-SRV-ATTR:host'
-  host1=`nova show $iname | awk "/$host_attr/{print $4}"`
+  host1=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
   echo "------------------------------  Console log"
   nova console-log $iname | tail
   echo "------------------------------  Check live migration"
@@ -248,7 +251,7 @@ function run_os_checks() {
   sleep 20
   wait_instance $instance_id $MAX_FAIL
   nova show $iname
-  host2=`nova show $iname | awk "/$host_attr/{print $4}"`
+  host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
   if [[ "$host1" == "$host2" ]] ; then
     echo '' >> errors
     echo "ERROR: Host is not changed after live migration." >> errors
@@ -257,7 +260,7 @@ function run_os_checks() {
   echo "------------------------------  Check flavor with additional Ephemeral and swap "
   iname="instance_02"
   nova boot --flavor 53 $nic_opts --image cirros $iname
-  instance_id=`nova list | awk "/ $iname /{print $2}"`
+  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $((3*MAX_FAIL))
   nova show $iname
 
@@ -290,7 +293,7 @@ function run_os_checks() {
 
   echo "------------------------------  Creating snapshot"
   cinder snapshot-create volume_for_snaps
-  snapshot_id=`cinder snapshot-list | awk "/$volume_id/{print$2}"`
+  snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
   wait_snapshot $snapshot_id $MAX_FAIL
 
   echo "------------------------------  Creating volume from snapshot"
@@ -312,7 +315,7 @@ function run_os_checks() {
   echo "------------------------------  Creating instance"
   iname="instance_for_snaps"
   nova boot --flavor 51 $nic_opts --image cirros $iname
-  instance_id=`nova list | awk "/ $iname /{print $2}"`
+  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $MAX_FAIL
 
   echo "------------------------------  Creating Image from Instance"
@@ -328,7 +331,7 @@ function run_os_checks() {
   echo "------------------------------  Creating instance from created image"
   iname="from_snapshot"
   nova boot --flavor 51 $nic_opts --image $simage_id $iname
-  instance_id=`nova list | awk "/ $iname /{print $2}"`
+  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $((3*MAX_FAIL))
 
   echo "------------------------------  Deleting artefacts"
@@ -349,7 +352,7 @@ function run_os_checks() {
   echo "------------------------------  Creating instance"
   iname="instance_for_resize"
   nova boot --flavor 51 $nic_opts --image cirros $iname
-  instance_id=`nova list | awk "/ $iname /{print $2}"`
+  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $MAX_FAIL
   $exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null
   echo "------------------------------  Resizing instance"
