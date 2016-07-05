@@ -90,7 +90,7 @@ function deploy_changes() {
 
 start_from=${1:-0}
 end_to=${2:-8}
-((steps_count=${end_to}-${start_from}))
+steps_count=$((end_to-start_from))
 
 if (( ${steps_count} < 1 )) ; then
   echo "No more steps to execute"
@@ -137,7 +137,7 @@ if [[ $start_from < 1 ]]; then
     fail "There is not enough free online nodes, only $nodes is available but 6 is required"
   fi
 
-  ((steps_count-=1))
+  steps_count=$((steps_count-1))
 
 else
   env_num=$(fuel env | awk "/$env_name/ {print(\$1)}")
@@ -170,7 +170,7 @@ if [[ $start_from < 2 ]]; then
   python ${my_dir}/set_plugin_parameters.py --fuel_version "${fuel_version}" --config_file "./settings_${env_num}.yaml" --device_paths ${device_paths} --sds_on_controller=true || fail "Failed to set plugin parameters"
   fuel --env $env_num settings --upload || fail "Failed to download env settings"
 
-  ((steps_count-=1))
+  steps_count=$((steps_count-1))
 fi
 
 if (( ${steps_count} < 1 )) ; then
@@ -181,7 +181,7 @@ fi
 if [[ $start_from < 3 ]]; then
   # deploy 3+2 config
   deploy_changes $env_num
-  ((steps_count-=1))
+  steps_count=$((steps_count-1))
 fi
 
 if (( ${steps_count} < 1 )) ; then
@@ -193,7 +193,7 @@ if [[ $start_from < 4 ]]; then
   # remove controller: 2+2
   fuel --env $env_num node --node-id ${nodes[0]} remove || fail "Failed to remove node ${nodes[$0]} from environment $env_num"
   deploy_changes $env_num
-  ((steps_count-=1))
+  steps_count=$((steps_count-1))
   #update nodes list
   nodes=($(fuel node | grep 'True' | grep 'controller' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
   nodes+=($(fuel node | grep 'True' | grep 'compute' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
@@ -209,7 +209,7 @@ if [[ $start_from < 5 ]]; then
   # add controller back: 3+2
   add_node $env_num ${nodes[4]} 'cinder,controller' ${device_paths}
   deploy_changes $env_num
-  ((steps_count-=1))
+  steps_count=$((steps_count-1))
 fi
 
 if (( ${steps_count} < 1 )) ; then
@@ -221,7 +221,7 @@ if [[ $start_from < 6 ]]; then
   # remove compute: 3+1
   fuel --env $env_num node --node-id ${nodes[3]} remove || fail "Failed to remove node ${nodes[$3]} from environment $env_num"
   deploy_changes $env_num
-  ((steps_count-=1))
+  steps_count=$((steps_count-1))
   #update nodes list
   nodes=($(fuel node | grep 'True' | grep 'controller' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
   nodes+=($(fuel node | grep 'True' | grep 'compute' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
@@ -238,7 +238,7 @@ if [[ $start_from < 7 ]]; then
   add_node $env_num ${nodes[4]} 'cinder,controller' ${device_paths}
   add_node $env_num ${nodes[5]} 'cinder,controller' ${device_paths}
   deploy_changes $env_num
-  ((steps_count-=1))
+  steps_count=$((steps_count-1))
 fi
 
 if (( ${steps_count} < 1 )) ; then
@@ -248,6 +248,6 @@ fi
 
 if [[ $start_from < 8 ]]; then
   cleanup
-  ((steps_count-=1))
+  steps_count=$((steps_count-1))
 fi
 
