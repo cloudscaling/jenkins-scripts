@@ -119,42 +119,33 @@ function wait_image() {
   done
 }
 
-function run_os_checks() {
-  
-  exec_on_mdm_callback=$1
-  get_provisioning_type_callback=$2
-  
-  rm -f errors
-  touch errors
-  export MAX_FAIL=30
-  
-  scli_password=${SCALEIO_mdm_password:-'Default_password'}
-  if [ -n "${SCALEIO_mdm_ips}" ] ; then
-    mdm_opts="--mdm_ip ${SCALEIO_mdm_ips}"
-  else
-    mdm_opts=""
-  fi
-  scli_login="scli ${mdm_opts} --login --username admin --password ${scli_password} --approve_certificate"
-  scli_query="${scli_login} && scli ${mdm_opts}"
-  
-  pd_name=${SCALEIO_PROTECTION_DOMAIN:-'default_protection_domain'}
-  
-  # check installed cloud
+function create_virtualenv() {
   rm -rf .venv
   virtualenv .venv
   source .venv/bin/activate
   pip install -q python-openstackclient
-  
-  openstack catalog list
+  deactivate
+}
 
-  if ! openstack image show cirros &>/dev/null ; then
+function create_image() {
+  image_name=${1:-cirros}
+
+  source .venv/bin/activate
+
+  if ! image_id=`openstack image show $image_name | awk '/ id /{print $4}'` ; then
     rm -f cirros-0.3.4-x86_64-disk.img
     wget -t 2 -T 60 -nv http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-    openstack image create --public --file cirros-0.3.4-x86_64-disk.img cirros
+    openstack image create --public --file cirros-0.3.4-x86_64-disk.img $image_name
+    image_id=`openstack image show $image_name | awk '/ id /{print $4}'`
   fi
-  image_id=`openstack image show cirros | grep " id " | awk '{print $4}'`
-  
-  echo "------------------------------  Add specific flavors"
+
+  deactivate
+  echo $image_id
+}
+
+function create_flavors() {
+  source .venv/bin/activate
+
   if ! nova flavor-show 51 &>/dev/null ; then
     nova flavor-create fl8gb 51 512 8 1
   fi
@@ -165,21 +156,57 @@ function run_os_checks() {
     nova flavor-create fl8gbext --ephemeral 8 --swap 8192 53 512 8 1
   fi
   sleep 2
-  
+
+  deactivate
+}
+
+function create_network() {
+  nova network-create --fixed-range-v4 10.0.0.0/24 --gateway 10.0.0.1 --bridge br100 private
+}
+
+function run_os_checks() {
+  exec_on_mdm_callback=$1
+  get_provisioning_type_callback=$2
+
+  rm -f errors
+  touch errors
+  export MAX_FAIL=30
+
+  scli_password=${SCALEIO_mdm_password:-'Default_password'}
+  if [ -n "${SCALEIO_mdm_ips}" ] ; then
+    mdm_opts="--mdm_ip ${SCALEIO_mdm_ips}"
+  else
+    mdm_opts=""
+  fi
+  scli_login="scli ${mdm_opts} --login --username admin --password ${scli_password} --approve_certificate"
+  scli_query="${scli_login} && scli ${mdm_opts}"
+
+  pd_name=${SCALEIO_PROTECTION_DOMAIN:-'default_protection_domain'}
+
+  # check installed cloud
+  source .venv/bin/activate
+
+  openstack catalog list
+
+  image_id=`create_image`
+
+  echo "------------------------------  Add specific flavors"
+  create_flavors
+
   echo "------------------------------  Check cinder volumes"
   echo "------------------------------  Check simple volume"
   cinder create --display_name simple_volume 1
   volume_id=`cinder list | grep " simple_volume " | awk '{print $2}'`
   wait_volume $volume_id $MAX_FAIL
-  
+
   echo "------------------------------  Check cinder volumes"
   echo "------------------------------  Check volume from image"
   cinder create --image-id $image_id --display_name volume_from_image 1
   volume_id=`cinder list | grep " volume_from_image " | awk '{print $2}'`
   wait_volume $volume_id $MAX_FAIL
-  
+
   cinder list
-  
+
   echo "------------------------------  Run instance from bootable volume"
   # in fuel env tehre is more than 1 network, so it's needed to specify network directly
   net_id=`nova network-list | awk '/admin_internal_net/ {print($2)}'`
@@ -205,7 +232,7 @@ function run_os_checks() {
     echo '' >> errors
     echo "ERROR: Host is not changed after live migration." >> errors
   fi
-  
+
   echo "------------------------------  Run instance from ephemeral"
   iname="instance_01"
   nova boot --flavor 51 $nic_opts --image cirros $iname
@@ -226,14 +253,14 @@ function run_os_checks() {
     echo '' >> errors
     echo "ERROR: Host is not changed after live migration." >> errors
   fi
-  
+
   echo "------------------------------  Check flavor with additional Ephemeral and swap "
   iname="instance_02"
   nova boot --flavor 53 $nic_opts --image cirros $iname
   instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $((3*MAX_FAIL))
   nova show $iname
-  
+
   # check existing volumes type
   current_type=`${get_provisioning_type_callback}`
   echo "------------------------------ Check that all volumes in ScaleIO has type: $current_type"
@@ -248,29 +275,29 @@ function run_os_checks() {
   else
     echo "------------------------------ All volumes in ScaleIO has type: $current_type"
   fi
-  
+
   # remove OpenStack objects
   cinder delete simple_volume || /bin/true
   nova delete inst_from_volume || /bin/true
   nova delete instance_01 || /bin/true
   nova delete instance_02 || /bin/true
-  
+
   # check snapshots
   echo "------------------------------  Creating volume"
   cinder create --display_name volume_for_snaps 1
   volume_id=`cinder list | grep " volume_for_snaps " | awk '{print $2}'`
   wait_volume $volume_id $MAX_FAIL
-  
+
   echo "------------------------------  Creating snapshot"
   cinder snapshot-create volume_for_snaps
   snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
   wait_snapshot $snapshot_id $MAX_FAIL
-  
+
   echo "------------------------------  Creating volume from snapshot"
   cinder create --snapshot_id $snapshot_id --name from_snapshot
   snap_volume_id=`cinder list | grep " from_snapshot " | awk '{print $2}'`
   wait_volume $snap_volume_id $MAX_FAIL
-  
+
   cinder delete $snap_volume_id
   echo "------------------------------ Deleting snapshot"
   cinder snapshot-delete $snapshot_id
@@ -280,15 +307,14 @@ function run_os_checks() {
     echo "Snapshot $snapshot_id wasn't deleted." >> errors
   fi
   cinder delete $volume_id
-  
-  
+
   echo "------------------------------  Checking creation of snapshot from instance and second instance from the created image"
   echo "------------------------------  Creating instance"
   iname="instance_for_snaps"
   nova boot --flavor 51 $nic_opts --image cirros $iname
   instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $MAX_FAIL
-  
+
   echo "------------------------------  Creating Image from Instance"
   nova image-create $instance_id snapshot_image
   simage_id=`openstack image show snapshot_image | grep " id " | awk '{print $4}'`
@@ -298,13 +324,13 @@ function run_os_checks() {
   echo "------------------------------  Status should be 'saving' now. Waiting for 'active'"
   wait_image $simage_id $((2*MAX_FAIL)) active
   openstack image show $simage_id
-  
+
   echo "------------------------------  Creating instance from created image"
   iname="from_snapshot"
   nova boot --flavor 51 $nic_opts --image $simage_id $iname
   instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $((3*MAX_FAIL))
-  
+
   echo "------------------------------  Deleting artefacts"
   nova delete from_snapshot
   sleep 5
@@ -315,18 +341,17 @@ function run_os_checks() {
     echo "Snapshot wasn't deleted." >> errors
   fi
   nova delete instance_for_snaps
-  
-  
+
   echo "------------------------------  Checking resize from 'empty' flavor to flavor with set PD (resize to another host)"
   if [[ $current_type == 'thin' ]] ; then otype='thick' ; else otype='thin' ; fi
   nova flavor-key 52 set sio:pd_name=${pd_name} sio:provisioning_type=$otype
-  
+
   echo "------------------------------  Creating instance"
   iname="instance_for_resize"
   nova boot --flavor 51 $nic_opts --image cirros $iname
   instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $MAX_FAIL
-  ${exec_on_mdm_callback} "${scli_query} --query_all_volume" 2>/dev/null
+  $exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null
   echo "------------------------------  Resizing instance"
   nova resize $instance_id 52
   echo "------------------------------  Wating instance for resize-confirm"
@@ -339,10 +364,10 @@ function run_os_checks() {
   # TODO: add checking that new volume was created and has different provisioning type
   nova delete $iname
   sleep 5
-  
+
   # all checks is done and we can switch off traps
   set +e
-  
+
   # here we try to list all infos from ScaleIO
   set -x
   ${exec_on_mdm_callback} "${scli_query} --query_all_volume" 2>/dev/null
@@ -352,9 +377,11 @@ function run_os_checks() {
   nova list
   cinder list
   set +x
-  
+
+  deactivate
+
   if [ -s errors ] ; then
     cat errors
-    exit 1
+    return 1
   fi
 }

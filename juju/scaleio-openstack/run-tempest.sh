@@ -3,6 +3,9 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+source $my_dir/../functions
+source $my_dir/../functions-openstack
+
 auth_ip=`juju status keystone --format tabular | awk '/keystone\/0/{print $7}'`
 keystone_machine=`juju status keystone --format tabular | awk '/keystone\/0/{print $5}'`
 juju scp $my_dir/__setup_cloud_accounts.sh $keystone_machine: 2>/dev/null
@@ -14,27 +17,11 @@ export OS_TENANT_NAME=admin
 export OS_PROJECT_NAME=admin
 export OS_PASSWORD=password
 
-# check installed cloud
-rm -rf .venv
-virtualenv .venv
-source .venv/bin/activate
-pip install -q python-openstackclient
-
-if ! openstack image show cirros &>/dev/null ; then
-  rm -f cirros-0.3.4-x86_64-disk.img
-  wget -t 2 -T 60 -nv http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-  openstack image create --public --file cirros-0.3.4-x86_64-disk.img cirros
-fi
-image_id=`openstack image show cirros | awk '/ id /{print $4}'`
-
-if ! nova flavor-show 51 &>/dev/null ; then
-  nova flavor-create fl8gb 51 512 8 1
-fi
-if ! nova flavor-show 52 &>/dev/null ; then
-  nova flavor-create fl16gb 52 512 16 1
-fi
-
-deactivate
+create_virtualenv
+image_id=`create_image`
+image_id_alt=`create_image cirros_alt`
+create_flavors
+create_network
 
 cd $WORKSPACE/tempest
 
@@ -44,7 +31,10 @@ cp $my_dir/tempest.conf $CONF
 sed -i "s/%AUTH_IP%/$auth_ip/g" $CONF
 sed -i "s|%TEMPEST_DIR%|$(pwd)|g" $CONF
 sed -i "s/%IMAGE_ID%/$image_id/g" $CONF
+sed -i "s/%IMAGE_ID_ALT%/$image_id_alt/g" $CONF
 
-tox -eall-plugin "(tempest\.api\.compute|tempest\.api\.image|tempest\.api\.volume)"
+tox -eall-plugin -- --concurrency 1 "(tempest\.api\.compute|tempest\.api\.image|tempest\.api\.volume)"
+
+testr last --subunit | subunit-1to2 | python $WORKSPACE/jenkins-scripts/tempest/subunit2jenkins.py -o test_result.xml -s scaleio-openstack
 
 cd $my_dir

@@ -4,6 +4,7 @@ my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
+source $my_dir/functions
 
 deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
@@ -39,6 +40,9 @@ echo "Machine created: $m5"
 wait_for_machines $m1 $m2 $m3 $m4 $m5
 
 $my_dir/fix_scini_problems.sh $m1 $m2 $m3 $m4 $m5
+
+create_eth1 $m1
+create_eth1 $m2
 # ---------------------------------------- pre-deployment stage end
 
 # change bundles' variables

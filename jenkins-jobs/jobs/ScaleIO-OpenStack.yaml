@@ -77,3 +77,6 @@
       - shell: |
           #!/bin/bash -e
           ./jenkins-scripts/juju/run-scaleio-openstack.sh deploy-$DEPLOY_TYPE.sh $DEPLOY_FROM
+    publishers:
+      - junit:
+          results: tempest/test_result.xml

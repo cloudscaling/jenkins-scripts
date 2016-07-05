@@ -6,7 +6,7 @@ export OS_TENANT_NAME=admin
 export OS_PROJECT_NAME=admin
 export OS_PASSWORD=password
 
-for (( i=1; i<9; ++i )) ; do
+for (( i=1; i<5; ++i )) ; do
   if ! keystone tenant-get test_tenant_$i &>/dev/null ; then
     keystone tenant-create --name test_tenant_$i 2>/dev/null
   fi
