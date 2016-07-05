@@ -358,7 +358,8 @@ function check_sds_on_controller {
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-
+  
+  #TODO: change check in case there are several mdms
   mdm_ip=`juju ssh $mch "scli --query_cluster | grep 'Management IPs'" 2>/dev/null | awk '{print$5}' | sed 's/,//g'`
   sds_on_controller='false'
   all_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
