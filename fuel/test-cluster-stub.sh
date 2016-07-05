@@ -8,6 +8,6 @@ source ${my_dir}/fuel-utils
 copy_to_master "${my_dir}/*.sh"
 copy_to_master "${my_dir}/*.py"
 execute_on_master './prepare_plugin.sh'
-execute_on_master './cluster.sh 0 3'
+execute_on_master './test-cluster.sh 0 3'
 ${my_dir}/check-openstack-stub.sh
-execute_on_master './cluster.sh 3 8'
+execute_on_master './test-cluster.sh 3 8'
