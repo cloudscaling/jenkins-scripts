@@ -42,7 +42,6 @@ set_fuel_options cached-storage-pools='sp2'
 set_fuel_options rfcache-devices=$rfcache_paths
 configure_cluster mode 1 primary-controller 1 compute 2,3
 
-rfcache=`echo "$rfcache_paths" | sed 's/,/ /'`
 check_password 1 'Other_password'
 check_protection_domain 1 'pd'
 check_sds_storage_pool 1 "$new_storage_pools" "$new_device_paths"
@@ -51,8 +50,7 @@ check_storage_pool 1 'Checksum mode' 'enabled'
 check_storage_pool 1 'Background device scanner' 'Mode: device_only'
 check_storage_pool 1 'Spare policy' '15%'
 check_capacity_alerts 1 '79' '89'
-check_storage_pool 1 'Flash Read Cache' "Doesn't use" 'sp1'
-check_storage_pool 1 'Flash Read Cache' "Uses" 'sp2'
-check_rfcache 1 "$rfcache"
+check_specific_storage_pool 1 'Flash Read Cache' "Uses" 'sp2'
+check_rfcache 1 "$rfcache_paths"
 
 save_logs
