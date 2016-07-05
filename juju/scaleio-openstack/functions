@@ -3,5 +3,5 @@
 function create_eth1() {
   node=$1
 
-  juju ssh $node "sudo apt-get install uml-utilities ; sudo ip tuntap add dev eth1 mode tap ; sudo ip link set dev eth1 up" 2>/dev/null
+  juju ssh $node "sudo apt-get -qqfy install uml-utilities ; sudo ip tuntap add dev eth1 mode tap ; sudo ip link set dev eth1 up" 2>/dev/null
 }
