@@ -20,16 +20,19 @@ virtualenv .venv
 source .venv/bin/activate
 pip install -q python-openstackclient
 
-if ! openstack image show cirros ; then
+if ! openstack image show cirros &>/dev/null ; then
   rm -f cirros-0.3.4-x86_64-disk.img
   wget -t 2 -T 60 -nv http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
   openstack image create --public --file cirros-0.3.4-x86_64-disk.img cirros
 fi
 image_id=`openstack image show cirros | awk '/ id /{print $4}'`
 
-nova flavor-create fl8gb 51 512 8 1 || /bin/true
-nova flavor-create fl16gb 52 512 16 1 || /bin/true
-sleep 2
+if ! nova flavor-show 51 &>/dev/null ; then
+  nova flavor-create fl8gb 51 512 8 1
+fi
+if ! nova flavor-show 52 &>/dev/null ; then
+  nova flavor-create fl16gb 52 512 16 1
+fi
 
 deactivate
 
