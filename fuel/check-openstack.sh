@@ -19,4 +19,5 @@ easy_install pip
 pip install -q virtualenv
 
 export SCALEIO_PROTECTION_DOMAIN='default'
+create_virtualenv
 run_os_checks exec_on_mdm get_provisioning_type 

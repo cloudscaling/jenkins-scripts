@@ -24,4 +24,5 @@ export OS_TENANT_NAME=admin
 export OS_PROJECT_NAME=admin
 export OS_PASSWORD=password
 
+create_virtualenv
 run_os_checks exec_on_mdm get_provisioning_type
