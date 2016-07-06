@@ -40,16 +40,10 @@ set_fuel_options scanner-mode='true'
 set_fuel_options spare-policy='15'
 set_fuel_options capacity-high-alert-threshold='79'
 set_fuel_options capacity-critical-alert-threshold='89'
-<<<<<<< HEAD
 set_fuel_options cached-storage-pools='sp2'
 set_fuel_options rfcache-devices=$rfcache_paths
-configure_cluster mode 1 primary-controller 1 compute 2,3
-=======
-set_fuel_options cached-storage-pools='sp'
-set_fuel_options rfcache-devices=$rfcache_path
 set_fuel_options sds-on-controller='false'
 configure_cluster mode 1 primary-controller 1 compute 2,3,4
->>>>>>> master
 
 check_password 1 'Other_password'
 check_protection_domain 1 'pd'
@@ -59,13 +53,8 @@ check_storage_pool 1 'Checksum mode' 'enabled'
 check_storage_pool 1 'Background device scanner' 'Mode: device_only'
 check_storage_pool 1 'Spare policy' '15%'
 check_capacity_alerts 1 '79' '89'
-<<<<<<< HEAD
 check_specific_storage_pool 1 'Flash Read Cache' "Uses" 'sp2'
 check_rfcache 1 "$rfcache_paths"
-=======
-check_storage_pool 1 'Flash Read Cache' "Uses"
-check_path 1 'Rfcache device ' $rfcache_path
 check_sds_on_controller 1 'false'
->>>>>>> master
 
 save_logs
