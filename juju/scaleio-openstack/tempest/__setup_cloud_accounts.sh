@@ -13,7 +13,7 @@ for (( i=1; i<9; ++i )) ; do
   if ! keystone user-get user_$i &>/dev/null ; then
     keystone user-create --name user_$i --tenant test_tenant_$i --pass password 2>/dev/null
     if (( i>=5 )) ; then
-      keystone user-role-add --tenant test_tenant_$i --user user_$i --role Admin
+      keystone user-role-add --tenant test_tenant_$i --user user_$i --role Admin 2>/dev/null
     fi
   fi
 done

@@ -37,7 +37,7 @@ sed -i "s|%TEMPEST_DIR%|$(pwd)|g" $CONF
 sed -i "s/%IMAGE_ID%/$image_id/g" $CONF
 sed -i "s/%IMAGE_ID_ALT%/$image_id_alt/g" $CONF
 
-source .venv/bin/activate
+source $my_dir/.venv/bin/activate
 pip install -r requirements.txt
 pip install junitxml
 
