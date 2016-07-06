@@ -83,7 +83,16 @@ function execute_task() {
 function deploy_changes() {
     env_num=$1
     fuel --env $env_num deploy-changes > /dev/null 2>&1 &
-    sleep 5
+    pid="$!"
+    tries=360
+    while [[ $tries > 0 ]] ; do
+      echo wait $tries
+      if ! ps $pid ; then
+        break
+      fi
+      tries=$((tries-1))
+      sleep 30
+    done
     wait_running_tasks
     check_failed_tasks $env_num
 }
