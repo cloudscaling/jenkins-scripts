@@ -51,6 +51,10 @@ fi
 
 $my_dir/scaleio-openstack/check-openstack.sh
 
+if [[ "$RUN_TEMPEST" == 'true' ]] ; then
+  $my_dir/scaleio-openstack/run-tempest.sh
+fi
+
 $my_dir/scaleio-openstack/save_logs.sh
 
 if [[ $CLEAN_ENV != 'false' ]] ; then

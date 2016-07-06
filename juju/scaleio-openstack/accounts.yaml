@@ -1,0 +1,21 @@
+- username: 'user_1'
+  tenant_name: 'test_tenant_1'
+  password: 'password'
+
+- username: 'user_2'
+  tenant_name: 'test_tenant_2'
+  password: 'password'
+
+- username: 'user_3'
+  tenant_name: 'test_tenant_3'
+  password: 'password'
+
+- username: 'user_4'
+  tenant_name: 'test_tenant_4'
+  password: 'password'
+
+- username: 'admin'
+  tenant_name: 'admin'
+  password: 'password'
+  types:
+     - 'admin'

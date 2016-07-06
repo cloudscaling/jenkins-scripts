@@ -82,7 +82,7 @@ function copy_log() {
   mch=$1
   log=$2
   dst=$3
-  if juju ssh $mch "test -f $log" ; then
+  if juju ssh $mch "test -f $log" 2>/dev/null ; then
     juju ssh $mch "cat $log" > "$dst" 2>/dev/null
   fi
 }
@@ -115,7 +115,7 @@ function remove_node_service() {
     mch=${machines[$1]}
     name=fuel-node${mch}
     echo Remove EMC packages from machine $1/$machs
-    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -yf emc-scaleio-*'
+    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' 2>/dev/null
     echo Remove service ${name} from machine $1/$machs
     juju remove-service ${name}
     shift
@@ -357,7 +357,7 @@ function check_protection_domain {
 
   ret=0
   for sds_name in ${sds_names[@]} ; do
-    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name"`
+    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
     if ! echo "$output_sds" | grep 'Protection Domain:' | grep -q $pd_name  ; then
       echo "ERROR: Wrong protection domain on $sds_name."
       echo "$output_sds" | grep "Protection Domain:"
@@ -376,7 +376,7 @@ function check_password {
 
   ret=0
   username='admin'
-  if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate" ; then
+  if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate" 2>/dev/null ; then
     echo "INFO: Success. Password was changed to $password"
   else
     echo "ERROR: Wrong password. Please check."
@@ -399,11 +399,21 @@ function check_sds_storage_pool {
 
   ret=0
   for sds_name in ${sds_names[@]} ; do
+<<<<<<< HEAD
     output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name"`
     if ! echo "$output_sds" | grep "Device information" | grep -q "total ${#device_paths_list[@]} devices" ; then
       echo "ERROR: Error in devices number in $sds_name"
       echo "$output_sds"
       ((++ret))
+=======
+    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
+    if ! echo "$output_sds" | grep -A 3 "Device information " | grep 'Storage Pool:' | grep -q $sp_name  ; then
+      echo "ERROR: Unexpected name of storage pool on $sds_name."
+      echo "$output_sds" | grep -A 3 "Device information"
+      return 1
+    else
+      echo "INFO: Success. Storage pool name on $sds_name is $sp_name."
+>>>>>>> master
     fi
     i=0
     for devpath in $device_paths_list ; do
@@ -422,4 +432,37 @@ function check_sds_storage_pool {
   done
 
   return $ret
+}
+
+function check_fuel_perfomance {
+  mch=${machines[$1]}
+  username='admin'
+  password=`get_config fuel-master password`
+
+  check-performance "juju ssh" "$mch" "$username" "$password"
+}
+
+function check_sds_on_controller {
+  mch=${machines[$1]}
+  expected=$2
+
+  username='admin'
+  password=`get_config fuel-master password`
+
+  login_cmd="scli --login --username $username --password $password --approve_certificate"
+  
+  #TODO: change check in case there are several mdms
+  mdm_ip=`juju ssh $mch "scli --query_cluster | grep 'Management IPs'" 2>/dev/null | awk '{print$5}' | sed 's/,//g'`
+  sds_on_controller='false'
+  all_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
+  if echo $all_sds | grep $mdm_ip ; then
+    sds_on_controller='true'
+  fi
+
+  if [[ $sds_on_controller == $expected ]] ; then
+    echo "INFO: Success. SDS on controller is $expected."
+  else
+    echo "ERROR: SDS on controller is $sds_on_controller, but is expected to be $expected."
+    return 1
+  fi
 }
