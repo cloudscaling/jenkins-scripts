@@ -22,38 +22,38 @@ echo "Machine created: $m4"
 wait_for_machines $m1 $m2 $m3 $m4
 
 echo "Deploy cinder"
-juju deploy --repository juju-scaleio-tmp local:trusty/cinder --to $m1
+juju deploy --repository juju-scaleio-tmp local:cinder --to $m1
 juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-liberty" "overwrite=true"
 juju expose cinder
 
 echo "Deploy keystone"
-juju deploy --repository juju-scaleio-tmp local:trusty/keystone --to $m3
+juju deploy --repository juju-scaleio-tmp local:keystone --to $m3
 juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-liberty"
 juju expose keystone
 
 echo "Deploy rabbit mq"
-juju deploy cs:trusty/rabbitmq-server --to $m4
+juju deploy cs:rabbitmq-server --to $m4
 juju set rabbitmq-server "source=cloud:trusty-liberty"
 
 echo "Deploy mysql"
-juju deploy cs:trusty/mysql --to $m4
+juju deploy cs:mysql --to $m4
 
 echo "Deploy SDC"
-juju deploy --repository juju-scaleio local:trusty/scaleio-sdc --to $m1
+juju deploy --repository juju-scaleio local:scaleio-sdc --to $m1
 
 echo "Deploy subordinate to OpenStack"
-juju deploy --repository juju-scaleio local:trusty/scaleio-openstack
+juju deploy --repository juju-scaleio local:scaleio-openstack
 
 echo "Deploy gateway"
-juju deploy --repository juju-scaleio local:trusty/scaleio-gw --to $m2
+juju deploy --repository juju-scaleio local:scaleio-gw --to $m2
 juju service add-unit scaleio-gw --to $m4
 juju expose scaleio-gw
 
 echo "Deploy MDM"
-juju deploy --repository juju-scaleio local:trusty/scaleio-mdm --to $m2
+juju deploy --repository juju-scaleio local:scaleio-mdm --to $m2
 
 echo "Deploy SDS"
-juju deploy --repository juju-scaleio local:trusty/scaleio-sds --to $m2
+juju deploy --repository juju-scaleio local:scaleio-sds --to $m2
 juju service add-unit scaleio-sds --to $m3
 juju service add-unit scaleio-sds --to $m4
 juju set scaleio-sds "device-paths=/dev/xvdf"

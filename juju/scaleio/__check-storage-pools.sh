@@ -36,7 +36,7 @@ function catch_errors() {
 }
 
 echo "INFO: Deploy MDM"
-juju deploy --repository juju-scaleio local:trusty/scaleio-mdm --to 0
+juju deploy --repository juju-scaleio local:scaleio-mdm --to 0
 
 machines[1]=$m1
 machines[2]=$m2
@@ -44,7 +44,7 @@ machines[3]=$m3
 for (( i=1; i<4; ++i )) ; do
   echo "INFO: Deploy SDS $i (sp1,sp1,sp2; /dev/xvdf,/dev/xvdg,/dev/xvdh)"
   sds="scaleio-sds$i"
-  juju deploy --repository juju-scaleio local:trusty/scaleio-sds $sds --to ${machines[$i]}
+  juju deploy --repository juju-scaleio local:scaleio-sds $sds --to ${machines[$i]}
   juju set $sds storage-pools="sp1,sp1,sp2" protection-domain=pd device-paths="/dev/xvdf,/dev/xvdg,/dev/xvdh"
   juju add-relation $sds scaleio-mdm
 done
