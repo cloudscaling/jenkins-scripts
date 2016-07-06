@@ -191,12 +191,23 @@ function run_os_checks() {
   # check installed cloud
   source .venv/bin/activate
   openstack catalog list
+  # in fuel env there is more than 1 network, so it's needed to specify network directly
+  net_id=`nova network-list | awk '/admin_internal_net/{print $2}'`
+  if [ -n "${net_id}" ] ; then
+    nic_opts="--nic net-id=$net_id"
+  else
+    nic_opts=""
+  fi
+
   deactivate
 
   image_id=`create_image`
   echo "------------------------------  Add specific flavors"
   create_flavors
-  create_network
+  # in case of fuel net-id is not emtpy, so skip network creation
+  if [ -z "${net_id}" ] ; then
+    create_network
+  fi
 
   source .venv/bin/activate
   echo "------------------------------  Check cinder volumes"
@@ -214,13 +225,6 @@ function run_os_checks() {
   cinder list
 
   echo "------------------------------  Run instance from bootable volume"
-  # in fuel env tehre is more than 1 network, so it's needed to specify network directly
-  net_id=`nova network-list | awk '/admin_internal_net/{print $2}'`
-  if [ -n "${net_id}" ] ; then
-    nic_opts="--nic net-id=$net_id"
-  else
-    nic_opts=""
-  fi
   iname='inst_from_volume'
   nova boot --flavor 51 $nic_opts --block-device "device=/dev/vda,id=$volume_id,shutdown=remove,source=volume,dest=volume,bootindex=0" $iname
   instance_id=`nova list | grep " $iname " | awk '{print $2}'`
