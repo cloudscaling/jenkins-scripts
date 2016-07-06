@@ -155,15 +155,18 @@ function create_flavors() {
   if ! nova flavor-show 53 &>/dev/null ; then
     nova flavor-create fl8gbext --ephemeral 8 --swap 8192 53 512 8 1
   fi
-  sleep 2
 
   deactivate
 }
 
 function create_network() {
+  source .venv/bin/activate
+
   if ! nova network-show private &>/dev/null ; then
     nova network-create --fixed-range-v4 10.0.0.0/24 --gateway 10.0.0.1 --bridge br100 private
   fi
+
+  deactivate
 }
 
 function run_os_checks() {
