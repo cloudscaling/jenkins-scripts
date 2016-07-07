@@ -15,8 +15,11 @@
     defaults: global
     scm:
       - emc-juju-scaleio
-      - cs-juju-scaleio
       - jenkins-scripts
+      # temporary
+      - charm-cinder
+      - charm-keystone
+      - charm-nova-compute
     builders:
       - use-openstack-updated-charms
       - shell: |
@@ -69,9 +72,12 @@
           default: false
     scm:
       - emc-juju-scaleio
-      - cs-juju-scaleio
       - jenkins-scripts
       - tempest
+      # temporary
+      - charm-cinder
+      - charm-keystone
+      - charm-nova-compute
     builders:
       - use-openstack-updated-charms
       - shell: |

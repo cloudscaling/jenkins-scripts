@@ -7,10 +7,11 @@
           name: CLEAN_ENV
           default: true
     scm:
-      # remove this when OpenStack release new charms
       - emc-juju-scaleio
-      - cs-juju-scaleio
       - jenkins-scripts
+      # temporary
+      - charm-cinder
+      - charm-keystone
     builders:
       - shell: |
           #!/bin/bash -e

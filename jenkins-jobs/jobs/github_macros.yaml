@@ -4,7 +4,7 @@
     scm:
       - git:
           url: 'https://github.com/{organization}/{repo}.git'
-          basedir: '{repo}{suffix}'
+          basedir: '{repo}'
           branches:
             - '*/master'
           clean:
@@ -46,14 +46,6 @@
           credentials-id: "41a26b60-2237-462d-86c3-95e3180fdbaa"
 
 - scm:
-    name: cs-juju-scaleio
-    scm:
-      - github:
-          organization: cloudscaling
-          repo: juju-scaleio
-          suffix: '-tmp'
-
-- scm:
     name: emc-juju-scaleio
     scm:
       - github:
@@ -73,3 +65,35 @@
       - github:
           organization: openstack
           repo: tempest
+
+
+# temporary definition while cinder,keystone,nova-compute charms are not released
+- scm:
+    name: github
+    scm:
+      - git:
+          url: 'https://github.com/openstack/charm-{charm}.git'
+          basedir: 'juju-scaleio-tmp/trusty/{charm}'
+          branches:
+            - '*/master'
+          clean:
+              after: true
+              before: true
+          prune: true
+          wipe-workspace: true
+          skip-tag: true
+- scm:
+    name: charm-cinder
+    scm:
+      - github:
+          charm: cinder
+- scm:
+    name: charm-keystone
+    scm:
+      - github:
+          charm: keystone
+- scm:
+    name: charm-nova-compute
+    scm:
+      - github:
+          charm: nova-compute
