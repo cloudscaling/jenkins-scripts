@@ -7,11 +7,11 @@ source $my_dir/../functions
 source $my_dir/functions
 
 deploy_from=${1:-charmstore}   # Place where to get ScaleIO charms - github or charmstore
-if [[ "$deploy_from" == charmstore ]] ; then
-  JUJU_REPO="cs:~cloudscaling"
-else
-  # deploy_from=github
+if [[ "$deploy_from" == github ]] ; then
   JUJU_REPO="local:trusty"
+else
+  # deploy_from=charmstore
+  JUJU_REPO="cs:~cloudscaling"
 fi
 
 BUNDLE="$my_dir/scaleio-amazon.yaml"
