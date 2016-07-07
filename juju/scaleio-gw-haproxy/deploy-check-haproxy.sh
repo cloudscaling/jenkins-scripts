@@ -91,12 +91,6 @@ fi
 echo "Waiting for all services up"
 sleep 60
 
-# check installed cloud
-rm -rf .venv
-virtualenv .venv
-source .venv/bin/activate
-pip install -q python-openstackclient
-
 auth_ip=`juju status keystone/0 --format json | jq .services.keystone.units | grep public-address | sed 's/[\",]//g' | awk '{print $2}'`
 export OS_AUTH_URL=http://$auth_ip:5000/v2.0
 export OS_USERNAME=admin
@@ -104,7 +98,11 @@ export OS_TENANT_NAME=admin
 export OS_PROJECT_NAME=admin
 export OS_PASSWORD=password
 
-keystone catalog
+# check installed cloud
+create_virtualenv
+
+source $WORKSPACE/.venv/bin/activate
+openstack catalog list
 
 function check_volume_creation() {
   local volume_name=simple_volume_$1
@@ -199,6 +197,8 @@ juju ssh 4 sudo service scaleio-gateway status 2>/dev/null
 check_haproxy_responses ${ip_addresses[@]}
 echo "INFO: Check creation of cinder volume through gw1 $(date)"
 check_volume_creation ha2_gw1
+
+deactivate
 
 trap - ERR
 
