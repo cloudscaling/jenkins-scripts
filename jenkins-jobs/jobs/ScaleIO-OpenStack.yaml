@@ -36,6 +36,8 @@
        version: 'cloud:trusty-kilo'
     - Liberty:
        version: 'cloud:trusty-liberty'
+    - Mitaka:
+       version: 'cloud:trusty-mitaka'
    jobs:
     - 'ScaleIO-OpenStack-{os_ver}'
 
@@ -52,6 +54,7 @@
           name: VERSION
           description: "Version of the OpenStack"
           choices:
+            - cloud:trusty-mitaka
             - cloud:trusty-liberty
             - cloud:trusty-kilo
             - cloud:trusty-juno
