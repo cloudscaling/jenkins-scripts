@@ -1,0 +1,42 @@
+# Deployment  ScaleIO 3-node cluster in Amazon environment.
+
+series: trusty
+services:
+  "scaleio-gw":
+    charm: "cs:cloudscaling/scaleio-gw"
+    num_units: 1
+    expose: true
+    to:
+      - "2"
+  "scaleio-mdm":
+    charm: "cs:cloudscaling/scaleio-mdm"
+    num_units: 3
+    options:
+      cluster-mode: 3
+    to:
+      - "1"
+      - "2"
+      - "3"
+  "scaleio-sds":
+    charm: "cs:cloudscaling/scaleio-sds"
+    num_units: 3
+    options:
+      "device-paths": /dev/xvdf
+    to:
+      - "1"
+      - "2"
+      - "3"
+relations:
+    - "scaleio-mdm:scaleio-mdm"
+  - - "scaleio-sds:scaleio-sds"
+    - "scaleio-mdm:scaleio-sds"
+  - - "scaleio-gw:scaleio-mdm"
+    - "scaleio-mdm:scaleio-mdm"
+    - "scaleio-gw:scaleio-gw"
+machines:
+  "1":
+    series: trusty
+  "2":
+    series: trusty
+  "3":
+    series: trusty
