@@ -1,13 +1,13 @@
 #!/bin/bash -e
 
-my_file="$(readlink -e "$0")"
-my_dir="$(dirname $my_file)"
-
 inner_script=${1:-}
 if [ -z "$inner_script" ] ; then
   echo "No script is specified but required"
   exit 1
 fi
+
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
 
 if ! juju bootstrap ; then
   echo "Bootstrap error. exiting..."

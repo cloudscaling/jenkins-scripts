@@ -14,9 +14,9 @@ tempest.api.compute.admin.test_simple_tenant_usage.TenantUsagesTestJSON.test_get
 tempest.api.compute.admin.test_simple_tenant_usage.TenantUsagesTestJSON.test_get_usage_tenant_with_non_admin_user[id-9d00a412-b40e-4fd9-8eba-97b496316116]
 
 # timeout
+tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON.test_create_backup[id-b963d4f1-94b3-4c40-9e97-7b583f46e470,image]
 # tempest.api.compute.images.test_images.ImagesTestJSON.test_create_image_from_stopped_server[id-aaacd1d0-55a2-4ce8-818a-b5439df8adc9]
 # tempest.api.compute.servers.test_delete_server.DeleteServersTestJSON.test_delete_server_while_in_shelved_state[id-bb0cb402-09dd-4947-b6e5-5e7e1cfa61ad]
-# tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON.test_create_backup[id-b963d4f1-94b3-4c40-9e97-7b583f46e470,image]
 # tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON.test_shelve_unshelve_server[id-77eba8e0-036e-4635-944b-f7a8f3b78dc9]
 # tempest.api.compute.servers.test_servers_negative.ServersNegativeTestJSON.test_shelve_shelved_server[id-443e4f9b-e6bf-4389-b601-3a710f15fddd,negative]
 # tempest.api.volume.test_volumes_actions.VolumesV1ActionsTest.test_volume_upload[id-d8f1ca95-3d5b-44a3-b8ca-909691c9532d,image]
@@ -43,10 +43,6 @@ tempest.api.image.v2.test_images_member_negative.ImagesMemberNegativeTest.test_i
 
 # Details: {u'code': 400, u'message': u'Bad project format: project is not in proper format (None)'}
 tempest.api.volume.admin.test_volume_type_access.VolumeTypesAccessV2Test.test_volume_type_access_list[id-5220eb28-a435-43ce-baaf-ed46f0e95159]
-
-# ??? need to investigate
-#tempest.api.volume.admin.test_volume_types.VolumeTypesV1Test.test_volume_crud_with_volume_type_and_extra_specs[id-c03cc62c-f4e9-4623-91ec-64ce2f9c1260]
-#tempest.api.volume.admin.test_volume_types.VolumeTypesV2Test.test_volume_crud_with_volume_type_and_extra_specs[id-c03cc62c-f4e9-4623-91ec-64ce2f9c1260]
 
 # setUpClass failed
 # tries to create credentials - bug in tempest

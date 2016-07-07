@@ -2,6 +2,7 @@
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
+os_source="cloud:trusty-liberty"
 
 rm -f errors
 touch errors
@@ -23,17 +24,17 @@ wait_for_machines $m1 $m2 $m3 $m4
 
 echo "Deploy cinder"
 juju deploy --repository juju-scaleio-tmp local:cinder --to $m1
-juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=cloud:trusty-liberty" "overwrite=true"
+juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=$os_source" "overwrite=true"
 juju expose cinder
 
 echo "Deploy keystone"
 juju deploy --repository juju-scaleio-tmp local:keystone --to $m3
-juju set keystone "admin-password=password" "debug=true" "openstack-origin=cloud:trusty-liberty"
+juju set keystone "admin-password=password" "debug=true" "openstack-origin=$os_source"
 juju expose keystone
 
 echo "Deploy rabbit mq"
 juju deploy cs:rabbitmq-server --to $m4
-juju set rabbitmq-server "source=cloud:trusty-liberty"
+juju set rabbitmq-server "source=$os_source"
 
 echo "Deploy mysql"
 juju deploy cs:mysql --to $m4
