@@ -71,6 +71,10 @@
             - bundle
             - manual
       - bool:
+          name: PUPPET_DEV_MODE
+          description: "Use puppets from github instead of puppetforge"
+          default: true
+      - bool:
           name: RUN_TEMPEST
           default: false
     scm:

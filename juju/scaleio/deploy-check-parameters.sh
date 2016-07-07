@@ -20,6 +20,7 @@ m3=$(create_machine 0 3)
 echo "Machine created: $m3"
 
 wait_for_machines $m1 $m2 $m3
+apply_developing_puppets $m1 $m2 $m3
 
 # deploy fake charms to prevent machines removing
 juju deploy ubuntu --to $m1

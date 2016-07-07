@@ -38,6 +38,7 @@ m5=$(create_machine 2 1)
 echo "Machine created: $m5"
 
 wait_for_machines $m1 $m2 $m3 $m4 $m5
+apply_developing_puppets $m1 $m2 $m3 $m4 $m5
 
 $my_dir/fix_scini_problems.sh $m1 $m2 $m3 $m4 $m5
 
