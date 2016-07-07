@@ -27,6 +27,10 @@
           export VERSION="{version}"
           export PUPPET_DEV_MODE=true
           ./jenkins-scripts/juju/run-scaleio-openstack.sh deploy-bundle.sh github
+    publishers:
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: 'true'
 
 - project:
    name: ScaleIO-OpenStack
@@ -94,3 +98,6 @@
     publishers:
       - junit:
           results: tempest/test_result.xml
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: 'true'
