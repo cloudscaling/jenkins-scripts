@@ -6,6 +6,10 @@
       - bool:
           name: CLEAN_ENV
           default: true
+      - bool:
+          name: PUPPET_DEV_MODE
+          description: "Use puppets from github instead of puppetforge"
+          default: true
     scm:
       - emc-juju-scaleio
       - jenkins-scripts

@@ -11,7 +11,7 @@
 
 - job-template:
     name: ScaleIO-OpenStack-{os_ver}
-    description: "Deploys ScaleIO cluster(from bundle, from github/emccode) with OpenStack({os_ver}) and checks it"
+    description: "Deploys ScaleIO cluster(from bundle, from github/emccode) with OpenStack({os_ver}) and use puppets from github. Then checks it"
     defaults: global
     scm:
       - emc-juju-scaleio
@@ -25,6 +25,7 @@
       - shell: |
           #!/bin/bash -e
           export VERSION="{version}"
+          export PUPPET_DEV_MODE=true
           ./jenkins-scripts/juju/run-scaleio-openstack.sh deploy-bundle.sh github
 
 - project:
