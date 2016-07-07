@@ -52,7 +52,7 @@ export OS_TEST_TIMEOUT=700
 
 set +e
 #python -m subunit.run discover -t ./ ./tempest/test_discover --load-list=$tests_filtered | subunit-trace -n -f
-testr run --subunit --load-list=$tests_filtered | subunit-trace -n -f
+testr run --subunit --concurrency=2 --load-list=$tests_filtered | subunit-trace -n -f
 exit_code=$?
 
 testr last --subunit | subunit-1to2 | python $WORKSPACE/jenkins-scripts/tempest/subunit2jenkins.py -o test_result.xml -s scaleio-openstack
