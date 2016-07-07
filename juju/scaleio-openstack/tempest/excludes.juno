@@ -1,1 +1,6 @@
 !excludes.kilo
+
+# looks like it is unsupported
+tempest.api.compute.admin.test_servers_on_multinodes.ServersOnMultiNodesTest.test_create_servers_on_different_hosts[id-cc7ca884-6e3e-42a3-a92f-c522fcf25e8e]
+tempest.api.volume.admin.test_volume_type_access.VolumeTypesAccessV2Test.test_volume_type_access_add[id-d4dd0027-835f-4554-a6e5-50903fb79184]
+tempest.api.compute.servers.test_instance_actions.InstanceActionsTestJSON
