@@ -139,9 +139,12 @@ function apply_developing_puppets() {
     return
   fi
   for mch in $@ ; do
-    juju ssh $mch "sudo apt-get -qqfy install git >/dev/null" 2>/dev/null
+    juju ssh $mch "sudo apt-get -qqfy install git puppet >/dev/null" 2>/dev/null
     juju ssh $mch "sudo git clone https://github.com/emccode/puppet-scaleio /etc/puppet/modules/scaleio" 2>/dev/null
     juju ssh $mch "sudo git clone https://github.com/emccode/puppet-scaleio-openstack /etc/puppet/modules/scaleio_openstack" 2>/dev/null
+    for dep in puppetlabs-firewall puppetlabs-stdlib puppetlabs-inifile ; do
+      juju ssh $mch "sudo puppet module install $dep" 2>/dev/null
+    done
   done
 }
 
