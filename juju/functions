@@ -135,7 +135,7 @@ function create_machine() {
 }
 
 function apply_developing_puppets() {
-  if [[ "${PUPPET_DEV_MODE:-false}" != true ]] ;
+  if [[ "${PUPPET_DEV_MODE:-false}" != true ]] ; then
     return
   fi
   for mch in $@ ; do
