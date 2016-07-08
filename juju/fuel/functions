@@ -178,33 +178,7 @@ function configure_cluster() {
     shift
   done
 
-  sleep 15
-
-  echo "Wait for services start: $(date)"
-  wait_absence_status_for_services "executing|blocked|waiting|allocating"
-  echo "Wait for services end: $(date)"
-
-  juju set fuel-master deploy=$deploy_counter
-  ((deploy_counter++))
-  sleep 30
-
-  echo "Wait for services start: $(date)"
-  wait_absence_status_for_services "maintenance"
-  echo "Wait for services end: $(date)"
-
-  # check query_cluster output before exit on error if exists
-  master_mdm=`get_master_mdm "echo $mdms"`
-  echo "INFO: query cluster on machine $master_mdm"
-  juju ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
-
-  # check for errors
-  if juju status | grep "current" | grep error ; then
-    echo "ERROR: Some services went to error state"
-    juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
-    exit 1
-  fi
-
-  check-cluster "juju ssh" $master_mdm $mode
+  wait_and_check
 }
 
 function add_computes() {
@@ -212,7 +186,10 @@ function add_computes() {
     deploy_node_service $i "compute"
   done
 
-  sleep 15
+  wait_and_check
+}
+
+function wait_and_check() {
 
   echo "Wait for services start: $(date)"
   wait_absence_status_for_services "executing|blocked|waiting|allocating"
@@ -220,7 +197,6 @@ function add_computes() {
 
   juju set fuel-master deploy=$deploy_counter
   ((deploy_counter++))
-  sleep 30
 
   echo "Wait for services start: $(date)"
   wait_absence_status_for_services "maintenance"
@@ -235,7 +211,7 @@ function add_computes() {
   if juju status | grep "current" | grep error ; then
     echo "ERROR: Some services went to error state"
     juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
-    exit 1
+    return 1
   fi
 
   check-cluster "juju ssh" $master_mdm $mode
@@ -545,7 +521,7 @@ function check_protection_domain_nodes {
     echo "INFO: Success. Number of protection domains is optimal."
   else
     echo "ERROR: Too much protection domains was created."
-    return 1
+    ((++ret))
   fi
 
   return $ret
