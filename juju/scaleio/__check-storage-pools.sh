@@ -28,9 +28,9 @@ function remove_services() {
 trap 'catch_errors $LINENO' ERR EXIT
 function catch_errors() {
   local exit_code=$?
-  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
-
+  echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
   trap - ERR EXIT
+
   remove_services
   exit $exit_code
 }

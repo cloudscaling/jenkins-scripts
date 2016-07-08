@@ -24,7 +24,8 @@ function save_logs() {
 
 function catch_errors() {
   local exit_code=$?
-  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
+  echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
+  trap - ERR
 
   # sleep some time to flush logs
   sleep 20

@@ -16,7 +16,8 @@ fi
 trap 'catch_errors $LINENO' ERR EXIT
 function catch_errors() {
   local exit_code=$?
-  echo "Line: $1  Error=$exit_code  Command: '$BASH_COMMAND'"
+  echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
+  trap - ERR EXIT
 
   juju remove-service scaleio-sds-zp || /bin/true
   juju remove-service scaleio-sds || /bin/true
@@ -25,7 +26,6 @@ function catch_errors() {
   wait_for_removed "scaleio-sds" || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
 
-  trap - ERR EXIT
   exit $exit_code
 }
 
