@@ -11,7 +11,7 @@ if [[ "`whoami`" != 'root' ]] ; then
   exit -1
 fi
 
-fuel_master='10.20.0.2'
+fuel_master=${FUEL_MASTER_ADDR:-'10.20.0.2'}
 
 if [ -f /home/jenkins/.ssh/known_hosts ] ; then
   ssh-keygen -f /home/jenkins/.ssh/known_hosts  -R $fuel_master
