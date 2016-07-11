@@ -21,8 +21,8 @@ index dfe5ffe..182590f 100755
 -node_ram=3072
 -node_cpu=1
 -node_size=75G
-+node_ram=8192
-+node_cpu=4
++node_ram=4096
++node_cpu=2
 +node_size=100G
  node_count=$2
  

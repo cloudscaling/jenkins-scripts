@@ -5,18 +5,18 @@ How to prepare stand:
 3. create jenkins user
 4. add key of master jenkins server into jenkins's user authorized_keys file (~/.ssh/authorized_keys)
 5. Prepare SW:
-   apt-get install -y git qemu-kvm
-   su jenkins
-   mkdir ~/fuel_ci
-   cd ~/fuel_ci
-   git clone https://github.com/skolekonov/fuel-kvm
-   git clone https://github.com/cloudscaling/jenkins-scripts
-   cp jenkins-scripts/fuel/provision_fuel.sh ./
-   cp jenkins-scripts/fuel/cleanup_env.sh ./
-   cp jenkins-scripts/fuel/fuel_kvm.patch ./fuel-kvm/
-   pushd fuel-kvm
-   patch --backup-if-mismatch fuel_kvm.patch
-   popd
+    apt-get install -y git qemu-kvm
+    su jenkins
+    mkdir ~/fuel_ci
+    cd ~/fuel_ci
+    git clone https://github.com/cloudscaling/fuel-kvm
+    git clone https://github.com/cloudscaling/jenkins-scripts
+    cp jenkins-scripts/fuel/provision_fuel.sh ./
+    cp jenkins-scripts/fuel/cleanup_env.sh ./
+    cp jenkins-scripts/fuel/fuel_kvm.patch ./fuel-kvm/
+    pushd fuel-kvm
+    patch --backup-if-mismatch fuel_kvm.patch
+    popd
 
 6. Download MOS iso file into ~/fuel_ci/.
    Names are expected as 'MirantisOpenStack-x.y.iso', e.g. MirantisOpenStack-8.0.iso
