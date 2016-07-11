@@ -139,7 +139,7 @@ function apply_developing_puppets() {
     return
   fi
   for mch in $@ ; do
-    juju ssh $mch "sudo apt-get -qqfy update && sudo apt-get -qqfy upgrade && sudo apt-get -qqfy purge puppet ruby facter" 2>/dev/null
+    juju ssh $mch "sudo apt-get -qy update && sudo apt-get -qfy upgrade && sudo apt-get -qqfy purge puppet ruby facter" 2>/dev/null
     if [[ "${PUPPET4:-false}" == true ]] ; then
       juju ssh $mch "sudo apt-get -qqfy install git ruby" 2>/dev/null
       juju ssh $mch "sudo gem install puppet" 2>/dev/null
