@@ -54,7 +54,7 @@ juju expose nova-cloud-controller
 echo "Deploy nova-compute"
 juju deploy --repository juju-scaleio-tmp local:nova-compute --to $m1
 juju service add-unit nova-compute --to $m2
-juju set nova-compute "debug=true" "openstack-origin=$VERSION" "virt-type=qemu" "enable-resize=True" "enable-live-migration=True" "migration-auth-type=ssh" #"libvirt-image-backend=sio"
+juju set nova-compute "debug=true" "openstack-origin=$VERSION" "virt-type=qemu" "enable-resize=True" "enable-live-migration=True" "migration-auth-type=ssh" "libvirt-image-backend=sio"
 
 echo "Deploy glance"
 juju deploy cs:glance --to $m3
@@ -119,7 +119,7 @@ juju add-relation "nova-cloud-controller:amqp" "rabbitmq-server:amqp"
 juju add-relation "cinder:image-service" "glance:image-service"
 juju add-relation "scaleio-openstack:scaleio-gw" "scaleio-gw:scaleio-gw"
 juju add-relation "cinder:storage-backend" "scaleio-openstack:storage-backend"
-#juju add-relation "nova-compute:ephemeral-backend" "scaleio-openstack:ephemeral-backend"
+juju add-relation "nova-compute:ephemeral-backend" "scaleio-openstack:ephemeral-backend"
 
 
 echo "Wait for services start: $(date)"
