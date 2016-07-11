@@ -7,9 +7,13 @@
       - bool:
           name: CLEAN_ENV
           default: true
-      - string:
+      - choice:
           name: FUEL_VERSION
-          default: '8.0'
+          description: "Version of the FUEL to test"
+          choices:
+            - 6.1
+            - 7.0
+            - 8.0
       - string:
           name: FUEL_NODES
           default: '6'
