@@ -15,7 +15,7 @@ prepare_fuel_master 0
 #   zero-padding=false
 #   TODO: add more parameters and check their default value
 configure_cluster mode 1 primary-controller 1 compute 2,3
-add_computes 4
+configure_cluster mode 1 primary-controller 1 compute 4
 
 check_fuel_perfomance 1
 check_protection_domain 1 'default'
@@ -49,7 +49,7 @@ set_fuel_options cached-storage-pools='sp2'
 set_fuel_options rfcache-devices=$rfcache_paths
 set_fuel_options sds-on-controller='false'
 configure_cluster mode 1 primary-controller 1 compute 2,3,4
-add_computes 5,6,7
+configure_cluster mode 1 primary-controller 1 compute 5,6,7
 
 check_password 1 'Other_password'
 check_protection_domain 1 'pd'

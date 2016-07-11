@@ -178,19 +178,6 @@ function configure_cluster() {
     shift
   done
 
-  wait_and_check
-}
-
-function add_computes() {
-  for i in `echo $1 | sed 's/,/ /g'`; do
-    deploy_node_service $i "compute"
-  done
-
-  wait_and_check
-}
-
-function wait_and_check() {
-
   echo "Wait for services start: $(date)"
   wait_absence_status_for_services "executing|blocked|waiting|allocating"
   echo "Wait for services end: $(date)"
@@ -216,6 +203,7 @@ function wait_and_check() {
 
   check-cluster "juju ssh" $master_mdm $mode
 }
+
 
 #TODO: remove duplication of code: re-use the check functions from common code when it appears
 function check_storage_pool {
