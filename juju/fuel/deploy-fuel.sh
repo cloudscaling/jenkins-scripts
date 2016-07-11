@@ -28,8 +28,16 @@ check_storage_pool 1 'Flash Read Cache' "Doesn't use"
 check_sds_on_controller 1 'true'
 
 remove_node_service 1 2 3
+
+set_fuel_options metadata-enabled='false'
+configure_cluster mode 1 primary-controller 1 compute 2
+check_scaleio_not_installed 1
+remove_node_service 1 2
+
 new_storage_pools='sp1,sp2'
 new_device_paths='/dev/xvdf,/dev/xvdg'
+
+set_fuel_options metadata-enabled='true'
 set_fuel_options protection-domain='pd'
 set_fuel_options storage-pools=$new_storage_pools
 set_fuel_options device-paths=$new_device_paths
