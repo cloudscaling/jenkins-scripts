@@ -13,10 +13,6 @@ How to prepare stand:
     git clone https://github.com/cloudscaling/jenkins-scripts
     cp jenkins-scripts/fuel/provision_fuel.sh ./
     cp jenkins-scripts/fuel/cleanup_env.sh ./
-    cp jenkins-scripts/fuel/fuel_kvm.patch ./fuel-kvm/
-    pushd fuel-kvm
-    patch --backup-if-mismatch fuel_kvm.patch
-    popd
 
 6. Download MOS iso file into ~/fuel_ci/.
    Names are expected as 'MirantisOpenStack-x.y.iso', e.g. MirantisOpenStack-8.0.iso
