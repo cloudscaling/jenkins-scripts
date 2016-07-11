@@ -98,6 +98,7 @@
     publishers:
       - junit:
           results: tempest/test_result.xml
+          allow-empty-results: true
       - archive:
           artifacts: 'logs/**'
-          allow-empty: 'true'
+          allow-empty: true
