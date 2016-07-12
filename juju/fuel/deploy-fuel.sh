@@ -16,6 +16,7 @@ prepare_fuel_master 0
 #   TODO: add more parameters and check their default value
 configure_cluster mode 1 primary-controller 1 compute 2,3
 
+check_branch 1
 check_fuel_perfomance 1
 check_protection_domain 1 'default'
 check_sds_storage_pool 1 'default' "$device_paths"
@@ -28,8 +29,10 @@ check_storage_pool 1 'Flash Read Cache' "Doesn't use"
 check_sds_on_controller 1 'true'
 
 remove_node_service 1 2 3
+
 new_storage_pools='sp1,sp2'
 new_device_paths='/dev/xvdf,/dev/xvdg'
+
 set_fuel_options protection-domain='pd'
 set_fuel_options storage-pools=$new_storage_pools
 set_fuel_options device-paths=$new_device_paths
