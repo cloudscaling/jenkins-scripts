@@ -13,6 +13,10 @@ How to prepare stand:
     git clone https://github.com/cloudscaling/jenkins-scripts
     cp jenkins-scripts/fuel/provision_fuel.sh ./
     cp jenkins-scripts/fuel/cleanup_env.sh ./
-
 6. Download MOS iso file into ~/fuel_ci/.
    Names are expected as 'MirantisOpenStack-x.y.iso', e.g. MirantisOpenStack-8.0.iso
+7. Allow jenkins user to run deploy of env, add to sudoers fiel:
+jenkins ALL=(ALL) NOPASSWD: /home/jenkins/fuel_ci/provision_fuel.sh
+jenkins ALL=(ALL) NOPASSWD: /home/jenkins/fuel_ci/cleanup_env.sh
+Defaults!/home/jenkins/fuel_ci/provision_fuel.sh env_keep+="FUEL_*"
+Defaults!/home/jenkins/fuel_ci/cleanup_env.sh env_keep+="FUEL_*"
