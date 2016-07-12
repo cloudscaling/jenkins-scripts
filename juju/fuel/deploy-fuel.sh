@@ -14,7 +14,7 @@ prepare_fuel_master 0
 # 3+1 cluster with default parameters:
 configure_cluster mode 1 primary-controller 1 compute 2,3
 # Adding compute node to check that it will get to the same protection domain (parameter protection-domain-nodes is 100 by default)
-configure_cluster mode 1 primary-controller 1 compute 4
+configure_cluster mode 1 primary-controller 1 compute 2,3,4
 
 check_fuel_perfomance 1
 check_protection_domain 1 'default'
@@ -48,7 +48,7 @@ set_fuel_options cached-storage-pools='sp2'
 set_fuel_options rfcache-devices=$rfcache_paths
 set_fuel_options sds-on-controller='false'
 configure_cluster mode 1 primary-controller 1 compute 2,3,4
-configure_cluster mode 1 primary-controller 1 compute 5,6,7
+configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
 
 check_password 1 'Other_password'
 check_protection_domain 1 'pd'

@@ -19,6 +19,7 @@ else
   device_paths="/dev/xvdf"
   rfcache_paths="/dev/xvdh,/dev/xvdi"
 fi
+username='admin'
 machines=()
 deploy_counter=1
 
@@ -206,6 +207,17 @@ function configure_cluster() {
 
 
 #TODO: remove duplication of code: re-use the check functions from common code when it appears
+
+function get_pd_list {
+  controller=$1
+  password=$2
+  login_cmd="scli --login --username $username --password $password --approve_certificate"
+  pd_names_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME"
+
+  pd_output=`juju ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
+  pd_list=`echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'`
+}
+
 function check_storage_pool {
   mch=${machines[$1]}
   key_to_check=$2
@@ -218,10 +230,8 @@ function check_storage_pool {
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  pd_names_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME"
 
-  pd_output=`juju ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
-  pd_list=`echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'`
+  get_pd_list $mch $password
 
   ret=0
   for pd in $pd_list ; do
@@ -251,14 +261,11 @@ function check_specific_storage_pool {
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
   checked_sp_list=(`echo "$checked_sps" | sed 's/,/ /g'`)
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  pd_names_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME"
 
-  pd_output=`juju ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
-  pd_list=`echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'`
+  get_pd_list $mch $password
 
   ret=0
   for pd in $pd_list ; do
@@ -300,10 +307,8 @@ function check_capacity_alerts {
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  pd_names_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME"
 
-  pd_output=`juju ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
-  pd_list=`echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'`
+  get_pd_list $mch $password
 
   ret=0
   for pd in $pd_list ; do
