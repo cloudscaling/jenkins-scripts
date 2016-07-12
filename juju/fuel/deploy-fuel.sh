@@ -16,7 +16,7 @@ configure_cluster mode 1 primary-controller 1 compute 2,3
 # Adding compute node to check that it will get to the same protection domain (parameter protection-domain-nodes is 100 by default)
 configure_cluster mode 1 primary-controller 1 compute 2,3,4
 
-check_fuel_perfomance 1
+check_fuel_performance 1
 check_protection_domain 1 'default'
 check_protection_domain_nodes 1 '100'
 check_sds_storage_pool 1 'default' "$device_paths"
@@ -30,9 +30,15 @@ check_sds_on_controller 1 'true'
 
 remove_node_service 1 2 3 4
 
+set_fuel_options metadata-enabled='false'
+configure_cluster mode 1 primary-controller 1 compute 2
+check_scaleio_not_installed 1
+remove_node_service 1 2
+
 new_storage_pools='sp1,sp2'
 new_device_paths='/dev/xvdf,/dev/xvdg'
 
+set_fuel_options metadata-enabled='true'
 set_fuel_options protection-domain='pd'
 set_fuel_options protection-domain-nodes='3'
 set_fuel_options storage-pools=$new_storage_pools
