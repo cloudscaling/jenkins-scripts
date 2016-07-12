@@ -215,7 +215,7 @@ function get_pd_list {
   pd_names_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME"
 
   pd_output=`juju ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
-  pd_list=`echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'`
+  echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'
 }
 
 function check_storage_pool {
@@ -231,7 +231,7 @@ function check_storage_pool {
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
 
-  get_pd_list $mch $password
+  pd_list=`get_pd_list $mch $password`
 
   ret=0
   for pd in $pd_list ; do
@@ -265,7 +265,7 @@ function check_specific_storage_pool {
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
 
-  get_pd_list $mch $password
+  pd_list=`get_pd_list $mch $password`
 
   ret=0
   for pd in $pd_list ; do
@@ -308,7 +308,7 @@ function check_capacity_alerts {
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
 
-  get_pd_list $mch $password
+  pd_list=`get_pd_list $mch $password`
 
   ret=0
   for pd in $pd_list ; do
