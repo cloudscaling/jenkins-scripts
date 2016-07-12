@@ -16,6 +16,7 @@ configure_cluster mode 1 primary-controller 1 compute 2,3
 # Adding compute node to check that it will get to the same protection domain (parameter protection-domain-nodes is 100 by default)
 configure_cluster mode 1 primary-controller 1 compute 2,3,4
 
+check_branch 1
 check_fuel_performance 1
 check_protection_domain 1 'default'
 check_protection_domain_nodes 1 '100'

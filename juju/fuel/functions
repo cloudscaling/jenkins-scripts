@@ -531,3 +531,40 @@ function check_scaleio_not_installed {
     echo "INFO: Success. ScaleIO packages wasn't installed to controller."
   fi
 }
+
+function check_branch {
+  mch=${machines[$1]}
+
+  branch=`get_config fuel-master branch-name`
+
+  master_file=' deployment_tasks.yaml'
+  branch_file=' tasks.yaml'
+
+  find_file="sudo ls -l /root/fuel-plugin-scaleio"
+
+  if [[ $branch == "master" ]] ; then
+    if juju ssh $mch "$find_file" 2>/dev/null | grep "$master_file" ; then
+      if ! juju ssh $mch "$find_file" 2>/dev/null | grep "$branch_file" ; then
+        echo "INFO: Success. Your branch is $branch. All files are corresponding."
+      else
+        echo "ERROR: Your branch is $branch. There is unexpected file $branch_file in /root/fuel-plugin-scaleio."
+        return 1
+      fi
+    else
+      echo "ERROR: Your branch is $branch. There is no expected file $master_file in /root/fuel-plugin-scaleio."
+      return 1
+    fi
+  else
+    if juju ssh $mch "$find_file" 2>/dev/null | grep "$branch_file" ; then
+      if ! juju ssh $mch "$find_file" 2>/dev/null | grep "$master_file" ; then
+        echo "INFO: Success. Your branch is $branch. All files are corresponding."
+      else
+        echo "ERROR: Your branch is $branch. There is unexpected file $master_file in /root/fuel-plugin-scaleio."
+        return 1
+      fi
+    else
+      echo "ERROR: Your branch is $branch. There is no expected file $branch_file in /root/fuel-plugin-scaleio."
+      return 1
+    fi
+  fi
+}
