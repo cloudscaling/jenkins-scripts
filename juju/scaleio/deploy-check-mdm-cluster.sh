@@ -23,8 +23,7 @@ m5=$(create_machine 0 0)
 echo "Machine created: $m5"
 
 wait_for_machines $m1 $m2 $m3 $m4 $m5
-# add machine 0 because it will be used for deployment of MDM
-apply_developing_puppets 0 $m1 $m2 $m3 $m4 $m5
+apply_developing_puppets $m1 $m2 $m3 $m4 $m5
 
 # deploy fake charms to prevent machines removing
 juju deploy ubuntu --to $m1
