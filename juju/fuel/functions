@@ -178,34 +178,35 @@ function configure_cluster() {
     shift
   done
 
-  sleep 15
-
   echo "Wait for services start: $(date)"
   wait_absence_status_for_services "executing|blocked|waiting|allocating"
   echo "Wait for services end: $(date)"
 
   juju set fuel-master deploy=$deploy_counter
   ((deploy_counter++))
-  sleep 30
 
   echo "Wait for services start: $(date)"
   wait_absence_status_for_services "maintenance"
   echo "Wait for services end: $(date)"
 
-  # check query_cluster output before exit on error if exists
-  master_mdm=`get_master_mdm "echo $mdms"`
-  echo "INFO: query cluster on machine $master_mdm"
-  juju ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
+  metadata_enable=`get_config fuel-master metadata-enable`
+  if [[ $metadata_enable == '"true"' ]] ; then
+    # check query_cluster output before exit on error if exists
+    master_mdm=`get_master_mdm "echo $mdms"`
+    echo "INFO: query cluster on machine $master_mdm"
+    juju ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
 
-  # check for errors
-  if juju status | grep "current" | grep error ; then
-    echo "ERROR: Some services went to error state"
-    juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
-    exit 1
+    # check for errors
+    if juju status | grep "current" | grep error ; then
+      echo "ERROR: Some services went to error state"
+      juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
+      return 1
+    fi
+
+    check-cluster "juju ssh" $master_mdm $mode
   fi
-
-  check-cluster "juju ssh" $master_mdm $mode
 }
+
 
 #TODO: remove duplication of code: re-use the check functions from common code when it appears
 function check_storage_pool {
@@ -214,23 +215,30 @@ function check_storage_pool {
   expected_value=$3
 
   storage_pools=`get_config fuel-master storage-pools`
-  sp_list=`echo "$storage_pools" | sed 's/,/ /'`
-  pd=`get_config fuel-master protection-domain`
+  sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
+
   username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
+  pd_names_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME"
+
+  pd_output=`juju ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
+  pd_list=`echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'`
+
   ret=0
-  for sp in $sp_list ; do
-    query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-    output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null`
-    if echo "$output" | grep "$key_to_check" | grep -q "$expected_value" ; then
-      echo "INFO: Success. Parameter $key_to_check in storage pool $sp is $expected_value."
-    else
-      echo "ERROR: Parameter $key_to_check in storage pool $sp is in wrong state."
-      echo "$output"
-      ((++ret))
-    fi
+  for pd in $pd_list ; do
+    for sp in $sp_list ; do
+      query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
+      output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null`
+      if echo "$output" | grep "$key_to_check" | grep -q "$expected_value" ; then
+        echo "INFO: Success. Parameter $key_to_check in storage pool $sp in protection domain $pd is $expected_value."
+      else
+        echo "ERROR: Parameter $key_to_check in storage pool $sp in protection domain $pd is in wrong state."
+        echo "$output"
+        ((++ret))
+      fi
+    done
   done
 
   return $ret
@@ -245,32 +253,39 @@ function check_specific_storage_pool {
 
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
   checked_sp_list=(`echo "$checked_sps" | sed 's/,/ /g'`)
-  pd=`get_config fuel-master protection-domain`
+
   username='admin'
   password=`get_config fuel-master password`
 
-  ret=0
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  for sp in $sp_list ; do
-    query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-    output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null`
-    if [[ ${checked_sp_list[@]} =~ "$sp" ]] ; then
-      if echo "$output" | grep "$key_to_check" | grep -q "$expected_value" ; then
-        echo "INFO: Success. Parameter $key_to_check in storage pool $sp is $expected_value."
+  pd_names_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME"
+
+  pd_output=`juju ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
+  pd_list=`echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'`
+
+  ret=0
+  for pd in $pd_list ; do
+    for sp in $sp_list ; do
+      query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
+      output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null`
+      if [[ ${checked_sp_list[@]} =~ "$sp" ]] ; then
+        if echo "$output" | grep "$key_to_check" | grep -q "$expected_value" ; then
+          echo "INFO: Success. Parameter $key_to_check in storage pool $sp in protection domain $pd is $expected_value."
+        else
+          echo "ERROR: Parameter $key_to_check in storage pool $sp in protection domain $pd is in wrong state."
+          echo "$output"
+          ((++ret))
+        fi
       else
-        echo "ERROR: Parameter $key_to_check in storage pool $sp is in wrong state."
-        echo "$output"
-        ((++ret))
+        if ! echo "$output" | grep "$key_to_check" | grep -q "$expected_value" ; then
+          echo "INFO: Success. Parameter $key_to_check in storage pool $sp in protection domain $pd is not in state $expected_value."
+        else
+          echo "ERROR: Parameter $key_to_check in storage pool $sp in protection domain $pd is in $expected_value, but shouldn't."
+          echo "$output"
+          ((++ret))
+        fi
       fi
-    else
-      if ! echo "$output" | grep "$key_to_check" | grep -q "$expected_value" ; then
-        echo "INFO: Success. Parameter $key_to_check in storage pool $sp is not in state $expected_value."
-      else
-        echo "ERROR: Parameter $key_to_check in storage pool $sp is in $expected_value, but shouldn't."
-        echo "$output"
-        ((++ret))
-      fi
-    fi
+    done
   done
 
   return $ret
@@ -283,29 +298,36 @@ function check_capacity_alerts {
 
   storage_pools=`get_config fuel-master storage-pools`
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
-  pd=`get_config fuel-master protection-domain`
+
   username='admin'
   password=`get_config fuel-master password`
 
-  ret=0
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  for sp in $sp_list ; do
-    query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-    output_storage_pool=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null | grep "Capacity alert thresholds"`
-    if echo "$output_storage_pool" | awk '{print$5}' | grep -q "$high_alert" ; then
-       echo "INFO: Success. Capacity alert thresholds on $sp storage pool: high is $high_alert."
-    else
-      echo "ERROR: Wrong capacity high alert thresholds on $sp storage pool."
-      echo "$output_storage_pool"
-      ((++ret))
-    fi
-    if echo "$output_storage_pool" | awk '{print$7}' | grep -q "$critical_alert" ; then
-      echo "INFO: Success. Capacity alert thresholds on $sp storage pool: critical is $critical_alert"
-    else
-      echo "ERROR: Wrong capacity critical alert thresholds on $sp storage pool."
-      echo "$output_storage_pool"
-      ((++ret))
-    fi
+  pd_names_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME"
+
+  pd_output=`juju ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
+  pd_list=`echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'`
+
+  ret=0
+  for pd in $pd_list ; do
+    for sp in $sp_list ; do
+      query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
+      output_storage_pool=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null | grep "Capacity alert thresholds"`
+      if echo "$output_storage_pool" | awk '{print$5}' | grep -q "$high_alert" ; then
+         echo "INFO: Success. Capacity alert thresholds on $sp storage pool in protection domain $pd: high is $high_alert."
+      else
+        echo "ERROR: Wrong capacity high alert thresholds on $sp storage pool in protection domain $pd. Expected $high_alert."
+        echo "$output_storage_pool"
+        ((++ret))
+      fi
+      if echo "$output_storage_pool" | awk '{print$7}' | grep -q "$critical_alert" ; then
+        echo "INFO: Success. Capacity alert thresholds on $sp storage pool in protection domain $pd: critical is $critical_alert"
+      else
+        echo "ERROR: Wrong capacity critical alert thresholds on $sp storage pool in protection domain $pd. Expected $critical_alert."
+        echo "$output_storage_pool"
+        ((++ret))
+      fi
+    done
   done
 
   return $ret
@@ -346,7 +368,7 @@ function check_rfcache {
 
 function check_protection_domain {
   mch=${machines[$1]}
-  pd_name=$2
+  expected_pd_name=$2
 
   username='admin'
   password=`get_config fuel-master password`
@@ -358,12 +380,13 @@ function check_protection_domain {
   ret=0
   for sds_name in ${sds_names[@]} ; do
     output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
-    if ! echo "$output_sds" | grep 'Protection Domain:' | grep -q $pd_name  ; then
+    current_pd_name=`echo "$output_sds" | awk '/Protection Domain:/{print$5}' | sed 's/\r//g'`
+    if [[ "${current_pd_name%%_*}" == "${expected_pd_name}" ]] ; then
+      echo "INFO: Success. Protection domain on $sds_name is $current_pd_name."
+    else
       echo "ERROR: Wrong protection domain on $sds_name."
       echo "$output_sds" | grep "Protection Domain:"
       ((++ret))
-    else
-      echo "INFO: Success. Protection domain on $sds_name is $pd_name."
     fi
   done
 
@@ -399,7 +422,7 @@ function check_sds_storage_pool {
 
   ret=0
   for sds_name in ${sds_names[@]} ; do
-    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name"`
+    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
     if ! echo "$output_sds" | grep "Device information" | grep -q "total ${#device_paths_list[@]} devices" ; then
       echo "ERROR: Error in devices number in $sds_name"
       echo "$output_sds"
@@ -440,12 +463,12 @@ function check_sds_on_controller {
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  
+
   #TODO: change check in case there are several mdms
   mdm_ip=`juju ssh $mch "scli --query_cluster | grep 'Management IPs'" 2>/dev/null | awk '{print$5}' | sed 's/,//g'`
   sds_on_controller='false'
   all_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
-  if echo $all_sds | grep $mdm_ip ; then
+  if echo "$all_sds" | grep $mdm_ip ; then
     sds_on_controller='true'
   fi
 
@@ -455,4 +478,34 @@ function check_sds_on_controller {
     echo "ERROR: SDS on controller is $sds_on_controller, but is expected to be $expected."
     return 1
   fi
+}
+
+function check_branch {
+  mch=${machines[$1]}
+
+  branch=`get_config fuel-master branch-name`
+
+  master_file='deployment_tasks.yaml'
+  branch_file='tasks.yaml'
+
+  if [[ $branch == 'master' ]] ; then
+    expected_file="sudo find /root/fuel-plugin-scaleio -name $master_file"
+    unexpected_file="sudo find /root/fuel-plugin-scaleio -name $branch_file"
+  else
+    expected_file="sudo find /root/fuel-plugin-scaleio -name $branch_file"
+    unexpected_file="sudo find /root/fuel-plugin-scaleio -name $master_file"
+  fi
+
+  if juju ssh $mch "$expected_file" 2>/dev/null | grep tasks ; then
+    if ! juju ssh $mch "$unexpected_file" 2>/dev/null | grep tasks ; then
+      echo "INFO: Success. Your branch is $branch. All files are corresponding."
+    else
+      echo "ERROR: Your branch is $branch. There is unexpected file $unexpected_file in /root/fuel-plugin-scaleio."
+      return 1
+    fi
+  else
+    echo "ERROR: Your branch is $branch. There is no expected file $expected_file in /root/fuel-plugin-scaleio."
+    return 1
+  fi
+
 }
