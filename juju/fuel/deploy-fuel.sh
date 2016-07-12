@@ -12,9 +12,8 @@ provision_machines 0 1 2 3 4 5 6 7
 prepare_fuel_master 0
 
 # 3+1 cluster with default parameters:
-#   zero-padding=false
-#   TODO: add more parameters and check their default value
 configure_cluster mode 1 primary-controller 1 compute 2,3
+# Adding compute node to check that it will get to the same protection domain (parameter protection-domain-nodes is 100 by default)
 configure_cluster mode 1 primary-controller 1 compute 4
 
 check_fuel_perfomance 1
