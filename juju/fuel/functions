@@ -189,19 +189,19 @@ function configure_cluster() {
   wait_absence_status_for_services "maintenance"
   echo "Wait for services end: $(date)"
 
+  # check for errors
+  if juju status | grep "current" | grep error ; then
+    echo "ERROR: Some services went to error state"
+    juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
+    return 1
+  fi
+
   metadata_enable=`get_config fuel-master metadata-enable`
   if [[ $metadata_enable == '"true"' ]] ; then
     # check query_cluster output before exit on error if exists
     master_mdm=`get_master_mdm "echo $mdms"`
     echo "INFO: query cluster on machine $master_mdm"
     juju ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
-
-    # check for errors
-    if juju status | grep "current" | grep error ; then
-      echo "ERROR: Some services went to error state"
-      juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
-      return 1
-    fi
 
     check-cluster "juju ssh" $master_mdm $mode
   fi
