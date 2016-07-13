@@ -540,31 +540,25 @@ function check_branch {
   master_file=' deployment_tasks.yaml'
   branch_file=' tasks.yaml'
 
-  find_file="sudo ls -l /root/fuel-plugin-scaleio"
+  files="sudo ls -l /root/fuel-plugin-scaleio"
 
   if [[ $branch == "master" ]] ; then
-    if juju ssh $mch "$find_file" 2>/dev/null | grep "$master_file" ; then
-      if ! juju ssh $mch "$find_file" 2>/dev/null | grep "$branch_file" ; then
-        echo "INFO: Success. Your branch is $branch. All files are corresponding."
-      else
-        echo "ERROR: Your branch is $branch. There is unexpected file $branch_file in /root/fuel-plugin-scaleio."
-        return 1
-      fi
+    present_file=$master_file
+    absent_file=$branch_file
+  else
+    present_file=$branch_file
+    absent_file=$master_file
+  fi
+
+  if juju ssh $mch "$files" 2>/dev/null | grep "$present_file" ; then
+    if ! juju ssh $mch "$files" 2>/dev/null | grep "$absent_file" ; then
+      echo "INFO: Success. Your branch is $branch. All files are corresponding."
     else
-      echo "ERROR: Your branch is $branch. There is no expected file $master_file in /root/fuel-plugin-scaleio."
+      echo "ERROR: Your branch is $branch. There is unexpected file $absent_file in /root/fuel-plugin-scaleio."
       return 1
     fi
   else
-    if juju ssh $mch "$find_file" 2>/dev/null | grep "$branch_file" ; then
-      if ! juju ssh $mch "$find_file" 2>/dev/null | grep "$master_file" ; then
-        echo "INFO: Success. Your branch is $branch. All files are corresponding."
-      else
-        echo "ERROR: Your branch is $branch. There is unexpected file $master_file in /root/fuel-plugin-scaleio."
-        return 1
-      fi
-    else
-      echo "ERROR: Your branch is $branch. There is no expected file $branch_file in /root/fuel-plugin-scaleio."
-      return 1
-    fi
+    echo "ERROR: Your branch is $branch. There is no expected file $present_file in /root/fuel-plugin-scaleio."
+    return 1
   fi
 }
