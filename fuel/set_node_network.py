@@ -14,7 +14,7 @@ def main(args):
     
     to_move = []
     for interface in config:
-        if interface['name'] == 'eth0':
+        if interface['name'] in ['eth0', 'ens3']:
             for network in interface['assigned_networks']:
                 if network['name'] != 'fuelweb_admin':
                     to_move.append(network)
@@ -23,7 +23,7 @@ def main(args):
         break
     
     for interface in config:
-        if interface['name'] == 'eth1':
+        if interface['name'] in ['eth1', 'ens4']:
             interface['assigned_networks'] += to_move
             break
 
