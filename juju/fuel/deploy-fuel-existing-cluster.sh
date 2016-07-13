@@ -13,7 +13,7 @@ provision_machines 0 1 2 3
 # prepare fuel master
 prepare_fuel_master 0
 
-gateway_ip=(`juju status scaleio-gw | grep public-address | awk '{print $2}'`)
+gateway_ip=`juju status scaleio-gw | grep public-address | awk '{print $2}'`
 
 set_fuel_options existing-cluster="true"
 set_fuel_options gateway-ip=$gateway_ip
