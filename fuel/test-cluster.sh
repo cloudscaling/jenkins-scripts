@@ -143,7 +143,7 @@ if [[ $start_from < 1 ]]; then
     sleep 10
   done
   if [[ ${#nodes[@]} < 6 ]]; then
-    fail "There is not enough free online nodes, only $nodes is available but 6 is required"
+    fail "There is not enough free online nodes, only ${#nodes[@]} is available but 6 is required"
   fi
 
   steps_count=$((steps_count-1))
