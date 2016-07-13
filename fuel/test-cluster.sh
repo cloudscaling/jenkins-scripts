@@ -109,7 +109,7 @@ fi
 fuel_version=$(fuel --version 2>&1 | grep -o '[0-9]\.[0-9]\.[0-9]')
 env_name="emc"
 device_paths="/dev/vdb,/dev/vdc"
-if [[ "$fuel_version" == "8.0.0" ]]; then
+if [[ "$fuel_version" == "8.0.0" || "$fuel_version" == "9.0.0" ]]; then
     ha_mode_opts=''
 else
     ha_mode_opts='--mode ha'
