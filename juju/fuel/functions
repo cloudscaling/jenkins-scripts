@@ -119,6 +119,7 @@ function remove_node_service() {
     juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' 2>/dev/null
     echo Remove service ${name} from machine $1/$machs
     juju remove-service ${name}
+    wait_for_removed $name
     shift
   done
 }
@@ -140,7 +141,7 @@ function deploy_node_service() {
   name=fuel-node${mch}
   roles=$2
 
-  if ! juju service get ${name} 2>/dev/null  ; then
+  if ! juju service get ${name} &>/dev/null  ; then
     echo "$name:
       branch-name:  $branch" >/tmp/config.yaml
     juju deploy local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
