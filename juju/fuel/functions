@@ -111,16 +111,19 @@ function catch_errors() {
 
 function remove_node_service() {
   echo Remove service from machines $@
-  machs="$#"
-  while (( "$#" )); do
-    mch=${machines[$1]}
+  for node in "$@" ; do
+    mch=${machines[$node]}
     name=fuel-node${mch}
-    echo Remove EMC packages from machine $1/$machs
+    echo Remove EMC packages from machine $1/$#
     juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' 2>/dev/null
-    echo Remove service ${name} from machine $1/$machs
+    echo Remove service ${name} from machine $1/$#
     juju remove-service ${name}
+  done
+  # wait for remove
+  for node in "$@" ; do
+    mch=${machines[$node]}
+    name=fuel-node${mch}
     wait_for_removed $name
-    shift
   done
 }
 
