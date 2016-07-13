@@ -7,14 +7,11 @@ source $my_dir/functions
 
 # Deploy bundle
 $my_dir/../scaleio/deploy-scaleio-cluster.sh
-# TODO: add deployed machines to array automaticly
-machines=(1 2 3)
 
 # provision machines
-provision_machines 3 4 5 6
-
+provision_machines 0 1 2 3
 # prepare fuel master
-prepare_fuel_master 3
+prepare_fuel_master 0
 
 gateway_ip=(`juju status scaleio-gw | grep public-address | awk '{print $2}'`)
 
@@ -23,6 +20,6 @@ set_fuel_options gateway-ip=$gateway_ip
 set_fuel_options gateway-port="4443"
 set_fuel_options gateway-user="admin"
 set_fuel_options password="Default_password"
-configure_cluster primary-controller 4 compute 5,6
+configure_cluster primary-controller 1 compute 2,3
 
-check_existing_cluster 4,5,6
+check_existing_cluster 1,2,3

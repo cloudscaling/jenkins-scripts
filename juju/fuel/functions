@@ -8,7 +8,6 @@ source $my_dir/../scaleio/static-checks
 
 # cdir is equal to evn variable WORKSPACE in jenkins and us not equal to my_dir
 cdir="$(pwd)"
-cd fuel-charms
 
 cloud=${1:-"ec2"}
 if [[ "${cloud}" == "gce" ]]; then
@@ -128,7 +127,7 @@ function prepare_fuel_master() {
   echo "fuel-master:
     branch-name:  $branch
     device-paths: $device_paths" >/tmp/config.yaml
-  juju deploy local:trusty/fuel-master --to $mch --config /tmp/config.yaml
+  juju deploy --repository fuel-charms local:trusty/fuel-master --to $mch --config /tmp/config.yaml
 }
 
 function set_fuel_options() {
@@ -143,7 +142,7 @@ function deploy_node_service() {
   if ! juju service get ${name} 2>/dev/null  ; then
     echo "$name:
       branch-name:  $branch" >/tmp/config.yaml
-    juju deploy local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
+    juju deploy --repository fuel-charms local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
     juju add-relation fuel-master $name
   fi
   juju set $name roles="${roles}"
@@ -228,7 +227,6 @@ function check_storage_pool {
   storage_pools=`get_config fuel-master storage-pools`
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -305,7 +303,6 @@ function check_capacity_alerts {
   storage_pools=`get_config fuel-master storage-pools`
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -342,7 +339,6 @@ function check_rfcache {
   rfcache_list=(`echo $2 | sed 's/,/ /g'`)
   rfcache_count=${#rfcache_list[@]}
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -374,7 +370,6 @@ function check_protection_domain {
   mch=${machines[$1]}
   expected_pd_name=$2
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -402,7 +397,6 @@ function check_password {
   password=$2
 
   ret=0
-  username='admin'
   if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate" 2>/dev/null ; then
     echo "INFO: Success. Password was changed to $password"
   else
@@ -418,7 +412,6 @@ function check_sds_storage_pool {
   sp_list=(`echo $2 | sed 's/,/ /g'`)
   device_paths_list=(`echo $3 | sed 's/,/ /g'`)
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -453,7 +446,6 @@ function check_sds_storage_pool {
 
 function check_fuel_performance {
   mch=${machines[$1]}
-  username='admin'
   password=`get_config fuel-master password`
 
   check-performance "juju ssh" "$mch" "$username" "$password"
@@ -463,7 +455,6 @@ function check_sds_on_controller {
   mch=${machines[$1]}
   expected=$2
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -488,7 +479,6 @@ function check_protection_domain_nodes {
   mch=${machines[$1]}
   max_nodes=$2
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -585,16 +575,18 @@ function check_existing_cluster {
     #create volume
     volume_name=vol$sdc
     add_volume_cmd="scli --mdm_ip $mdm_ip --add_volume --protection_domain_name $pd_name --storage_pool_name $sp_name --size_gb 8 --volume_name $volume_name"
-    if ! juju ssh $sdc "$login_cmd && $add_volume_cmd" 2>/dev/null ; then
+    if ! output=`juju ssh $sdc "$login_cmd && $add_volume_cmd" 2>/dev/null` ; then
       echo "ERROR: Couldn't create volume $volume_name on SDC node $sdc."
+      echo "$output"
       return 1
     fi
 
     #map volume
     sdc_ip=`juju ssh $sdc "ip addr show dev eth0" 2>/dev/null | awk '/inet /{split($2,a,"/"); print a[1]}'`
     map_volume_cmd="scli --mdm_ip $mdm_ip --map_volume_to_sdc --volume_name $volume_name --sdc_ip $sdc_ip"
-    if ! juju ssh $sdc "$login_cmd && $map_volume_cmd" 2>/dev/null ; then
+    if ! output=`juju ssh $sdc "$login_cmd && $map_volume_cmd" 2>/dev/null` ; then
       echo "ERROR: Couldn't map volume $volume_name on SDC node $sdc."
+      echo "$output"
       return 1
     fi
 
