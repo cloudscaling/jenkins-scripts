@@ -11,9 +11,10 @@
           name: FUEL_VERSION
           description: "Version of the FUEL to test"
           choices:
-            - '6.1'
-            - '7.0'
+            - '9.0'
             - '8.0'
+            - '7.0'
+            - '6.1'
       - string:
           name: FUEL_NODES
           default: '6'
