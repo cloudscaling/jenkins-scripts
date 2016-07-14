@@ -97,6 +97,24 @@ function deploy_changes() {
     check_failed_tasks $env_num
 }
 
+function list_online_nodes() {
+  local env=$1
+  local role=${2:-""}
+  if [[ "$env" == "None" && "$fuel_version" == "9.0.0" ]] ; then
+    env=""
+  fi
+  if [ -n "$role" ] ; then
+    role_regexp=".*${role}.*"
+  else
+    role_regexp=""
+  fi
+  fuel node | awk -F '|' "/^[ ]*[0-9]+[ |]+${role_regexp}/ {
+    gsub(/[ \t\r\n]+/, \"\", \$1); \
+    gsub(/[ \t\r\n]+/, \"\", \$9); \
+    gsub(/[ \t\r\n]+/, \"\", \$4); \
+    if((\$9==\"True\" || \$9==\"1\") && \$4==\"$env\"){print(\$1)}}" | sort
+}
+
 start_from=${1:-0}
 end_to=${2:-8}
 steps_count=$((end_to-start_from))
@@ -136,7 +154,7 @@ if [[ $start_from < 1 ]]; then
   
   nodes=()
   for i in {1..60}; do
-    nodes=($(fuel node | grep 'True' | awk '/discover/ {if($8=="None"){print($1)}}' | sort))
+    nodes=($(list_online_nodes 'None'))
     if [[ ${#nodes[@]} == 6 || ${#nodes[@]} > 6  ]]; then
         break
     fi
@@ -150,9 +168,9 @@ if [[ $start_from < 1 ]]; then
 
 else
   env_num=$(fuel env | awk "/$env_name/ {print(\$1)}")
-  nodes=($(fuel node | grep 'True' | grep 'controller' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
-  nodes+=($(fuel node | grep 'True' | grep 'compute' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
-  nodes+=($(fuel node | grep 'True' | awk "{if(\$8==\"None\"){print(\$1)}}" | sort))  
+  nodes=($(list_online_nodes $env_num 'controller'))
+  nodes+=($(list_online_nodes $env_num 'compute'))
+  nodes+=($(list_online_nodes 'None'))
 fi
 
 echo nodes: ${nodes[@]}
