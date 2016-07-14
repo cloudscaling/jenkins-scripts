@@ -527,17 +527,16 @@ function check_existing_cluster {
   mdm=`get_master_mdm`
   sdc_nodes=`echo $1 | sed 's/,/ /g'`
 
-  cluster_mdm_ips=(`juju ssh $mdm "scli --query_cluster --approve_certificate" 2>/dev/null | awk '/Management IPs/{print$5}' | sed 's/,//g'`)
+  cluster_mdm_ips=(`juju ssh $mdm "scli --query_cluster --approve_certificate" 2>/dev/null | awk '/Management IPs/{print $5}' | sed 's/,//g'`)
 
-  error_nodes=()
+  ret=0
   for node in $sdc_nodes ; do
     sdc=${machines[$node]}
     #check emc-packages"
     if output=`juju ssh $sdc "dpkg -l emc*" 2>/dev/null | grep emc | grep -v 'scaleio-sdc'` ; then
       echo "ERROR: There is scaleio packages on machine $sdc besides scaleio-sdc."
       echo $output
-      error_nodes+=$sdc
-      continue
+      ((++ret))
     else
       echo "INFO: Success. There is no scaleio packages on machine $sdc besides scaleio-sdc."
     fi
@@ -545,31 +544,33 @@ function check_existing_cluster {
     sdc_mdm_ips=(`juju ssh $sdc "sudo /bin/emc/scaleio/drv_cfg --query_mdms" 2>/dev/null | awk '/MDM-ID/{print $10}' | sed 's/\[0\]-//g'`)
 
     #check MDM addresses"
+    mdm_err=0
     if [[ ${#cluster_mdm_ips[@]} != ${#sdc_mdm_ips[@]} ]] ; then
       echo "ERROR: Wrong MDM number on SDC node $sdc. Expected ${#cluster_mdm_ips[@]}, but got ${#sdc_mdm_ips[@]}."
-      error_nodes+=$sdc
-      continue
+      ((++mdm_err))
+    else
+      for ip in $cluster_mdm_ips ; do
+        if ! [[ ${sdc_mdm_ips[@]} =~ $ip ]] ; then
+          echo "ERROR: There is no MDM with ip $ip in cluster, but it presents on machine $sdc."
+          ((++mdm_err))
+        fi
+      done
+    fi
+    if (( mdm_err == 0 )) ; then
+      echo "INFO: Success. The SDC node $sdc has correct information about MDMs in cluster."
+    else
+      ((++ret))
     fi
 
-    for ip in $cluster_mdm_ips ; do
-      if ! [[ ${sdc_mdm_ips[@]} =~ $ip ]] ; then
-        echo "ERROR: There is no MDM with ip $ip in cluster, but it presents on machine $sdc."
-        error_nodes+=$sdc
-        continue
-      fi
-    done
-
-    echo "INFO: Success. The SDC node $sdc has information about MDMs in cluster."
+    juju ssh $sdc "sudo apt-get install emc-scaleio-mdm" 2>/dev/null
 
     mdm_ip=${cluster_mdm_ips[0]}
-
-    juju ssh $sdc "sudo apt-get install emc-scaleio-mdm" 2>/dev/null
 
     password=`get_config fuel-master password`
     login_cmd="scli --mdm_ip $mdm_ip --login --username $username --password $password --approve_certificate"
 
-    pd_name=`juju ssh $mdm "$login_cmd && scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME" 2>/dev/null | awk '/NAME/{print$2}' | sed 's/\r//g'`
-    sp_name=`juju ssh $mdm "$login_cmd && scli --query_properties --all_objects --object_type STORAGE_POOL --properties NAME" 2>/dev/null | awk '/NAME/{print$2}' | sed 's/\r//g'`
+    pd_name=`juju ssh $mdm "$login_cmd && scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME" 2>/dev/null | awk '/NAME/{print $2}' | sed 's/\r//g'`
+    sp_name=`juju ssh $mdm "$login_cmd && scli --query_properties --all_objects --object_type STORAGE_POOL --properties NAME" 2>/dev/null | awk '/NAME/{print $2}' | sed 's/\r//g'`
 
     #create volume
     volume_name=vol$sdc
@@ -577,7 +578,7 @@ function check_existing_cluster {
     if ! output=`juju ssh $sdc "$login_cmd && $add_volume_cmd" 2>/dev/null` ; then
       echo "ERROR: Couldn't create volume $volume_name on SDC node $sdc."
       echo "$output"
-      error_nodes+=$sdc
+      ((++ret))
       continue
     fi
 
@@ -587,7 +588,7 @@ function check_existing_cluster {
     if ! output=`juju ssh $sdc "$login_cmd && $map_volume_cmd" 2>/dev/null` ; then
       echo "ERROR: Couldn't map volume $volume_name on SDC node $sdc."
       echo "$output"
-      error_nodes+=$sdc
+      ((++ret))
       continue
     fi
 
@@ -597,15 +598,14 @@ function check_existing_cluster {
       echo "INFO: Success. The volume $volume_name was created and mapped on SDC node $sdc."
     else
       echo "ERROR: There is no mapped volume $volume_name in cluster."
-      error_nodes+=$sdc
-      continue
+      ((++ret))
     fi
   done
 
-  if [[ ${#error_nodes[@]} == 0 ]] ; then
+  if (( ret == 0 )) ; then
     echo "INFO: Success. All SDC nodes are connected to existing cluster."
   else
-    echo "ERROR: ${error_nodes[@]} nodes didn't pass all checks."
+    echo "ERROR: Not all nodes passed all checks."
     return 1
   fi
 }
