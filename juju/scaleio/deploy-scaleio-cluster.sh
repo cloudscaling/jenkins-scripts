@@ -39,7 +39,7 @@ $my_dir/../scaleio-openstack/fix_scini_problems.sh $m1 $m2 $m3
 sed -i -e "s/%JUJU_REPO%/$JUJU_REPO/m" $BUNDLE
 
 # script needs to change directory to local charms repository
-cd ~/juju-scaleio
+cd juju-scaleio
 juju-deployer -c $BUNDLE
 
 echo "Wait for services start: $(date)"

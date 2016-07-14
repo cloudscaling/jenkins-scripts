@@ -542,7 +542,7 @@ function check_existing_cluster {
       echo "INFO: Success. There is no scaleio packages on machine $sdc besides scaleio-sdc."
     fi
 
-    sdc_mdm_ips=(`juju ssh $sdc "sudo /bin/emc/scaleio/drv_cfg --query_mdms" 2>/dev/null | awk '/MDM-ID/{print$10}' | sed 's/\[0\]-//g'`)
+    sdc_mdm_ips=(`juju ssh $sdc "sudo /bin/emc/scaleio/drv_cfg --query_mdms" 2>/dev/null | awk '/MDM-ID/{print $10}' | sed 's/\[0\]-//g'`)
 
     #check MDM addresses"
     if [[ ${#cluster_mdm_ips[@]} != ${#sdc_mdm_ips[@]} ]] ; then
