@@ -32,9 +32,9 @@ relations:
   - - "scaleio-gw:scaleio-mdm"
     - "scaleio-mdm:scaleio-mdm"
 machines:
-  "1":
+  "%m1%":
     series: trusty
-  "2":
+  "%m2%":
     series: trusty
-  "3":
+  "%m3%":
     series: trusty
