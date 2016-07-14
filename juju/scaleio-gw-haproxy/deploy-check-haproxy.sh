@@ -105,29 +105,10 @@ create_virtualenv
 source $WORKSPACE/.venv/bin/activate
 openstack catalog list
 
-function check_volume_creation() {
-  local volume_name=simple_volume_$1
-
-  volume_id=`cinder create --display_name $volume_name 1 | grep " id " | awk '{print $4}'`
-  echo "INFO: Volume created. Name: $volume_name  Id: $volume_id"
-  wait_volume $volume_id $MAX_FAIL
-
-  status=`cinder show $volume_id | awk '/ status / {print $4}'`
-  if [[ $status == "available" ]]; then
-    echo "INFO: Success"
-  elif [[ $status == "error" || -z "$status" ]]; then
-    echo 'ERROR: Volume creation error'
-  fi
-  if ! output=`cinder delete $volume_id` ; then
-    echo "$output" >> errors
-    echo 'ERROR: Volume deletion error'
-  fi
-}
-
 function check_cinder_conf() {
-  gw_ip=$1
+  local gw_ip=$1
   echo "INFO: Check ScaleIO gateway IP setting in cinder.conf"
-  conf_ip=`juju ssh 1 sudo cat /etc/cinder/cinder.conf 2>/dev/null | grep san_ip | awk '{print $3}' | sed "s/\r//"`
+  local conf_ip=`juju ssh 1 sudo cat /etc/cinder/cinder.conf 2>/dev/null | grep san_ip | awk '{print $3}' | sed "s/\r//"`
   if [[ "$conf_ip" != "$gw_ip" ]] ; then
     echo "ERROR: Error in ScaleIO gateway IP setting in cinder.conf"
     echo "ERROR: Expected $gw_ip, but got $conf_ip"
@@ -137,12 +118,43 @@ function check_cinder_conf() {
 }
 
 function check_haproxy_responses() {
-  gw_ip1=$1
-  gw_ip2=$2
-  resp=`curl -k -u admin:Default_password https://$gw_ip1:4443/api/login 2>/dev/null`
-  echo "INFO: Check server HA1($gw_ip1) response: $resp"
-  resp=`curl -k -u admin:Default_password https://$gw_ip2:4443/api/login 2>/dev/null`
-  echo "INFO: Check server HA2($gw_ip2) response: $resp"
+  local gw_ip1=$1
+  local gw_ip2=$2
+  local ret=0
+  for gw_ip in $gw_ip1 $gw_ip2 ; do
+    echo "INFO: Check server HA($gw_ip):"
+    if ! resp=`curl -k -u admin:Default_password https://$gw_ip:4443/api/login 2>/dev/null` ; then
+      echo "ERROR: Response: $resp"
+      ((++ret))
+    fi
+    echo "INFO: Success. Response: $resp"
+  done
+  return $ret
+}
+
+function check_volume_creation() {
+  local volume_name=simple_volume_$1
+
+  if ! output=`cinder create --display_name $volume_name 1` ; then
+    echo "ERROR: Volume creation error: $volume_name"
+    echo "$output"
+    return 1
+  fi
+  local volume_id=`echo "$output" | grep " id " | awk '{print $4}'`
+  echo "INFO: Volume created. Name: $volume_name  Id: $volume_id"
+  wait_volume $volume_id $MAX_FAIL
+
+  local ret=0
+  local status=`cinder show $volume_id | awk '/ status / {print $4}'`
+  if [[ $status == "available" ]]; then
+    echo "INFO: Volume successfully built."
+  elif [[ $status == "error" || -z "$status" ]]; then
+    echo 'ERROR: Volume was build with errors:'
+    cinder show $volume_id
+    ret=1
+  fi
+  cinder delete $volume_id 1>/dev/null
+  return $ret
 }
 
 trap 'catch_errors $LINENO' ERR
@@ -156,11 +168,13 @@ function catch_errors() {
   exit $exit_code
 }
 
+ret=0
+
 check_cinder_conf ${ip_addresses[0]}
 
 check_haproxy_responses ${ip_addresses[@]}
 echo "INFO: Check creation of cinder volume through gw1 $(date)"
-check_volume_creation ha1_gw1
+check_volume_creation ha1_gw1 || ret=1
 
 echo "INFO: Stop scaleio-gateway service on the first gateway $(date)"
 juju ssh 2 'sudo service scaleio-gateway stop || /bin/true' 2>/dev/null
@@ -170,7 +184,7 @@ juju ssh 2 sudo service scaleio-gateway status 2>/dev/null
 
 check_haproxy_responses ${ip_addresses[@]}
 echo "INFO: Check creation of cinder volume through gw2 $(date)"
-check_volume_creation ha1_gw2
+check_volume_creation ha1_gw2 || ret=1
 
 echo "INFO: Configure haproxy to second GW $(date)"
 juju set scaleio-gw "vip=${ip_addresses[1]}"
@@ -183,7 +197,7 @@ check_cinder_conf ${ip_addresses[1]}
 
 check_haproxy_responses ${ip_addresses[@]}
 echo "INFO: Check creation of cinder volume through gw2 $(date)"
-check_volume_creation ha2_gw2
+check_volume_creation ha2_gw2 || ret=1
 
 echo "INFO: Start scaleio-gateway service on the first gateway $(date)"
 juju ssh 2 'sudo service scaleio-gateway start || /bin/true' 2>/dev/null
@@ -198,7 +212,7 @@ juju ssh 4 sudo service scaleio-gateway status 2>/dev/null
 
 check_haproxy_responses ${ip_addresses[@]}
 echo "INFO: Check creation of cinder volume through gw1 $(date)"
-check_volume_creation ha2_gw1
+check_volume_creation ha2_gw1 || ret=1
 
 deactivate
 
@@ -206,9 +220,9 @@ trap - ERR
 
 $my_dir/../scaleio-openstack/save_logs.sh
 
-if [ -s errors ] ; then
-  cat errors
+if [[ $ret != 0 ]] ; then
+  echo "FINISH: Errors occured during the test."
   exit 1
 fi
 
-echo "SUCCESS"
+echo "FINISH: Success"
