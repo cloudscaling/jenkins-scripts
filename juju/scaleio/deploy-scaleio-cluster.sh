@@ -37,6 +37,9 @@ $my_dir/../scaleio-openstack/fix_scini_problems.sh $m1 $m2 $m3
 
 # change bundles' variables
 sed -i -e "s/%JUJU_REPO%/$JUJU_REPO/m" $BUNDLE
+sed -i -e "s/%m1%/$m1/m" $BUNDLE
+sed -i -e "s/%m2%/$m2/m" $BUNDLE
+sed -i -e "s/%m3%/$m3/m" $BUNDLE
 
 # script needs to change directory to local charms repository
 cd juju-scaleio
