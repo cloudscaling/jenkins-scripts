@@ -123,7 +123,7 @@ if [[ $start_from < 1 ]]; then
     wait_running_tasks
   fi
 
-  release=`fuel rel | awk '/Ubuntu/ {print($1)}'`
+  release=`fuel rel | awk '/Ubuntu [0-9]+/ {print($1)}'`
   if [[ -z "$release" ]]; then
     fail "There is no Ubuntu release"
   fi
