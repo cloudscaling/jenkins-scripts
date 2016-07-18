@@ -8,6 +8,8 @@ source $my_dir/../functions
 deploy_from=${1:-charmstore}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
   JUJU_REPO="local:trusty"
+  # script needs to change directory to local charms repository due to absent option for juju-deployer
+  cd juju-scaleio
 else
   # deploy_from=charmstore
   JUJU_REPO="cs:~cloudscaling"
@@ -41,8 +43,6 @@ sed -i -e "s/%m1%/$m1/m" $BUNDLE
 sed -i -e "s/%m2%/$m2/m" $BUNDLE
 sed -i -e "s/%m3%/$m3/m" $BUNDLE
 
-# script needs to change directory to local charms repository
-cd juju-scaleio
 juju-deployer -c $BUNDLE
 
 echo "Wait for services start: $(date)"
