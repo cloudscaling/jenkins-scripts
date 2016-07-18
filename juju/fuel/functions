@@ -567,7 +567,7 @@ function check_existing_cluster {
   for node in $sdc_nodes ; do
     sdc=${machines[$node]}
     #check emc-packages"
-    if output=`juju ssh $sdc "dpkg -l emc*" 2>/dev/null | grep emc | grep -v 'scaleio-sdc'` ; then
+    if output=`juju ssh $sdc "dpkg -l | grep 'emc-'" 2>/dev/null | grep -v 'scaleio-sdc'` ; then
       echo "ERROR: There is scaleio packages on machine $sdc besides scaleio-sdc."
       echo $output
       ((++ret))
