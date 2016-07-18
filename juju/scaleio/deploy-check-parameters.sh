@@ -22,7 +22,7 @@ echo "Machine created: $m3"
 wait_for_machines $m1 $m2 $m3
 # add machine 0 because it will be used for deployment of MDM
 apply_developing_puppets 0 $m1 $m2 $m3
-$my_dir/../scaleio-openstack/fix_scini_problems.sh $m1 $m2 $m3
+fix_kernel_drivers $m1 $m2 $m3
 
 # deploy fake charms to prevent machines removing
 juju deploy ubuntu --to $m1

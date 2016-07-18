@@ -33,7 +33,7 @@ echo "Machine created: $m3"
 
 wait_for_machines $m1 $m2 $m3
 
-$my_dir/../scaleio-openstack/fix_scini_problems.sh $m1 $m2 $m3
+fix_kernel_drivers $m1 $m2 $m3
 
 # ---------------------------------------- pre-deployment stage end
 
