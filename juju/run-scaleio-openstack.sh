@@ -17,6 +17,9 @@ if ! juju bootstrap ; then
   echo "Bootstrap error. exiting..."
   exit 1
 fi
+AZ=`juju status | grep -Po " availability-zone=.*[ $]*" | cut -d '=' -f 2`
+echo "INFO: Availability zone of this deployment is $AZ"
+export AZ
 
 trap 'catch_errors $LINENO' ERR EXIT
 

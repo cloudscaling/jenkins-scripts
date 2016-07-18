@@ -24,6 +24,7 @@ echo "Machine created: $m5"
 
 wait_for_machines $m1 $m2 $m3 $m4 $m5
 apply_developing_puppets $m1 $m2 $m3 $m4 $m5
+$my_dir/../scaleio-openstack/fix_scini_problems.sh $m1 $m2 $m3 $m4 $m5
 
 # deploy fake charms to prevent machines removing
 juju deploy ubuntu --to $m1

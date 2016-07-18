@@ -102,35 +102,40 @@ function create_machine() {
   # 0: general machine for parameters testing
   # 1: compute machine for OpenStack
   # 2: machine for MDM/SDS + OpenStack services
-  type="$1"
-  sds_disks_count="$2" # how many disks SDS should have
+  local type="$1"
+  local sds_disks_count="$2" # how many disks SDS should have
   shift ; shift
-  additional_constraints="$@"
+  local additional_constraints="$@"
 
   case "$type" in
   "0")
-    instance_type="t2.medium"
+    local instance_type="t2.medium"
     ;;
   "1")
-    instance_type="c4.large"
+    local instance_type="c4.large"
     ;;
   "2")
-    instance_type="r3.large"
+    local instance_type="r3.large"
     ;;
   *)
     return 1
     ;;
   esac
 
-  disks=''
+  local az_opts=""
+  if [ -n "$AZ" ] ; then
+    az_opts="zone=$AZ"
+  fi
+
+  local disks=''
   if (( sds_disks_count > 0 )) ; then
     da=()
     for (( i=0; i<sds_disks_count; ++i )) ; do da=(${da[@]-} ebs-ssd,100G) ; done
     disks="${da[@]}"
 
-    juju machine add --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" --disks "$disks" 2>&1 | awk '{print $3}'
+    juju machine add $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" --disks "$disks" 2>&1 | awk '{print $3}'
   else
-    juju machine add --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" 2>&1 | awk '{print $3}'
+    juju machine add $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" 2>&1 | awk '{print $3}'
   fi
 }
 

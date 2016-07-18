@@ -19,8 +19,7 @@
     name: cspgithub
     scm:
       - git:
-          url: 'ssh://github.com/cloudscaling/{repo}.git'
-          credentials-id: "{credentials-id}"
+          url: 'ssh://{repo}.github.com/cloudscaling/{repo}.git'
           basedir: '{repo}'
           branches:
             - '*/master'
@@ -36,14 +35,12 @@
     scm:
       - cspgithub:
           repo: "jenkins-scripts"
-          credentials-id: "e6c803b4-3d24-40ca-88b5-082f88f60f1f"
 
 - scm:
     name: fuel-charms
     scm:
       - cspgithub:
           repo: "fuel-charms"
-          credentials-id: "41a26b60-2237-462d-86c3-95e3180fdbaa"
 
 - scm:
     name: emc-juju-scaleio
