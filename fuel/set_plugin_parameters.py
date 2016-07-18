@@ -16,7 +16,7 @@ def main(args):
     config = None
     with open(args.config_file, 'r') as stream:
         config = yaml.load(stream)
-    if args.fuel_version not in ['8.0.0', '9.0.0']:
+    if args.fuel_version != '8.0.0':
         scaleio_config = config['editable']['scaleio']
         scaleio_config['metadata']['enabled'] = True
     else:
@@ -40,7 +40,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--fuel_version', dest='fuel_version', type=str, default='8.0.0')
+    parser.add_argument('--fuel_version', dest='fuel_version', type=str, default='8.0')
     parser.add_argument('--config_file', dest='config_file', type=str, default='./settings_1.yaml')
     parser.add_argument('--password', dest='password', type=str, default='qwe123QWE')
     parser.add_argument('--device_paths', dest='device_paths', type=str, default=None)

@@ -4,7 +4,6 @@ my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
-source $my_dir/functions
 
 deploy_from=${1:-charmstore}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
@@ -32,12 +31,15 @@ echo "Machine created: $m3"
 
 wait_for_machines $m1 $m2 $m3
 
-$my_dir/fix_scini_problems.sh $m1 $m2 $m3
+$my_dir/../scaleio-openstack/fix_scini_problems.sh $m1 $m2 $m3
 
 # ---------------------------------------- pre-deployment stage end
 
 # change bundles' variables
 sed -i -e "s/%JUJU_REPO%/$JUJU_REPO/m" $BUNDLE
+sed -i -e "s/%m1%/$m1/m" $BUNDLE
+sed -i -e "s/%m2%/$m2/m" $BUNDLE
+sed -i -e "s/%m3%/$m3/m" $BUNDLE
 
 # script needs to change directory to local charms repository
 cd juju-scaleio

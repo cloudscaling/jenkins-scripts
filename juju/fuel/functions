@@ -8,7 +8,6 @@ source $my_dir/../scaleio/static-checks
 
 # cdir is equal to evn variable WORKSPACE in jenkins and us not equal to my_dir
 cdir="$(pwd)"
-cd fuel-charms
 
 cloud=${1:-"ec2"}
 if [[ "${cloud}" == "gce" ]]; then
@@ -131,7 +130,7 @@ function prepare_fuel_master() {
   echo "fuel-master:
     branch-name:  $branch
     device-paths: $device_paths" >/tmp/config.yaml
-  juju deploy local:trusty/fuel-master --to $mch --config /tmp/config.yaml
+  juju deploy --repository fuel-charms local:trusty/fuel-master --to $mch --config /tmp/config.yaml
 }
 
 function set_fuel_options() {
@@ -146,7 +145,7 @@ function deploy_node_service() {
   if ! juju service get ${name} &>/dev/null  ; then
     echo "$name:
       branch-name:  $branch" >/tmp/config.yaml
-    juju deploy local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
+    juju deploy --repository fuel-charms local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
     juju add-relation fuel-master $name
   fi
   juju set $name roles="${roles}"
@@ -201,7 +200,8 @@ function configure_cluster() {
   fi
 
   metadata_enable=`get_config fuel-master metadata-enable`
-  if [[ $metadata_enable == '"true"' ]] ; then
+  existing_cluster=`get_config fuel-master existing-cluster`
+  if [[ $metadata_enable == '"true"' && $existing_cluster == '"false"' ]] ; then
     # check query_cluster output before exit on error if exists
     master_mdm=`get_master_mdm "echo $mdms"`
     echo "INFO: query cluster on machine $master_mdm"
@@ -230,7 +230,6 @@ function check_storage_pool {
   storage_pools=`get_config fuel-master storage-pools`
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -307,7 +306,6 @@ function check_capacity_alerts {
   storage_pools=`get_config fuel-master storage-pools`
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -344,7 +342,6 @@ function check_rfcache {
   rfcache_list=(`echo $2 | sed 's/,/ /g'`)
   rfcache_count=${#rfcache_list[@]}
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -376,7 +373,6 @@ function check_protection_domain {
   mch=${machines[$1]}
   expected_pd_name=$2
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -404,7 +400,6 @@ function check_password {
   password=$2
 
   ret=0
-  username='admin'
   if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate" 2>/dev/null ; then
     echo "INFO: Success. Password was changed to $password"
   else
@@ -420,7 +415,6 @@ function check_sds_storage_pool {
   sp_list=(`echo $2 | sed 's/,/ /g'`)
   device_paths_list=(`echo $3 | sed 's/,/ /g'`)
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -455,7 +449,6 @@ function check_sds_storage_pool {
 
 function check_fuel_performance {
   mch=${machines[$1]}
-  username='admin'
   password=`get_config fuel-master password`
 
   check-performance "juju ssh" "$mch" "$username" "$password"
@@ -465,7 +458,6 @@ function check_sds_on_controller {
   mch=${machines[$1]}
   expected=$2
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -490,7 +482,6 @@ function check_protection_domain_nodes {
   mch=${machines[$1]}
   max_nodes=$2
 
-  username='admin'
   password=`get_config fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
@@ -532,6 +523,93 @@ function check_scaleio_not_installed {
     return 1
   else
     echo "INFO: Success. ScaleIO packages wasn't installed to controller."
+  fi
+}
+
+function check_existing_cluster {
+  mdm=`get_master_mdm`
+  sdc_nodes=`echo $1 | sed 's/,/ /g'`
+
+  cluster_mdm_ips=(`juju ssh $mdm "scli --query_cluster --approve_certificate" 2>/dev/null | awk '/Management IPs/{print $5}' | sed 's/,//g'`)
+
+  ret=0
+  for node in $sdc_nodes ; do
+    sdc=${machines[$node]}
+    #check emc-packages"
+    if output=`juju ssh $sdc "dpkg -l emc*" 2>/dev/null | grep emc | grep -v 'scaleio-sdc'` ; then
+      echo "ERROR: There is scaleio packages on machine $sdc besides scaleio-sdc."
+      echo $output
+      ((++ret))
+    else
+      echo "INFO: Success. There is no scaleio packages on machine $sdc besides scaleio-sdc."
+    fi
+
+    sdc_mdm_ips=(`juju ssh $sdc "sudo /bin/emc/scaleio/drv_cfg --query_mdms" 2>/dev/null | awk '/MDM-ID/{print $10}' | sed 's/\[0\]-//g'`)
+
+    #check MDM addresses"
+    mdm_err=0
+    if [[ ${#cluster_mdm_ips[@]} != ${#sdc_mdm_ips[@]} ]] ; then
+      echo "ERROR: Wrong MDM number on SDC node $sdc. Expected ${#cluster_mdm_ips[@]}, but got ${#sdc_mdm_ips[@]}."
+      ((++mdm_err))
+    else
+      for ip in $cluster_mdm_ips ; do
+        if ! [[ ${sdc_mdm_ips[@]} =~ $ip ]] ; then
+          echo "ERROR: There is no MDM with ip $ip in cluster, but it presents on machine $sdc."
+          ((++mdm_err))
+        fi
+      done
+    fi
+    if (( mdm_err == 0 )) ; then
+      echo "INFO: Success. The SDC node $sdc has correct information about MDMs in cluster."
+    else
+      ((++ret))
+    fi
+
+    juju ssh $sdc "sudo apt-get install emc-scaleio-mdm" 2>/dev/null
+
+    mdm_ip=${cluster_mdm_ips[0]}
+
+    password=`get_config fuel-master password`
+    login_cmd="scli --mdm_ip $mdm_ip --login --username $username --password $password --approve_certificate"
+
+    pd_name=`juju ssh $mdm "$login_cmd && scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME" 2>/dev/null | awk '/NAME/{print $2}' | sed 's/\r//g'`
+    sp_name=`juju ssh $mdm "$login_cmd && scli --query_properties --all_objects --object_type STORAGE_POOL --properties NAME" 2>/dev/null | awk '/NAME/{print $2}' | sed 's/\r//g'`
+
+    #create volume
+    volume_name=vol$sdc
+    add_volume_cmd="scli --mdm_ip $mdm_ip --add_volume --protection_domain_name $pd_name --storage_pool_name $sp_name --size_gb 8 --volume_name $volume_name"
+    if ! output=`juju ssh $sdc "$login_cmd && $add_volume_cmd" 2>/dev/null` ; then
+      echo "ERROR: Couldn't create volume $volume_name on SDC node $sdc."
+      echo "$output"
+      ((++ret))
+      continue
+    fi
+
+    #map volume
+    sdc_ip=`juju ssh $sdc "ip addr show dev eth0" 2>/dev/null | awk '/inet /{split($2,a,"/"); print a[1]}'`
+    map_volume_cmd="scli --mdm_ip $mdm_ip --map_volume_to_sdc --volume_name $volume_name --sdc_ip $sdc_ip"
+    if ! output=`juju ssh $sdc "$login_cmd && $map_volume_cmd" 2>/dev/null` ; then
+      echo "ERROR: Couldn't map volume $volume_name on SDC node $sdc."
+      echo "$output"
+      ((++ret))
+      continue
+    fi
+
+    #check volumes
+    query_cmd="scli --mdm_ip $mdm_ip --query_all_volumes"
+    if juju ssh $sdc "$login_cmd && $query_cmd" 2>/dev/null | grep $volume_name | grep "Mapped to" ; then
+      echo "INFO: Success. The volume $volume_name was created and mapped on SDC node $sdc."
+    else
+      echo "ERROR: There is no mapped volume $volume_name in cluster."
+      ((++ret))
+    fi
+  done
+
+  if (( ret == 0 )) ; then
+    echo "INFO: Success. All SDC nodes are connected to existing cluster."
+  else
+    echo "ERROR: Not all nodes passed all checks."
+    return 1
   fi
 }
 

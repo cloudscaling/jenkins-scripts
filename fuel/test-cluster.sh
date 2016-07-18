@@ -97,24 +97,6 @@ function deploy_changes() {
     check_failed_tasks $env_num
 }
 
-function list_online_nodes() {
-  local env=$1
-  local role=${2:-""}
-  if [[ "$env" == "None" && "$fuel_version" == "9.0.0" ]] ; then
-    env=""
-  fi
-  if [ -n "$role" ] ; then
-    role_regexp=".*${role}.*"
-  else
-    role_regexp=""
-  fi
-  fuel node | awk -F '|' "/^[ ]*[0-9]+[ |]+${role_regexp}/ {
-    gsub(/[ \t\r\n]+/, \"\", \$1); \
-    gsub(/[ \t\r\n]+/, \"\", \$9); \
-    gsub(/[ \t\r\n]+/, \"\", \$4); \
-    if((\$9==\"True\" || \$9==\"1\") && \$4==\"$env\"){print(\$1)}}" | sort
-}
-
 start_from=${1:-0}
 end_to=${2:-8}
 steps_count=$((end_to-start_from))
@@ -127,7 +109,7 @@ fi
 fuel_version=$(fuel --version 2>&1 | grep -o '[0-9]\.[0-9]\.[0-9]')
 env_name="emc"
 device_paths="/dev/vdb,/dev/vdc"
-if [[ "$fuel_version" == "8.0.0" || "$fuel_version" == "9.0.0" ]]; then
+if [[ "$fuel_version" == "8.0.0" ]]; then
     ha_mode_opts=''
 else
     ha_mode_opts='--mode ha'
@@ -141,7 +123,7 @@ if [[ $start_from < 1 ]]; then
     wait_running_tasks
   fi
 
-  release=`fuel rel | awk '/Ubuntu [0-9]+/ {print($1)}'`
+  release=`fuel rel | awk '/Ubuntu/ {print($1)}'`
   if [[ -z "$release" ]]; then
     fail "There is no Ubuntu release"
   fi
@@ -154,23 +136,23 @@ if [[ $start_from < 1 ]]; then
   
   nodes=()
   for i in {1..60}; do
-    nodes=($(list_online_nodes 'None'))
+    nodes=($(fuel node | grep 'True' | awk '/discover/ {if($8=="None"){print($1)}}' | sort))
     if [[ ${#nodes[@]} == 6 || ${#nodes[@]} > 6  ]]; then
         break
     fi
     sleep 10
   done
   if [[ ${#nodes[@]} < 6 ]]; then
-    fail "There is not enough free online nodes, only ${#nodes[@]} is available but 6 is required"
+    fail "There is not enough free online nodes, only $nodes is available but 6 is required"
   fi
 
   steps_count=$((steps_count-1))
 
 else
   env_num=$(fuel env | awk "/$env_name/ {print(\$1)}")
-  nodes=($(list_online_nodes $env_num 'controller'))
-  nodes+=($(list_online_nodes $env_num 'compute'))
-  nodes+=($(list_online_nodes 'None'))
+  nodes=($(fuel node | grep 'True' | grep 'controller' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
+  nodes+=($(fuel node | grep 'True' | grep 'compute' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
+  nodes+=($(fuel node | grep 'True' | awk "{if(\$8==\"None\"){print(\$1)}}" | sort))  
 fi
 
 echo nodes: ${nodes[@]}

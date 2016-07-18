@@ -10,7 +10,6 @@ function fail() {
 yum install -y git createrepo rpm rpm-build git dpkg-devel dpkg-dev
 easy_install pip && pip install fuel-plugin-builder
 
-rm -rf fuel-plugin-scaleio
 git clone https://github.com/openstack/fuel-plugin-scaleio.git || fail "Failed to clone fuel-plugin-scaleio git repo"
 
 pushd fuel-plugin-scaleio
