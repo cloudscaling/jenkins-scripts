@@ -6,7 +6,7 @@ my_dir="$(dirname $my_file)"
 source $my_dir/functions
 
 # provision machines
-provision_machines 0 1 2 3 4 5 6 7
+provision_machines 0 1 2 3 4
 
 # prepare fuel master
 prepare_fuel_master 0
@@ -36,10 +36,38 @@ configure_cluster mode 1 primary-controller 1 compute 2
 check_scaleio_not_installed 1
 remove_node_service 1 2
 
+# Deploy bundle
+$my_dir/../scaleio/deploy-scaleio-cluster.sh
+
+gateway_ip=`juju status scaleio-gw | grep public-address | awk '{print $2}'`
+
+set_fuel_options metadata-enabled='true'
+set_fuel_options existing-cluster="true"
+set_fuel_options gateway-ip=$gateway_ip
+set_fuel_options gateway-port="4443"
+set_fuel_options gateway-user="admin"
+set_fuel_options password="Default_password"
+configure_cluster primary-controller 1 compute 2,3
+
+check_existing_cluster 1,2,3
+
+juju remove-service scaleio-sds
+juju remove-service scaleio-mdm
+juju remove-service scaleio-gw
+remove_node_service 1 2 3
+wait_for_removed "scaleio-sds"
+wait_for_removed "scaleio-mdm"
+wait_for_removed "scaleio-gw"
+
+provision_machines 5 6 7
+
 new_storage_pools='sp1,sp2'
 new_device_paths='/dev/xvdf,/dev/xvdg'
 
-set_fuel_options metadata-enabled='true'
+set_fuel_options existing-cluster="false"
+set_fuel_options gateway-ip=""
+set_fuel_options gateway-port="4443"
+set_fuel_options gateway-user="admin"
 set_fuel_options protection-domain='pd'
 set_fuel_options protection-domain-nodes='3'
 set_fuel_options storage-pools=$new_storage_pools
