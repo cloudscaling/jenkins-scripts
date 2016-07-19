@@ -32,7 +32,7 @@ m3=$(create_machine 2 1)
 echo "Machine created: $m3"
 
 wait_for_machines $m1 $m2 $m3
-
+apply_developing_puppets $m1 $m2 $m3 $m4 $m5
 fix_kernel_drivers $m1 $m2 $m3
 
 # ---------------------------------------- pre-deployment stage end
