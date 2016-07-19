@@ -137,11 +137,12 @@ function check-sds() {
       ((++node_errors))
       echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) query_sds for $node_name does not contain required roles"
     fi
-    if ! echo "$node_details" | grep -q "Path: $DEVICE_PATH" ; then
-      ((++node_errors))
-      echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) query_sds for $node_name does not contain $DEVICE_PATH path"
+    if ! [ -z $DEVICE_PATH ] ; then
+      if ! echo "$node_details" | grep -q "Path: $DEVICE_PATH" ; then
+        ((++node_errors))
+        echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) query_sds for $node_name does not contain $DEVICE_PATH path"
+      fi
     fi
-
     if [[ $node_errors == 0 ]] ; then
       echo "INFO: Success checking of $node_name"
     else
