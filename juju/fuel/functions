@@ -113,9 +113,9 @@ function remove_node_service() {
   for node in $@ ; do
     mch=${machines[$node]}
     name=fuel-node${mch}
-    echo "Remove EMC packages from machine $1/$#"
-    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' 2>/dev/null
-    echo "Remove service ${name} from machine $1/$#"
+    echo "Remove EMC packages from machine $node/$#"
+    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' &>/dev/null
+    echo "Remove service ${name} from machine $node/$#"
     juju remove-service ${name}
   done
   # wait for remove
@@ -208,6 +208,18 @@ function configure_cluster() {
     juju ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
 
     check-cluster "juju ssh" $master_mdm $mode
+
+    # check query_all_sds output
+    password=`get_config fuel-master password`
+    echo "INFO: check connection of SDSs"
+    output=`juju ssh $master_mdm "scli --login --username $username --password $password --approve_certificate >/dev/null && scli --query_all_sds" 2>/dev/null`
+    if echo "$output" | grep "SDS ID" | grep -q -v "State: Connected" ; then
+      echo "ERROR: Not all sds are connected"
+      echo "$output"
+      return 1
+    else
+      echo "INFO: Success. All sds are connected."
+    fi
   fi
 }
 
