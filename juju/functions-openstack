@@ -172,6 +172,7 @@ function create_network() {
 function run_os_checks() {
   exec_on_mdm_callback=$1
   get_provisioning_type_callback=$2
+  get_volume_by_instance_callback=$3
 
   rm -f errors
   touch errors
@@ -272,9 +273,9 @@ function run_os_checks() {
   nova show $iname
 
   # check existing volumes type
-  current_type=`${get_provisioning_type_callback}`
+  current_type=`$get_provisioning_type_callback`
   echo "------------------------------ Check that all volumes in ScaleIO has type: $current_type"
-  volumes=`${exec_on_mdm_callback} "${scli_query} --query_all_volume" 2>/dev/null | grep 'Volume ID:'`
+  volumes=`$exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null | grep 'Volume ID:'`
   vcount=`echo "$volumes" | wc -l`
   vtcount=`echo "$volumes" | grep -i "$current_type\-provisioned" | wc -l`
   if [[ $vcount != $vtcount ]] ; then
@@ -352,6 +353,7 @@ function run_os_checks() {
   fi
   nova delete instance_for_snaps
 
+  # resize checks
   echo "------------------------------  Checking resize from 'empty' flavor to flavor with set PD (resize to another host)"
   if [[ $current_type == 'thin' ]] ; then otype='thick' ; else otype='thin' ; fi
   nova flavor-key 52 set sio:pd_name=${pd_name} sio:provisioning_type=$otype
@@ -361,17 +363,68 @@ function run_os_checks() {
   nova boot --flavor 51 $nic_opts --image cirros $iname
   instance_id=`nova list | grep " $iname " | awk '{print $2}'`
   wait_instance $instance_id $MAX_FAIL
-  $exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null
+  int_iname=`nova show $instance_id | awk '/instance_name/{print $4}'`
+  if [ -n "$get_volume_by_instance_callback" ] ; then
+    echo "INFO: Check ScaleIO properties(type and size) of volume of instance $instance_id"
+    if ! vol_id1=`$get_volume_by_instance_callback $int_iname` ; then
+      echo '' >> errors
+      echo "Can't get volume id for instance $instance_id before resize" >> errors
+      echo "ERROR: Can't get volume id for instance $instance_id before resize"
+    else
+      vol_props=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $vol_id1 --properties TYPE,SIZE" 2>/dev/null`
+      vol_type1=`echo "$vol_props" | awk '/TYPE/{print $2}'`
+      vol_size1=`echo "$vol_props" | awk '/SIZE/{print $2}'`
+      if ! echo "$vol_type1" | grep -i $current_type >/dev/null ; then
+        echo '' >> errors
+        echo "Volume for $instance_id created with incorrect provisioning type! actual=$vol_type1 expected=$current_type" >> errors
+        echo "ERROR: Volume for $instance_id created with incorrect provisioning type! actual=$vol_type1 expected=$current_type"
+      fi
+      if ! echo "$vol_size1" | grep -i "8.0" >/dev/null ; then
+        echo '' >> errors
+        echo "Volume for $instance_id created with incorrect size! actual=$vol_size1 expected=8.0" >> errors
+        echo "ERROR: Volume for $instance_id created with incorrect provisioning type! actual=$vol_size1 expected=8.0"
+      fi
+    fi
+  else
+    echo "WARNING: Skip check ScaleIO properties(type and size) of volume of instance $instance_id"
+  fi
   echo "------------------------------  Resizing instance"
   nova resize $instance_id 52
   echo "------------------------------  Wating instance for resize-confirm"
   wait_instance $instance_id $((2*MAX_FAIL)) VERIFY_RESIZE
   nova resize-confirm $instance_id
   wait_instance $instance_id $MAX_FAIL
-  echo "------------------------------  Volume list after resize"
   sleep 10
-  ${exec_on_mdm_callback} "${scli_query} --query_all_volume" 2>/dev/null
-  # TODO: add checking that new volume was created and has different provisioning type
+  if [ -n "$get_volume_by_instance_callback" ] ; then
+    echo "INFO: Check ScaleIO properties(type and size) after resize of volume of instance $instance_id"
+    if ! vol_id2=`$get_volume_by_instance_callback $int_iname` ; then
+      echo '' >> errors
+      echo "Can't get volume id for instance $instance_id after resize" >> errors
+      echo "ERROR: Can't get volume id for instance $instance_id after resize"
+      $exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null
+    else
+      if [[ "$vol_id1" == "$vol_id2" ]] ; then
+        echo '' >> errors
+        echo "Volume for $instance_id didn't changed after resize!!! actual=$vol_id2 not_expected=$vol_id2" >> errors
+        echo "ERROR: Volume for $instance_id didn't changed after resize!!! actual=$vol_id2 not_expected=$vol_id2"
+      fi
+      vol_props=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $vol_id2 --properties TYPE,SIZE" 2>/dev/null`
+      vol_type2=`echo "$vol_props" | awk '/TYPE/{print $2}'`
+      vol_size2=`echo "$vol_props" | awk '/SIZE/{print $2}'`
+      if ! echo "$vol_type2" | grep -i $otype >/dev/null ; then
+        echo '' >> errors
+        echo "Resized volume for $instance_id created with incorrect provisioning type! actual=$vol_type2 expected=$otype" >> errors
+        echo "ERROR: Resized volume for $instance_id created with incorrect provisioning type! actual=$vol_type2 expected=$otype"
+      fi
+      if ! echo "$vol_size2" | grep -i "16.0" >/dev/null ; then
+        echo '' >> errors
+        echo "Resized volume for $instance_id created with incorrect size! actual=$vol_size2 expected=16.0" >> errors
+        echo "ERROR: Resized volume for $instance_id created with incorrect provisioning type! actual=$vol_size2 expected=16.0"
+      fi
+    fi
+  else
+    echo "WARNING: Skip check ScaleIO properties(type and size) of volume of instance $instance_id"
+  fi
   nova delete $iname
   sleep 5
 
@@ -380,10 +433,10 @@ function run_os_checks() {
 
   # here we try to list all infos from ScaleIO
   set -x
-  ${exec_on_mdm_callback} "${scli_query} --query_all_volume" 2>/dev/null
-  ${exec_on_mdm_callback} "${scli_query} --query_all_sds" 2>/dev/null
-  ${exec_on_mdm_callback} "${scli_query} --query_all_sdc" 2>/dev/null
-  ${exec_on_mdm_callback} "${scli_query} --query_performance_parameters --all_sds --all_sdc" 2>/dev/null
+  $exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null
+  $exec_on_mdm_callback "$scli_query --query_all_sds" 2>/dev/null
+  $exec_on_mdm_callback "$scli_query --query_all_sdc" 2>/dev/null
+  $exec_on_mdm_callback "$scli_query --query_performance_parameters --all_sds --all_sdc" 2>/dev/null
   nova list
   cinder list
   set +x
