@@ -210,8 +210,8 @@ function configure_cluster() {
     check-cluster "juju ssh" $master_mdm $mode
 
     # check query_all_sds output
-    password=`get_config fuel-master password`
-    device_paths=`get_config fuel-master device_paths`
+    local password=`get_config fuel-master password`
+    local device_paths=`get_config fuel-master device-paths`
     check-sds "juju ssh" $master_mdm $username $password $device_paths
   fi
 }
@@ -429,7 +429,7 @@ function check_sds_storage_pool {
   for sds_name in ${sds_names[@]} ; do
     output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
     if ! echo "$output_sds" | grep "Device information" | grep -q "total ${#device_paths_list[@]} devices" ; then
-      echo "ERROR: Error in devices number in $sds_name"
+      echo "ERROR: Error in number of devices in $sds_name"
       echo "$output_sds"
       ((++ret))
     fi
