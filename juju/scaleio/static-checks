@@ -141,7 +141,6 @@ function check-sds() {
       ((++node_errors))
       echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) query_sds for $node_name does not contain $DEVICE_PATH path"
     fi
-
     if [[ $node_errors == 0 ]] ; then
       echo "INFO: Success checking of $node_name"
     else

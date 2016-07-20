@@ -113,9 +113,9 @@ function remove_node_service() {
   for node in $@ ; do
     mch=${machines[$node]}
     name=fuel-node${mch}
-    echo "Remove EMC packages from machine $1/$#"
-    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' 2>/dev/null
-    echo "Remove service ${name} from machine $1/$#"
+    echo "Remove EMC packages from machine $node/$#"
+    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' &>/dev/null
+    echo "Remove service ${name} from machine $node/$#"
     juju remove-service ${name}
   done
   # wait for remove
@@ -208,6 +208,11 @@ function configure_cluster() {
     juju ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
 
     check-cluster "juju ssh" $master_mdm $mode
+
+    # check query_all_sds output
+    password=`get_config fuel-master password`
+    device_paths=`get_config fuel-master device_paths`
+    check-sds "juju ssh" $master_mdm $username $password $device_paths
   fi
 }
 
@@ -466,7 +471,7 @@ function check_sds_on_controller {
   mdm_ip=`juju ssh $mch "scli --query_cluster | grep 'Management IPs'" 2>/dev/null | awk '{print$5}' | sed 's/,//g'`
   sds_on_controller='false'
   all_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
-  if echo "$all_sds" | grep $mdm_ip ; then
+  if echo "$all_sds" | grep $mdm_ip >/dev/null ; then
     sds_on_controller='true'
   fi
 
