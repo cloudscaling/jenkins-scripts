@@ -52,25 +52,7 @@ function provision_machines() {
     done
   fi
 
-  # check kernel at one machine
-  rm -f index.html
-  wget -t 2 -T 30 -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/
-  kernel=`juju ssh ${new_mx[0]} "uname -r" 2>/dev/null`
-  kernel=`echo $kernel | sed 's/\r//'`
-  if ! cat index.html | grep $kernel ; then
-    echo "WARNING: driver for kernel $kernel not found on ftp.emc.com. Upgrade kernel to 4.2.0-30"
-
-    # change kernel and reboot
-    for m in ${new_mx[@]} ; do
-      echo "--- Updating machine $m"
-      juju ssh $m "sudo apt-get install -fy linux-image-4.2.0-30-generic linux-headers-4.2.0-30-generic &>/dev/null" 2>/dev/null
-      juju ssh $m "sudo reboot" 2>/dev/null
-    done
-
-    # wait for machines up
-    wait_for_machines ${new_mx[@]}
-  fi
-  rm -f index.html
+  fix_kernel_drivers ${new_mx[@]}
 
   # deploy fake module to avoid removal of machines in case of remove last service
   for i in ${new_mx[@]}; do
