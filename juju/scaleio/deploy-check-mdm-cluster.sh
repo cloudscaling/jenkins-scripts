@@ -52,7 +52,7 @@ function wait_for_mode() {
   local iter=0
   while [[ $(get_mode) != $check_str ]]
   do
-    if juju status | grep "current" | grep error >/dev/null ; then
+    if juju status | grep "current" | grep -q error ; then
       echo "ERROR: Some services went to error state"
       juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
       echo "---------------------------------------------------------------------------"
@@ -103,7 +103,7 @@ function scale_up() {
     declare -a free_machines
     local mdm_machines=`get_mdm_machines`
     for mch in $m1 $m2 $m3 $m4 $m5 ; do
-      if ! echo "$mdm_machines" | grep -e "^[\t ]*$mch[\t ]*$" >/dev/null ; then
+      if ! echo "$mdm_machines" | grep -qe "^[\t ]*$mch[\t ]*$" ; then
         free_machines=(${free_machines[@]} $mch)
       fi
     done

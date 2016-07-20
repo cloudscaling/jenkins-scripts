@@ -83,7 +83,7 @@ for i in 1 2 ; do
     echo "ERROR: ($my_name:$LINENO) Error in devices number in scaleio_sds_pd$i"
     echo "$sds_output"
   fi
-  if ! echo "$sds_output" | grep "Path: /dev/xvdf" >/dev/null ; then
+  if ! echo "$sds_output" | grep -q "Path: /dev/xvdf" ; then
     (( ++ret ))
     echo "ERROR: ($my_name:$LINENO) Error in device path in scaleio_sds_pd$i"
     echo "$sds_output"

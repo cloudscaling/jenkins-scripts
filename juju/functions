@@ -88,7 +88,7 @@ function wait_status() {
   wait_absence_status_for_services "executing|blocked|waiting|allocating"
 
   # check for errors
-  if juju status | grep "current" | grep error >/dev/null ; then
+  if juju status | grep "current" | grep -q error ; then
     echo "ERROR: Some services went to error state"
     juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
     echo "---------------------------------------------------------------------------"
