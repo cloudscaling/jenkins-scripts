@@ -1,5 +1,7 @@
 #!/bin/bash
 
+MAX_FAIL=30
+
 instance_status() { nova show $1 | awk '/ status / {print $4}'; }
 function volume_status() { cinder show $1 | awk '/ status / {print $4}'; }
 function snapshot_status() { cinder snapshot-show $1 | awk '/ status / {print $4}'; }
@@ -9,8 +11,9 @@ function wait_instance() {
   local instance_id=$1
   local max_fail=$2
   local wait_status=${3:-ACTIVE}
-  echo "------------------------------  Wait for status '$wait_status' of instance '$instance_id'"
+  echo "INFO: Wait for status '$wait_status' of instance '$instance_id'"
   local fail=0
+  local timeout=10
   while [[ true ]] ; do
     if ((fail >= max_fail)); then
       echo '' >> errors
@@ -29,7 +32,8 @@ function wait_instance() {
       nova show $instance_id >> errors
       return 0
     fi
-    sleep 10
+    sleep $timeout
+    ((timeout+=5))
     ((++fail))
   done
 }
@@ -37,8 +41,9 @@ function wait_instance() {
 function wait_volume() {
   local volume_id=$1
   local max_fail=$2
-  echo "------------------------------  Wait for volume: $volume_id"
+  echo "INFO: Wait for volume: $volume_id"
   local fail=0
+  local timeout=10
   while [[ true ]] ; do
     if ((fail >= max_fail)); then
       echo '' >> errors
@@ -57,7 +62,8 @@ function wait_volume() {
       cinder show $volume_id >> errors
       return
     fi
-    sleep 10
+    sleep $timeout
+    ((timeout+=5))
     ((++fail))
   done
 }
@@ -65,8 +71,9 @@ function wait_volume() {
 function wait_snapshot() {
   local snapshot_id=$1
   local max_fail=$2
-  echo "----------------------------  Wait for snapshot: $volume_id"
+  echo "INFO: Wait for snapshot: $volume_id"
   local fail=0
+  local timeout=10
   while [[ true ]] ; do
     if ((fail >= max_fail)); then
       echo '' >> errors
@@ -85,7 +92,8 @@ function wait_snapshot() {
       cinder snapshot-show $snapshot_id >> errors
       return
     fi
-    sleep 10
+    sleep $timeout
+    ((timeout+=5))
     ((++fail))
   done
 }
@@ -94,8 +102,9 @@ function wait_image() {
   local image_id=$1
   local max_fail=$2
   local wait_status=$3
-  echo "------------------------------  Waiting for image: $image_id"
+  echo "INFO: Wait for image: $image_id"
   local fail=0
+  local timeout=10
   while [[ true ]] ; do
     if ((fail >= max_fail)); then
       echo '' >> errors
@@ -114,7 +123,8 @@ function wait_image() {
       openstack image show $image_id >> errors
       return 0
     fi
-    sleep 10
+    sleep $timeout
+    ((timeout+=5))
     ((++fail))
   done
 }
@@ -123,7 +133,7 @@ function create_virtualenv() {
   rm -rf .venv
   virtualenv .venv
   source .venv/bin/activate
-  pip install -q python-openstackclient
+  pip install -q python-openstackclient 2>/dev/null
   deactivate
 }
 
@@ -134,7 +144,7 @@ function create_image() {
 
   if ! output=`openstack image show $image_name 2>/dev/null` ; then
     rm -f cirros-0.3.4-x86_64-disk.img
-    wget -t 2 -T 60 -nv http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+    wget -t 2 -T 60 -q http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
     output=`openstack image create --public --file cirros-0.3.4-x86_64-disk.img $image_name`
   fi
   image_id=`echo "$output" | awk '/ id /{print $4}'`
@@ -147,13 +157,13 @@ function create_flavors() {
   source .venv/bin/activate
 
   if ! nova flavor-show 51 &>/dev/null ; then
-    nova flavor-create fl8gb 51 512 8 1
+    nova flavor-create fl8gb 51 512 8 1 >/dev/null
   fi
   if ! nova flavor-show 52 &>/dev/null ; then
-    nova flavor-create fl16gb 52 512 16 1
+    nova flavor-create fl16gb 52 512 16 1 >/dev/null
   fi
   if ! nova flavor-show 53 &>/dev/null ; then
-    nova flavor-create fl8gbext --ephemeral 8 --swap 8192 53 512 8 1
+    nova flavor-create fl8gbext --ephemeral 8 --swap 8192 53 512 8 1 >/dev/null
   fi
 
   deactivate
@@ -172,11 +182,6 @@ function create_network() {
 function run_os_checks() {
   exec_on_mdm_callback=$1
   get_provisioning_type_callback=$2
-  get_volume_by_instance_callback=$3
-
-  rm -f errors
-  touch errors
-  export MAX_FAIL=30
 
   scli_password=${SCALEIO_mdm_password:-'Default_password'}
   if [ -n "${SCALEIO_mdm_ips}" ] ; then
@@ -191,7 +196,9 @@ function run_os_checks() {
 
   # check installed cloud
   source .venv/bin/activate
+  echo "INFO: Check OpenStack catalog first"
   openstack catalog list
+
   # in fuel env there is more than 1 network, so it's needed to specify network directly
   net_id=`nova network-list | awk '/admin_internal_net/{print $2}'`
   if [ -n "${net_id}" ] ; then
@@ -199,252 +206,485 @@ function run_os_checks() {
   else
     nic_opts=""
   fi
-
   deactivate
 
   image_id=`create_image`
-  echo "------------------------------  Add specific flavors"
   create_flavors
   # in case of fuel net-id is not emtpy, so skip network creation
   if [ -z "${net_id}" ] ; then
     create_network
   fi
 
-  source .venv/bin/activate
-  echo "------------------------------  Check cinder volumes"
-  echo "------------------------------  Check simple volume"
-  cinder create --display_name simple_volume 1
-  volume_id=`cinder list | awk '/ simple_volume /{print $2}'`
-  wait_volume $volume_id $MAX_FAIL
-
-  echo "------------------------------  Check cinder volumes"
-  echo "------------------------------  Check volume from image"
-  cinder create --image-id $image_id --display_name volume_from_image 1
-  volume_id=`cinder list | awk '/ volume_from_image /{print $2}'`
-  wait_volume $volume_id $MAX_FAIL
-
-  cinder list
-
-  echo "------------------------------  Run instance from bootable volume"
-  iname='inst_from_volume'
-  nova boot --flavor 51 $nic_opts --block-device "device=/dev/vda,id=$volume_id,shutdown=remove,source=volume,dest=volume,bootindex=0" $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-  wait_instance $instance_id $MAX_FAIL
-  nova show $iname
-  echo "------------------------------  Console log"
-  nova console-log $iname | tail -10
-  echo "------------------------------  Check live migration"
-  nova live-migration $iname
-  sleep 20
-  wait_instance $instance_id $MAX_FAIL
-  nova show $iname
-  host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
-  if [[ "$host1" == "$host2" ]] ; then
-    echo '' >> errors
-    echo "ERROR: Host is not changed after live migration." >> errors
-  fi
-
-  echo "------------------------------  Run instance from ephemeral"
-  iname="instance_01"
-  nova boot --flavor 51 $nic_opts --image cirros $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-  wait_instance $instance_id $MAX_FAIL
-  nova show $iname
   host_attr='OS-EXT-SRV-ATTR:host'
-  host1=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
-  echo "------------------------------  Console log"
-  nova console-log $iname | tail
-  echo "------------------------------  Check live migration"
-  nova live-migration $iname
-  sleep 20
-  wait_instance $instance_id $MAX_FAIL
-  nova show $iname
-  host2=`nova show $iname | grep "$host_attr" | awk '{print $4}'`
-  if [[ "$host1" == "$host2" ]] ; then
-    echo '' >> errors
-    echo "ERROR: Host is not changed after live migration." >> errors
-  fi
 
-  echo "------------------------------  Check flavor with additional Ephemeral and swap "
-  iname="instance_02"
-  nova boot --flavor 53 $nic_opts --image cirros $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-  wait_instance $instance_id $((3*MAX_FAIL))
-  nova show $iname
-
-  # check existing volumes type
-  current_type=`$get_provisioning_type_callback`
-  echo "------------------------------ Check that all volumes in ScaleIO has type: $current_type"
-  volumes=`$exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null | grep 'Volume ID:'`
-  vcount=`echo "$volumes" | wc -l`
-  vtcount=`echo "$volumes" | grep -i "$current_type\-provisioned" | wc -l`
-  if [[ $vcount != $vtcount ]] ; then
-    echo "------------------------------ ERROR: Some volume has another type"
-    echo '' >> errors
-    echo "ERROR: Some volumes has different type" >> errors
-    echo "$volumes" >> errors
-  else
-    echo "------------------------------ All volumes in ScaleIO has type: $current_type"
-  fi
-
-  # remove OpenStack objects
-  cinder delete simple_volume || /bin/true
-  nova delete inst_from_volume || /bin/true
-  nova delete instance_01 || /bin/true
-  nova delete instance_02 || /bin/true
-
-  # check snapshots
-  echo "------------------------------  Creating volume"
-  cinder create --display_name volume_for_snaps 1
-  volume_id=`cinder list | awk '/ volume_for_snaps /{print $2}'`
-  wait_volume $volume_id $MAX_FAIL
-
-  echo "------------------------------  Creating snapshot"
-  cinder snapshot-create volume_for_snaps
-  snapshot_id=`cinder snapshot-list | grep $volume_id | awk '{print$2}'`
-  wait_snapshot $snapshot_id $MAX_FAIL
-
-  echo "------------------------------  Creating volume from snapshot"
-  cinder create --snapshot_id $snapshot_id --name from_snapshot
-  snap_volume_id=`cinder list | awk '/ from_snapshot /{print $2}'`
-  wait_volume $snap_volume_id $MAX_FAIL
-
-  cinder delete $snap_volume_id
-  echo "------------------------------ Deleting snapshot"
-  cinder snapshot-delete $snapshot_id
-  sleep 5
-  if `cinder snapshot-list | grep $snapshot_id ` ; then
-    echo '' >> errors
-    echo "Snapshot $snapshot_id wasn't deleted." >> errors
-  fi
-  cinder delete $volume_id
-
-  echo "------------------------------  Checking creation of snapshot from instance and second instance from the created image"
-  echo "------------------------------  Creating instance"
-  iname="instance_for_snaps"
-  nova boot --flavor 51 $nic_opts --image cirros $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-  wait_instance $instance_id $MAX_FAIL
-
-  echo "------------------------------  Creating Image from Instance"
-  nova image-create $instance_id snapshot_image
-  simage_id=`openstack image show snapshot_image | awk '/ id /{print $4}'`
-  openstack image show $simage_id
-  echo "------------------------------  Status should be 'queued' now. Waiting for 'saving'"
-  wait_image $simage_id $MAX_FAIL saving
-  echo "------------------------------  Status should be 'saving' now. Waiting for 'active'"
-  wait_image $simage_id $((2*MAX_FAIL)) active
-  openstack image show $simage_id
-
-  echo "------------------------------  Creating instance from created image"
-  iname="from_snapshot"
-  nova boot --flavor 51 $nic_opts --image $simage_id $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-  wait_instance $instance_id $((3*MAX_FAIL))
-
-  echo "------------------------------  Deleting artefacts"
-  nova delete from_snapshot
-  sleep 5
-  openstack image delete $simage_id
-  sleep 5
-  if `openstack image list | grep $simage_id ` ; then
-    echo '' >> errors
-    echo "Snapshot wasn't deleted." >> errors
-  fi
-  nova delete instance_for_snaps
-
-  # resize checks
-  echo "------------------------------  Checking resize from 'empty' flavor to flavor with set PD (resize to another host)"
-  if [[ $current_type == 'thin' ]] ; then otype='thick' ; else otype='thin' ; fi
-  nova flavor-key 52 set sio:pd_name=${pd_name} sio:provisioning_type=$otype
-
-  echo "------------------------------  Creating instance"
-  iname="instance_for_resize"
-  nova boot --flavor 51 $nic_opts --image cirros $iname
-  instance_id=`nova list | grep " $iname " | awk '{print $2}'`
-  wait_instance $instance_id $MAX_FAIL
-  int_iname=`nova show $instance_id | awk '/instance_name/{print $4}'`
-  if [ -n "$get_volume_by_instance_callback" ] ; then
-    echo "INFO: Check ScaleIO properties(type and size) of volume of instance $instance_id"
-    if ! vol_id1=`$get_volume_by_instance_callback $int_iname` ; then
-      echo '' >> errors
-      echo "Can't get volume id for instance $instance_id before resize" >> errors
-      echo "ERROR: Can't get volume id for instance $instance_id before resize"
-    else
-      vol_props=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $vol_id1 --properties TYPE,SIZE" 2>/dev/null`
-      vol_type1=`echo "$vol_props" | awk '/TYPE/{print $2}'`
-      vol_size1=`echo "$vol_props" | awk '/SIZE/{print $2}'`
-      if ! echo "$vol_type1" | grep -i $current_type >/dev/null ; then
-        echo '' >> errors
-        echo "Volume for $instance_id created with incorrect provisioning type! actual=$vol_type1 expected=$current_type" >> errors
-        echo "ERROR: Volume for $instance_id created with incorrect provisioning type! actual=$vol_type1 expected=$current_type"
-      fi
-      if ! echo "$vol_size1" | grep -i "8.0" >/dev/null ; then
-        echo '' >> errors
-        echo "Volume for $instance_id created with incorrect size! actual=$vol_size1 expected=8.0" >> errors
-        echo "ERROR: Volume for $instance_id created with incorrect provisioning type! actual=$vol_size1 expected=8.0"
-      fi
-    fi
-  else
-    echo "WARNING: Skip check ScaleIO properties(type and size) of volume of instance $instance_id"
-  fi
-  echo "------------------------------  Resizing instance"
-  nova resize $instance_id 52
-  echo "------------------------------  Wating instance for resize-confirm"
-  wait_instance $instance_id $((2*MAX_FAIL)) VERIFY_RESIZE
-  nova resize-confirm $instance_id
-  wait_instance $instance_id $MAX_FAIL
-  sleep 10
-  if [ -n "$get_volume_by_instance_callback" ] ; then
-    echo "INFO: Check ScaleIO properties(type and size) after resize of volume of instance $instance_id"
-    if ! vol_id2=`$get_volume_by_instance_callback $int_iname` ; then
-      echo '' >> errors
-      echo "Can't get volume id for instance $instance_id after resize" >> errors
-      echo "ERROR: Can't get volume id for instance $instance_id after resize"
-      $exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null
-    else
-      if [[ "$vol_id1" == "$vol_id2" ]] ; then
-        echo '' >> errors
-        echo "Volume for $instance_id didn't changed after resize!!! actual=$vol_id2 not_expected=$vol_id2" >> errors
-        echo "ERROR: Volume for $instance_id didn't changed after resize!!! actual=$vol_id2 not_expected=$vol_id2"
-      fi
-      vol_props=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $vol_id2 --properties TYPE,SIZE" 2>/dev/null`
-      vol_type2=`echo "$vol_props" | awk '/TYPE/{print $2}'`
-      vol_size2=`echo "$vol_props" | awk '/SIZE/{print $2}'`
-      if ! echo "$vol_type2" | grep -i $otype >/dev/null ; then
-        echo '' >> errors
-        echo "Resized volume for $instance_id created with incorrect provisioning type! actual=$vol_type2 expected=$otype" >> errors
-        echo "ERROR: Resized volume for $instance_id created with incorrect provisioning type! actual=$vol_type2 expected=$otype"
-      fi
-      if ! echo "$vol_size2" | grep -i "16.0" >/dev/null ; then
-        echo '' >> errors
-        echo "Resized volume for $instance_id created with incorrect size! actual=$vol_size2 expected=16.0" >> errors
-        echo "ERROR: Resized volume for $instance_id created with incorrect provisioning type! actual=$vol_size2 expected=16.0"
-      fi
-    fi
-  else
-    echo "WARNING: Skip check ScaleIO properties(type and size) of volume of instance $instance_id"
-  fi
-  nova delete $iname
-  sleep 5
-
-  # all checks is done and we can switch off traps
+  # next checks will handle return code manually
   set +e
+
+  source .venv/bin/activate
+  local ret=0
+  check_cinder_simple_volume || ret=1
+  echo ''
+  check_cinder_bootable_volume || ret=1
+  echo ''
+  check_instance_simple || ret=1
+  echo ''
+  check_instance_ext || ret=1
+  echo ''
+  check_volume_snapshot || ret=1
+  echo ''
+  check_instance_snapshot || ret=1
+  echo ''
+  check_instance_resize || ret=1
+  echo ''
 
   # here we try to list all infos from ScaleIO
   set -x
   $exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null
   $exec_on_mdm_callback "$scli_query --query_all_sds" 2>/dev/null
   $exec_on_mdm_callback "$scli_query --query_all_sdc" 2>/dev/null
-  $exec_on_mdm_callback "$scli_query --query_performance_parameters --all_sds --all_sdc" 2>/dev/null
   nova list
   cinder list
   set +x
 
   deactivate
 
-  if [ -s errors ] ; then
-    cat errors
+  return $ret
+}
+
+function _get_current_volume_ids() {
+  $exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --all_objects --properties ID" 2>/dev/null | sed $'s/\r//' | grep -v "Logged in" | awk '/ID/{print $2}'
+}
+
+function _get_volume_ids() {
+  set -x
+  local ids_to_skip=$@
+  local ids=`_get_current_volume_ids`
+  for id in $ids ; do
+    echo "$ids_to_skip" | grep -q "$id" && continue
+    echo "$id"
+  done
+  set +x
+}
+
+function _check_provisioning_type() {
+  local type=$1
+  shift
+  local ids="$@"
+  if [[ $type == '-' ]] ; then type=`$get_provisioning_type_callback` ; fi
+  echo "INFO: Check that volumes in ScaleIO has type: $type"
+
+  local ret=0
+  for id in $ids ; do
+    local output=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $id --properties ID,TYPE" 2>/dev/null | sed $'s/\r//'`
+    if ! echo "$output" | grep -iq $type ; then
+      echo "ERROR: Volume $id has another type:"
+      echo "$output"
+      ret=1
+    else
+      echo "INFO: Volume $id has correct type."
+    fi
+  done
+  
+  return $ret
+}
+
+function _check_size() {
+  local size_mb=$1
+  shift
+  local ids="$@"
+  echo "INFO: Check that volumes in ScaleIO has size: $size_mb MB"
+
+  local ret=0
+  for id in $ids ; do
+    local output=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $id --properties ID,SIZE" 2>/dev/null | sed $'s/\r//'`
+    if ! echo "$output" | grep -iq "$size_mb MB" ; then
+      echo "ERROR: Volume $id has another size:"
+      echo "$output"
+      ret=1
+    else
+      echo "INFO: Volume $id has correct size"
+    fi
+  done
+  
+  return $ret
+}
+
+function check_cinder_simple_volume() {
+  echo "INFO: Check simple volume"
+
+  local volumes_before=`$exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null`
+  local volume_ids=`_get_volume_ids`
+
+  if ! output=`cinder create --display_name simple_volume 1` ; then
+    echo "ERROR: Couldn't create simple volume"
+    echo "$output"
     return 1
   fi
+
+  local ret=0
+  local volume_id=`echo "$output" | awk '/ id /{print $4}'`
+  if ! wait_volume $volume_id $MAX_FAIL ; then
+    ret=1
+    cinder show $volume_id
+  else
+    echo "INFO: Simple volume created successfully"
+  fi
+
+  echo "INFO: Check ScaleIO volume list"
+  local volumes_after=`$exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null`
+  local vc1=`echo "$volumes_before" | grep "Volume ID" | wc -l`
+  local vc2=`echo "$volumes_after" | grep "Volume ID" | wc -l`
+  if (( vc2 != vc1 + 1 )) ; then
+    echo "ERROR: Inconsistent count of volumes in ScaleIO"
+    echo "ERROR: before test:"
+    echo "$volumes_before"
+    echo "ERROR: after test:"
+    echo "$volumes_after"
+    ret=1
+  else
+    echo "INFO: Success"
+  fi
+
+  local new_ids=`_get_volume_ids $volume_ids`
+  _check_provisioning_type - $new_ids || ret=1
+  _check_size 8192 $new_ids || ret=1
+
+  echo "INFO: Volume information:"
+  cinder show $volume_id
+  cinder delete $volume_id >/dev/null
+  return $ret
 }
+
+function check_cinder_bootable_volume() {
+  echo "INFO: Check volume from image"
+  if ! output=`cinder create --image-id $image_id --display_name volume_from_image 1` ; then
+    echo "ERROR: Couldn't create volume from image"
+    echo "$output"
+    return 1
+  fi
+
+  local volume_id=`echo "$output" | awk '/ id /{print $4}'`
+  if ! wait_volume $volume_id $MAX_FAIL ; then
+    cinder show $volume_id
+    cinder delete $volume_id >/dev/null
+    return 1
+  else
+    echo "INFO: Volume from image created successfully"
+  fi
+
+  echo "INFO: Run instance from bootable volume"
+  local iname='inst_from_volume'
+  if ! output=`nova boot --flavor 51 $nic_opts --block-device "device=/dev/vda,id=$volume_id,shutdown=remove,source=volume,dest=volume,bootindex=0" $iname` ; then
+    echo "ERROR: Couldn't boot instance from bootable volume"
+    echo "$output"
+    return 1
+  fi
+
+  local instance_id=`echo "$output" | awk '/ id /{print $4}'`
+  if ! wait_instance $instance_id $MAX_FAIL ; then
+    nova show $instance_id
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+
+  local ret=0
+  _check_instance_log $instance_id || ret=1
+  _check_instance_migration $instance_id || ret=1
+
+  echo "INFO: Instance information:"
+  nova show $instance_id
+  nova delete $instance_id >/dev/null
+  return $ret
+}
+
+function check_instance_simple() {
+  echo "INFO: Check instance with simple flavor"
+  _check_instance 51
+  return $?
+}
+
+function check_instance_ext() {
+  echo "INFO: Check instance with additional Ephemeral and swap"
+  _check_instance 53
+  return $?
+}
+
+function _check_instance_log() {
+  local id=$1
+  # wait for console-log
+  echo "INFO: Check that console log is not empty"
+  sleep 10
+  local log_lines=`nova console-log $id | wc -l`
+  if (( log_lines == 0 )) ; then
+    echo "ERROR: console log is empty for instance $instance_id"
+    return 1
+  fi
+  return 0
+}
+
+function _check_instance_migration() {
+  local id=$1
+  local host1=`nova show $id | grep "$host_attr" | awk '{print $4}'`
+  echo "INFO: Check live migration and check that host changing (Host is $host1)"
+  nova live-migration $id
+  sleep 20
+  if ! wait_instance $id $MAX_FAIL ; then
+    return 1
+  fi
+
+  local host2=`nova show $id | grep "$host_attr" | awk '{print $4}'`
+  if [[ "$host1" == "$host2" ]] ; then
+    echo "ERROR: Host was not changed after live migration."
+    return 1
+  fi
+
+  return 0
+}
+
+function _check_instance() {
+  local flavor=$1
+
+  local volume_ids=`_get_volume_ids`
+
+  local iname="instance_$flavor"
+  if ! output=`nova boot --flavor $flavor $nic_opts --image cirros $iname` ; then
+    echo "ERROR: Couldn't boot instance"
+    echo "$output"
+    return 1
+  fi
+  local instance_id=`echo "$output" | awk '/ id /{print $4}'`
+  local ret=0
+  wait_instance $instance_id $((3*MAX_FAIL)) || ret=1
+  if [[ $ret == 0 ]] ; then
+    _check_instance_log $instance_id || ret=1
+    _check_instance_migration $instance_id || ret=1
+    local new_ids=`_get_volume_ids $volume_ids`
+    _check_provisioning_type - $new_ids || ret=1
+    _check_size 8192 $new_ids || ret=1 # this function is called with flavors 51 and 53. both have all disks sizes equal to 8Gb
+  fi
+
+  nova show $instance_id
+  nova delete $instance_id
+  return $ret
+}
+
+function check_volume_snapshot() {
+  echo "INFO: Check snapshot creation from volume and volume from snapshot"
+
+  local volume_ids=`_get_volume_ids`
+  echo "INFO: Create simple volume"
+  if ! output=`cinder create --display_name volume_for_snapshot 1` ; then
+    echo "ERROR: Couldn't create volume"
+    echo "$output"
+    return 1
+  fi
+  local volume_id=`echo "$output" | awk '/ id /{print $4}'`
+  if ! wait_volume $volume_id $MAX_FAIL ; then
+    cinder show $volume_id
+    cinder delete $volume_id >/dev/null
+    return 1
+  fi
+  local scaleio_volume_id=`_get_volume_ids $volume_ids` # here should be only one volume!
+  echo "INFO: Volume ($scaleio_volume_id) created successfully"
+
+  echo "INFO: Create snapshot"
+  if ! output=`cinder snapshot-create $volume_id` ; then
+    echo "ERROR: Couldn't create snapshot"
+    echo "$output"
+    cinder delete $volume_id >/dev/null
+    return 1
+  fi
+  local snapshot_id=`echo "$output" | awk '/ id /{print $4}'`
+  if ! wait_snapshot $snapshot_id $MAX_FAIL ; then
+    cinder snapshot-delete $snapshot_id >/dev/null
+    sleep 5
+    cinder delete $volume_id >/dev/null
+    return 1
+  fi  
+  echo "INFO: Snapshot created successfully"
+
+  echo "INFO: Creating volume from snapshot"
+  if ! output=`cinder create --snapshot_id $snapshot_id --name from_snapshot` ; then
+    echo "ERROR: Couldn't create volume from snapshot"
+    echo "$output"
+    cinder snapshot-delete $snapshot_id >/dev/null
+    sleep 5
+    cinder delete $volume_id >/dev/null
+    return 1
+  fi  
+  local snap_volume_id=`echo "$output" | awk '/ id /{print $4}'`
+  if ! wait_volume $snap_volume_id $MAX_FAIL ; then
+    cinder show $snap_volume_id
+    cinder delete $snap_volume_id >/dev/null
+    sleep 5
+    cinder snapshot-delete $snapshot_id >/dev/null
+    sleep 5
+    cinder delete $volume_id >/dev/null
+    return 1
+  fi
+  echo "INFO: Volume from snapshot created successfully"
+
+  local ret=0
+  _check_descendants $scaleio_volume_id 2 || ret=1
+
+  cinder delete $snap_volume_id >/dev/null
+  sleep 5
+  cinder snapshot-delete $snapshot_id >/dev/null
+  sleep 10
+  if `cinder snapshot-list | grep $snapshot_id ` ; then
+    echo "ERROR: Snapshot $snapshot_id wasn't deleted."
+    ret=1
+  fi
+
+  cinder delete $volume_id >/dev/null
+  
+  return $ret
+}
+
+function _check_descendants() {
+  local id=$1
+  local exp_count=$2
+
+  local query_str="--query_properties --object_type VOLUME --object_id $id --properties NUM_OF_DESCENDANT_VOLUMES"
+  local count=`$exec_on_mdm_callback "$scli_query $query_str" 2>/dev/null | sed $'s/\r//' | awk '/NUM_OF_D/{print $2}'`
+  if [[ $count != "$exp_count" ]] ; then
+    echo "ERROR: Invalid count of descendant volumes for base volume $id (expected = $exp_count)."
+    $exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $id --preset ALL"
+    return 1
+  fi
+  echo "INFO: Correct count of descendant volumes for base volume $id ($exp_count)."
+  return 0
+}
+
+function check_instance_snapshot() {
+  echo "INFO: Check creation of snapshot from instance and second instance from the created image"
+
+  local volume_ids=`_get_volume_ids`
+  echo "INFO: Create instance"
+  local iname="instance_for_snapshot"
+  if ! output=`nova boot --flavor 51 $nic_opts --image cirros $iname` ; then
+    echo "ERROR: Couldn't boot instance"
+    echo "$output"
+    return 1
+  fi
+  local instance_id=`echo "$output" | awk '/ id /{print $4}'`
+  if ! wait_instance $instance_id $MAX_FAIL ; then
+    nova show $instance_id
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  echo "INFO: Instance created successfully"
+
+  echo "INFO: Create image from Instance"
+  if ! output=`nova image-create $instance_id snapshot_image` ; then
+    echo "ERROR: Couldn't create image"
+    echo "$output"
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  # previous command doesn't return any output - get id from list
+  local simage_id=`openstack image show snapshot_image | awk '/ id /{print $4}'`
+  echo "INFO: Status should be 'queued' now. Waiting for 'saving'"
+  if ! wait_image $simage_id $MAX_FAIL saving ; then
+    openstack image show $simage_id
+    openstack image delete $simage_id >/dev/null
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  echo "INFO: Status should be 'saving' now. Waiting for 'active'"
+  if ! wait_image $simage_id $((2*MAX_FAIL)) active ; then
+    openstack image show $simage_id
+    openstack image delete $simage_id >/dev/null
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  echo "INFO: Image created successfully"
+
+  echo "INFO: Create instance from created image"
+  local iname="from_snapshot"
+  if ! output=`nova boot --flavor 51 $nic_opts --image $simage_id $iname` ; then
+    echo "ERROR: Couldn't boot instance from created image"
+    echo "$output"
+    openstack image delete $simage_id >/dev/null
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  local instance_id2=`echo "$output" | awk '/ id /{print $4}'`
+  if ! wait_instance $instance_id2 $((3*MAX_FAIL)) ; then
+    nova show $instance_id2
+    nova delete $instance_id2 >/dev/null
+    openstack image delete $simage_id >/dev/null
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  echo "INFO: Instance from new image created successfully"
+
+  local new_volume_ids=`_get_volume_ids $volume_ids`
+  for id in $new_volume_ids ; do
+    _check_descendants $id 0 || ret=1
+  done
+
+  nova delete $instance_id2 >/dev/null
+  openstack image delete $simage_id >/dev/null
+  nova delete $instance_id >/dev/null
+
+  return $ret
+}
+
+function check_instance_resize() {
+  echo "INFO: Check resize from 'empty' flavor to flavor with set PD (volume must be recreated)"
+  if [[ $current_type == 'thin' ]] ; then otype='thick' ; else otype='thin' ; fi
+  nova flavor-key 52 set sio:pd_name=${pd_name} sio:provisioning_type=$otype
+
+  echo "INFO: Create instance"
+  local iname="instance_03"
+  if ! output=`nova boot --flavor 51 $nic_opts --image cirros $iname` ; then
+    echo "ERROR: Couldn't boot instance"
+    echo "$output"
+    return 1
+  fi
+  local instance_id=`echo "$output" | awk '/ id /{print $4}'`
+  if ! wait_instance $instance_id $MAX_FAIL ; then
+    nova show $instance_id
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  echo "INFO: Instance created successfully"
+  local vol_id1=`_get_volume_ids $volume_ids` # should be only one
+
+  local volume_ids=`_get_volume_ids`
+  echo "INFO: Resizing instance"
+  if ! output=`nova resize $instance_id 52` ; then
+    echo "ERROR: Couldn't resize instance"
+    echo "$output"
+    nova show $instance_id
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  echo "INFO: Waiting instance for resize-confirm"
+  if ! wait_instance $instance_id $((2*MAX_FAIL)) VERIFY_RESIZE ; then
+    nova show $instance_id
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  if ! output=`nova resize-confirm $instance_id` ; then
+    echo "ERROR: Couldn't confirm resize instance"
+    echo "$output"
+    nova show $instance_id
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+  if ! wait_instance $instance_id $MAX_FAIL ; then
+    nova show $instance_id
+    nova delete $instance_id >/dev/null
+    return 1
+  fi
+
+  local new_ids=`_get_volume_ids $volume_ids`
+  _check_provisioning_type $otype $new_ids || ret=1
+  _check_size 16384 $new_ids || ret=1
+
+  nova delete $instance_id >/dev/null
+  return 0
+}
+
