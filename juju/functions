@@ -144,21 +144,22 @@ function apply_developing_puppets() {
     return
   fi
   local puppet4=${PUPPET4:-false}
+  local logf="$WORKSPACE/logs/apt.log"
   for mch in $@ ; do
-    echo "INFO: install development puppets to machine $mch (puppet4 = $puppet4)"
-    juju ssh $mch "sudo apt-get -qy update && sudo apt-get -qfy upgrade && sudo apt-get -qqfy purge puppet ruby facter" 2>/dev/null
+    echo "INFO: install development puppets to machine $mch (puppet4 = $puppet4)" | tee -a $logf
+    juju ssh $mch "sudo apt-get -qy update && sudo apt-get -qfy upgrade && sudo apt-get -qqfy purge puppet ruby facter" &>$logf
     if [[ "$puppet4" == true ]] ; then
-      juju ssh $mch "sudo apt-get -qqfy install git ruby" 2>/dev/null
-      juju ssh $mch "sudo gem install puppet" 2>/dev/null
+      juju ssh $mch "sudo apt-get -qqfy install git ruby" &>$logf
+      juju ssh $mch "sudo gem install puppet" &>$logf
       juju ssh $mch "sudo git clone -q https://github.com/emccode/puppet-scaleio /etc/puppetlabs/code/modules/scaleio" 2>/dev/null
       juju ssh $mch "sudo git clone -q https://github.com/emccode/puppet-scaleio-openstack /etc/puppetlabs/code/modules/scaleio_openstack" 2>/dev/null
     else
-      juju ssh $mch "sudo apt-get -qqfy install git puppet" 2>/dev/null
+      juju ssh $mch "sudo apt-get -qqfy install git puppet" &>$logf
       juju ssh $mch "sudo git clone -q https://github.com/emccode/puppet-scaleio /etc/puppet/modules/scaleio" 2>/dev/null
       juju ssh $mch "sudo git clone -q https://github.com/emccode/puppet-scaleio-openstack /etc/puppet/modules/scaleio_openstack" 2>/dev/null
     fi
     for dep in puppetlabs-firewall puppetlabs-stdlib puppetlabs-inifile ; do
-      juju ssh $mch "sudo puppet module install $dep || /bin/true" 2>/dev/null
+      juju ssh $mch "sudo puppet module install $dep || /bin/true" &>$logf
     done
   done
 }
@@ -181,7 +182,7 @@ function check_kernel() {
   if grep -q $kernel index.html ; then
     rm -f index.html
     wget -t 2 -T 30 -nv "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/${kernel}/
-    if grep -q 'scini.tar' index.html ; then
+    if grep -q 'scini.tar' index.html && grep -q 'xcache.tar' index.html  ; then
       rm -f index.html
       return 0
     fi
