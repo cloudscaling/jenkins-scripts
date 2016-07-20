@@ -211,8 +211,8 @@ function configure_cluster() {
 
     # check query_all_sds output
     password=`get_config fuel-master password`
-
-    check-sds "juju ssh" $master_mdm $username $password
+    device_paths=`get_config fuel-master device_paths`
+    check-sds "juju ssh" $master_mdm $username $password $device_paths
   fi
 }
 
