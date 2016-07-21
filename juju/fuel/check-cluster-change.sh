@@ -56,11 +56,11 @@ configure_cluster mode 1 primary-controller 1 compute 2,3
 configure_cluster mode 5 primary-controller 1 compute 2,3 controller 4,5,6,7
 
 # basic deploy 3+2 cluster
-remove_node_service 1,2,3,4,5,6,7
+remove_node_service 1 2 3 4 5 6 7
 configure_cluster mode 3 primary-controller 1 compute 2,3 controller 4,5
 
 # basic deploy 5+2 cluster
-remove_node_service 1,2,3,4,5
+remove_node_service 1 2 3 4 5
 configure_cluster mode 5 primary-controller 1 compute 2,3 controller 4,5,6,7
 
 save_logs
