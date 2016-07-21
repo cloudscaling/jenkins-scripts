@@ -98,4 +98,10 @@ check_specific_storage_pool 1 'Flash Read Cache' "Uses" 'sp2'
 check_rfcache 1 "$rfcache_paths"
 check_sds_on_controller 1 'false'
 
+remove_node_service 1 2 3 4 5 6 7
+set_fuel_options protection-domain-nodes='3'
+configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
+
+check_protection_domain_nodes 1 '3'
+
 save_logs
