@@ -563,6 +563,8 @@ function check_existing_cluster {
 
     sdc_mdm_ips=(`juju ssh $sdc "sudo /bin/emc/scaleio/drv_cfg --query_mdms" 2>/dev/null | awk '/MDM-ID/{print $10}' | sed 's/\[0\]-//g'`)
 
+    environment_file=`juju ssh $sdc "cat /etc/environment" 2>/dev/null`
+
     #check MDM addresses"
     mdm_err=0
     if [[ ${#cluster_mdm_ips[@]} != ${#sdc_mdm_ips[@]} ]] ; then
@@ -574,6 +576,10 @@ function check_existing_cluster {
           echo "ERROR: There is no MDM with ip $ip in cluster, but it presents on machine $sdc."
           ((++mdm_err))
         fi
+        if echo "$environment_file" | grep 'controller_ips' | grep -v -q $ip ; then
+          echo "ERROR: There is no information about controller $ip in file /etc/environment, but on SDC node $sdc."
+          ((++mdm_err))
+        fi
       done
     fi
     if (( mdm_err == 0 )) ; then
@@ -582,42 +588,12 @@ function check_existing_cluster {
       ((++ret))
     fi
 
-    juju ssh $sdc "sudo apt-get install emc-scaleio-mdm" 2>/dev/null
-
-    mdm_ip=${cluster_mdm_ips[0]}
-
-    password=`get_config fuel-master password`
-    login_cmd="scli --mdm_ip $mdm_ip --login --username $username --password $password --approve_certificate"
-
-    pd_name=`juju ssh $mdm "$login_cmd && scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME" 2>/dev/null | awk '/NAME/{print $2}' | sed 's/\r//g'`
-    sp_name=`juju ssh $mdm "$login_cmd && scli --query_properties --all_objects --object_type STORAGE_POOL --properties NAME" 2>/dev/null | awk '/NAME/{print $2}' | sed 's/\r//g'`
-
-    #create volume
-    volume_name=vol$sdc
-    add_volume_cmd="scli --mdm_ip $mdm_ip --add_volume --protection_domain_name $pd_name --storage_pool_name $sp_name --size_gb 8 --volume_name $volume_name"
-    if ! output=`juju ssh $sdc "$login_cmd && $add_volume_cmd" 2>/dev/null` ; then
-      echo "ERROR: Couldn't create volume $volume_name on SDC node $sdc."
-      echo "$output"
-      ((++ret))
-      continue
-    fi
-
-    #map volume
-    sdc_ip=`juju ssh $sdc "ip addr show dev eth0" 2>/dev/null | awk '/inet /{split($2,a,"/"); print a[1]}'`
-    map_volume_cmd="scli --mdm_ip $mdm_ip --map_volume_to_sdc --volume_name $volume_name --sdc_ip $sdc_ip"
-    if ! output=`juju ssh $sdc "$login_cmd && $map_volume_cmd" 2>/dev/null` ; then
-      echo "ERROR: Couldn't map volume $volume_name on SDC node $sdc."
-      echo "$output"
-      ((++ret))
-      continue
-    fi
-
-    #check volumes
-    query_cmd="scli --mdm_ip $mdm_ip --query_all_volumes"
-    if juju ssh $sdc "$login_cmd && $query_cmd" 2>/dev/null | grep $volume_name | grep "Mapped to" ; then
-      echo "INFO: Success. The volume $volume_name was created and mapped on SDC node $sdc."
+    gateway_ip=`juju status scaleio-gw | grep public-address | awk '{print $2}'`
+    #check gateway address
+    if echo "$environment_file" | grep 'gateway_ips' | grep -q $gateway_ip ; then
+      echo "INFO: Success. The SDC node $sdc has correct information about gateway ip in file /etc/environment."
     else
-      echo "ERROR: There is no mapped volume $volume_name in cluster."
+      echo "ERROR. There is no correct information about gateway ip in file /etc/environment."
       ((++ret))
     fi
   done
