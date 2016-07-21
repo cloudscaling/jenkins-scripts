@@ -3,7 +3,10 @@
 ENV_FILE="cloudrc"
 VM_CIDR="192.168.130.0/24"
 VM_TYPE="c4.xlarge"
-IMAGE_ID="ami-d05e75b8"
+# ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-20150325
+# us-east-1 IMAGE_ID="ami-d05e75b8"
+# ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-20160714
+IMAGE_ID="ami-ed82e39e"
 
 function get_value_from_json() {
   local cmd_out=$($1 | jq $2)
