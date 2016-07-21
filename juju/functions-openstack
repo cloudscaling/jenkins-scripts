@@ -256,14 +256,12 @@ function _get_current_volume_ids() {
 }
 
 function _get_volume_ids() {
-  set -x
   local ids_to_skip=$@
   local ids=`_get_current_volume_ids`
   for id in $ids ; do
     echo "$ids_to_skip" | grep -q "$id" && continue
     echo "$id"
   done
-  set +x
 }
 
 function _check_provisioning_type() {
