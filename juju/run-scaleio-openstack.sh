@@ -31,7 +31,7 @@ function catch_errors() {
   $my_dir/scaleio-openstack/save_logs.sh
 
   if [[ $CLEAN_ENV != 'false' ]] ; then
-    juju destroy-environment -y amazon
+    cleanup_environment
   fi
 
   exit $exit_code
@@ -61,7 +61,7 @@ fi
 $my_dir/scaleio-openstack/save_logs.sh
 
 if [[ $CLEAN_ENV != 'false' ]] ; then
-  juju destroy-environment -y amazon
+  cleanup_environment
 fi
 
 trap - ERR EXIT

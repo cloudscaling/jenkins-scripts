@@ -212,3 +212,16 @@ function fix_kernel_drivers() {
 
   wait_for_machines $@
 }
+
+function cleanup_environment() {
+  if juju destroy-environment -y amazon ; then
+    return 0
+  fi
+
+  # sometime Juju couldn't delete amazon environment and volumes - try to do it manually
+  juju destroy-environment -y amazon || /bin/true
+  for volid in `aws ec2 describe-volumes --filters Name=tag-value,Values="juju-amazon-volume*" Name=status,Values=available --query 'Volumes[*].{ID:VolumeId}' --output text` ; do
+    aws ec2 delete-volume --volume-id "$volid"
+    sleep 3
+  done
+}

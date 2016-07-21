@@ -9,6 +9,8 @@ fi
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+source $my_dir/functions
+
 if ! juju bootstrap ; then
   echo "Bootstrap error. exiting..."
   exit 1
@@ -35,7 +37,7 @@ function catch_errors() {
   save_logs
 
   if [[ $CLEAN_ENV != 'false' ]] ; then
-    juju destroy-environment -y amazon
+    cleanup_environment
   fi
 
   exit $exit_code
@@ -49,7 +51,7 @@ $my_dir/$inner_script
 save_logs
 
 if [[ $CLEAN_ENV != 'false' ]] ; then
-  juju destroy-environment -y amazon
+  cleanup_environment
 fi
 
 trap - ERR
