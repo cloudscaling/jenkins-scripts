@@ -544,8 +544,8 @@ function check_branch {
 }
 
 function check_existing_cluster {
-  mdm=`get_master_mdm`
-  sdc_nodes=`echo $1 | sed 's/,/ /g'`
+  mdm=`get_master_mdm`                 # Master MDM on existing cluster (juju scaleio bundle)
+  sdc_nodes=`echo $1 | sed 's/,/ /g'`  # Nodes added in fuel deploy
 
   cluster_mdm_ips=(`juju ssh $mdm "scli --query_cluster --approve_certificate" 2>/dev/null | awk '/Management IPs/{print $5}' | sed 's/,//g'`)
 
@@ -576,8 +576,9 @@ function check_existing_cluster {
           echo "ERROR: There is no MDM with ip $ip in cluster, but it presents on machine $sdc."
           ((++mdm_err))
         fi
-        if echo "$environment_file" | grep 'controller_ips' | grep -v -q $ip ; then
-          echo "ERROR: There is no information about controller $ip in file /etc/environment, but on SDC node $sdc."
+        if ! echo "$environment_file" | grep "controller_ips.*$ip" ; then
+          echo "ERROR: There is no information about controller $ip in file /etc/environment on SDC node $sdc."
+          echo "$environment_file"
           ((++mdm_err))
         fi
       done
@@ -588,12 +589,13 @@ function check_existing_cluster {
       ((++ret))
     fi
 
-    gateway_ip=`juju status scaleio-gw | grep public-address | awk '{print $2}'`
+    gateway_ip=`juju status scaleio-gw | awk '/public-address/{print $2}'`
     #check gateway address
-    if echo "$environment_file" | grep 'gateway_ips' | grep -q $gateway_ip ; then
+    if echo "$environment_file" | grep "gateway_ips.*$gateway_ip" ; then
       echo "INFO: Success. The SDC node $sdc has correct information about gateway ip in file /etc/environment."
     else
-      echo "ERROR. There is no correct information about gateway ip in file /etc/environment."
+      echo "ERROR: There is no correct information about gateway ip in file /etc/environment."
+      echo "$environment_file"
       ((++ret))
     fi
   done
