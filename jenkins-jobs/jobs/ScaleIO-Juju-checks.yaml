@@ -16,6 +16,8 @@
       # temporary
       - charm-cinder
       - charm-keystone
+    triggers:
+      - timed: "{time}"
     builders:
       - shell: |
           #!/bin/bash -e
@@ -29,13 +31,16 @@
    name: ScaleIO-checks
    check_name:
     - Juju-check-mdm-cluster:
-       description: 'Deploys MDM service and checks cluster reconfiguration (using github/emccode charms) '
+       description: 'Deploys MDM service and checks cluster reconfiguration (using developing charms/puppets) '
+       time: "H 0 * * 0"
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio/deploy-check-mdm-cluster.sh'
     - Juju-check-parameters:
-       description: 'Deploys services and checks validity of config parameters (using github/emccode charms) '
+       description: 'Deploys services and checks validity of config parameters (using developing charms/puppets) '
+       time: "H 2 * * 0"
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio/deploy-check-parameters.sh'
     - Juju-check-GW-haproxy:
-       description: 'Deploys ScaleIO cluster with cinder and keystone. Checks haproxy service of scaleio-gw. (using github/emccode charms) '
+       description: 'Deploys ScaleIO cluster with cinder and keystone. Checks haproxy service of scaleio-gw. (using developing charms/puppets) '
+       time: "H 4 * * 0"
        script: './jenkins-scripts/juju/run-scaleio.sh scaleio-gw-haproxy/deploy-check-haproxy.sh'
    jobs:
     - 'ScaleIO-{check_name}'
