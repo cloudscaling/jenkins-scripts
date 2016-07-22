@@ -49,8 +49,8 @@ configure_cluster mode 3 primary-controller 1 compute 2 controller 6,7
 configure_cluster mode 5 primary-controller 1 compute 2,3 controller 4,5,6,7
 
 # 1+2 cluster
-remove_node_service 4 5 6 7
-configure_cluster mode 1 primary-controller 1 compute 2,3
+remove_node_service 1 5 6 7
+configure_cluster mode 1 primary-controller 4 compute 2,3
 
 # 5+2 cluster
 configure_cluster mode 5 primary-controller 1 compute 2,3 controller 4,5,6,7
