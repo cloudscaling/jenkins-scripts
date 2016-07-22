@@ -183,7 +183,7 @@ function configure_cluster() {
 
   metadata_enable=`get_config fuel-master metadata-enable`
   existing_cluster=`get_config fuel-master existing-cluster`
-  if [[ $metadata_enable == '"true"' && $existing_cluster == '"false"' ]] ; then
+  if [[ $metadata_enable == true && $existing_cluster == false ]] ; then
     # check query_cluster output before exit on error if exists
     master_mdm=`get_master_mdm "echo $mdms"`
     echo "INFO: query cluster on machine $master_mdm"
