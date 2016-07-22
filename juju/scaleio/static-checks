@@ -108,7 +108,7 @@ function check-sds() {
   local NODE=$2
   local USERNAME=$3
   local PASSWORD=$4
-  local DEVICE_PATH=$5
+  local DEVICE_PATH=${5:-}
 
   local ret=0
 
