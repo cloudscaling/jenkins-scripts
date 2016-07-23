@@ -80,6 +80,10 @@
           description: "Use puppets from github instead of puppetforge"
           default: true
       - bool:
+          name: CHECK_EXISTING_CLUSTER_FEATURE
+          description: "Reconfigure cluster and run OpenStack tests again"
+          default: true
+      - bool:
           name: RUN_TEMPEST
           default: false
     scm:

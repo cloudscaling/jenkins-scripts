@@ -54,6 +54,11 @@ fi
 
 $my_dir/scaleio-openstack/check-openstack.sh
 
+if [[ "$CHECK_EXISTING_CLUSTER_FEATURE" == 'true' ]] ; then
+  $my_dir/scaleio-openstack/reconfigure-to-existing-cluster.sh
+  $my_dir/scaleio-openstack/check-openstack.sh
+fi
+
 if [[ "$RUN_TEMPEST" == 'true' ]] ; then
   $my_dir/scaleio-openstack/run-tempest.sh
 fi
