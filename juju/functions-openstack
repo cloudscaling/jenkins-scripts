@@ -282,7 +282,7 @@ function _check_provisioning_type() {
       echo "INFO: Volume $id has correct type."
     fi
   done
-  
+
   return $ret
 }
 
@@ -303,7 +303,7 @@ function _check_size() {
       echo "INFO: Volume $id has correct size"
     fi
   done
-  
+
   return $ret
 }
 

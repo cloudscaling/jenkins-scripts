@@ -20,10 +20,10 @@ function catch_errors() {
   echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
   trap - ERR EXIT
 
-  #juju remove-service scaleio-sds || /bin/true
-  #juju remove-service scaleio-mdm || /bin/true
-  #wait_for_removed "scaleio-sds" || /bin/true
-  #wait_for_removed "scaleio-mdm" || /bin/true
+  juju remove-service scaleio-sds || /bin/true
+  juju remove-service scaleio-mdm || /bin/true
+  wait_for_removed "scaleio-sds" || /bin/true
+  wait_for_removed "scaleio-mdm" || /bin/true
   exit $exit_code
 }
 
@@ -114,10 +114,10 @@ for sds_name in ${sds_names[@]} ; do
   fi
 done
 
-#juju remove-service scaleio-sds
-#juju remove-service scaleio-mdm
-#wait_for_removed "scaleio-sds"
-#wait_for_removed "scaleio-mdm"
+juju remove-service scaleio-sds
+juju remove-service scaleio-mdm
+wait_for_removed "scaleio-sds"
+wait_for_removed "scaleio-mdm"
 
 trap - ERR EXIT
 exit $ret
