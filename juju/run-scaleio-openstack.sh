@@ -10,8 +10,8 @@ my_dir="$(dirname $my_file)"
 source $my_dir/functions
 source $my_dir/scaleio/static-checks
 
-USERNAME="admin"
-PASSWORD="Default_password"
+export USERNAME="admin"
+export PASSWORD="Default_password"
 
 if ! juju bootstrap ; then
   echo "Bootstrap error. exiting..."
