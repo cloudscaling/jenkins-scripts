@@ -39,7 +39,6 @@ echo "INFO: Machine created: $m5"
 
 wait_for_machines $m1 $m2 $m3 $m4 $m5
 apply_developing_puppets $m1 $m2 $m3 $m4 $m5
-
 fix_kernel_drivers $m1 $m2 $m3 $m4 $m5
 
 create_eth1 $m1

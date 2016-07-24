@@ -22,6 +22,7 @@ echo "Machine created: $m4"
 
 wait_for_machines $m1 $m2 $m3 $m4
 apply_developing_puppets $m1 $m2 $m3 $m4
+fix_kernel_drivers $m1 $m2 $m3 $m4
 
 echo "Deploy cinder"
 juju deploy --repository juju-scaleio-tmp local:cinder --to $m1
