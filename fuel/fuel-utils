@@ -34,10 +34,19 @@ function execute_on_slave() {
   execute_on_master "ssh ${fuel_ssh_opts} $slave \"$@\""
 }
 
+function get_nodes() {
+  grep_args=''
+  if [[ -n ${1-} ]] ; then
+    grep_args=" | grep '$1'"
+  fi
+  output=`execute_on_master "fuel node${grep_args}"`
+  echo "$output" | grep -Eo '([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})'
+}
+
 function get_slave_nodes() {
-  execute_on_master 'fuel node | awk "/ready/ {print(\$10)}"'
+  get_nodes
 }
 
 function get_controller_nodes() {
-  execute_on_master 'fuel node | grep controller | awk "/ready/ {print(\$10)}"'
+  get_nodes controller
 }
