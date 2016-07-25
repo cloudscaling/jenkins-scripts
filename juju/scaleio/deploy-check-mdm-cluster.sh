@@ -40,6 +40,17 @@ juju status --format tabular
 
 master_mdm=''
 
+trap 'catch_errors $LINENO' ERR
+function catch_errors() {
+  local exit_code=$?
+  echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
+  trap - ERR
+
+  juju ssh $master_mdm "sudo scli --query_cluster --approve_certificate" 2>/dev/null
+
+  exit $exit_code
+}
+
 function check_mode() {
   master_mdm=`get_master_mdm`
   mode=`juju ssh $master_mdm "sudo scli --query_cluster --approve_certificate" 2>/dev/null | grep -A 1 "Cluster:" | grep "Mode:" | awk '{print $2}' | sed "s/,//"`
@@ -206,3 +217,6 @@ juju status --format tabular
 
 echo "--------------------------------------------------------------------------- $(date)"
 echo "--------------------------------------------------------------------------- end"
+
+trap - ERR
+
