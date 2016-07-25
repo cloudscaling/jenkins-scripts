@@ -40,17 +40,25 @@ juju status --format tabular
 
 master_mdm=''
 
-function get_mode() {
+function check_mode() {
   master_mdm=`get_master_mdm`
-  juju ssh $master_mdm sudo scli --query_cluster --approve_certificate 2>/dev/null | grep -A 1 "Cluster:" | grep "Mode:" | awk '{print $2}' | sed "s/,//"
+  mode=`juju ssh $master_mdm "sudo scli --query_cluster --approve_certificate" 2>/dev/null | grep -A 1 "Cluster:" | grep "Mode:" | awk '{print $2}' | sed "s/,//"`
+  if [[ "$mode" != $1 ]] ; then
+    return 1
+  fi
+  return 0
 }
 
-function wait_for_mode() {
-  check_str="$1"
-  local max_iter=${2:-30}
+function check_synced() {
+  master_mdm=`get_master_mdm`
+  ! juju ssh $master_mdm "sudo scli --query_cluster --approve_certificate" 2>/dev/null | grep -q "Status: Not synchronized"
+}
+
+function wait_for() {
+  local max_iter=30
   # waiting for services
   local iter=0
-  while [[ $(get_mode) != $check_str ]]
+  while ! $@
   do
     if juju status | grep "current" | grep -q error ; then
       echo "ERROR: Some services went to error state"
@@ -61,9 +69,9 @@ function wait_for_mode() {
       return 2
     fi
 
-    echo "Waiting for new status ($check_str) - $iter/$max_iter"
+    echo "Waiting for $@ - $iter/$max_iter"
     if ((iter >= max_iter)); then
-      echo "ERROR: Satus didn't change."
+      echo "ERROR: Wait timeout."
       juju status --format tabular
       return 1
     fi
@@ -74,7 +82,8 @@ function wait_for_mode() {
 
 function wait_and_check() {
   # wait for new status
-  wait_for_mode "$1""_node"
+  wait_for check_mode "$1""_node"
+  wait_for check_synced
 
   wait_status
 
