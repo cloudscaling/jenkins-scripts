@@ -41,6 +41,9 @@ function provision_machines() {
   # wait for machines up
   wait_for_machines ${new_mx[@]}
 
+  # install scaleio and scaleio_openstack puppets from githab.com/emccode from master branch
+  apply_developing_puppets ${new_mx[@]}
+
   # if not EC2:
   #       - prepare device for SDS (truncated file)
   #       - patch host name - in GCE hostname is too long, e.g. juju-023fae94-ef89-4b6d-8681-d9e462c7fae3-machine-2

@@ -1,5 +1,8 @@
 #!/bin/bash -eux
 
+# set this flag to true because fuel-plugin-scaleio is from master branch and dependent puppets also should be last version
+export PUPPET_DEV_MODE='true'
+
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
