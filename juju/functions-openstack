@@ -535,7 +535,7 @@ function check_volume_snapshot() {
   fi
 
   cinder delete $volume_id >/dev/null
-  
+
   return $ret
 }
 
@@ -634,6 +634,7 @@ function check_instance_resize() {
   if [[ $current_type == 'thin' ]] ; then otype='thick' ; else otype='thin' ; fi
   nova flavor-key 52 set sio:pd_name=${pd_name} sio:provisioning_type=$otype
 
+  local volume_ids=`_get_volume_ids`
   echo "INFO: Create instance"
   local iname="instance_03"
   if ! output=`nova boot --flavor 51 $nic_opts --image cirros $iname` ; then
@@ -649,8 +650,8 @@ function check_instance_resize() {
   fi
   echo "INFO: Instance created successfully"
   local vol_id1=`_get_volume_ids $volume_ids` # should be only one
-
   local volume_ids=`_get_volume_ids`
+
   echo "INFO: Resizing instance"
   if ! output=`nova resize $instance_id 52` ; then
     echo "ERROR: Couldn't resize instance"
