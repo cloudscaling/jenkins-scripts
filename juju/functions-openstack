@@ -19,7 +19,7 @@ function wait_instance() {
       echo '' >> errors
       echo "ERROR: Instance status wait timeout occured" >> errors
       nova show $instance_id >> errors
-      return 0
+      return 1
     fi
     echo "attempt $fail of $max_fail"
     status=$(instance_status $instance_id)
@@ -30,7 +30,7 @@ function wait_instance() {
       echo '' >> errors
       echo 'ERROR: Instance booting error' >> errors
       nova show $instance_id >> errors
-      return 0
+      return 1
     fi
     sleep $timeout
     ((timeout+=5))
@@ -49,7 +49,7 @@ function wait_volume() {
       echo '' >> errors
       echo "ERROR: Volume creation fails (timeout)" >> errors
       cinder show $volume_id >> errors
-      return
+      return 1
     fi
     echo "attempt $fail of $max_fail"
     status=$(volume_status $volume_id)
@@ -60,7 +60,7 @@ function wait_volume() {
       echo '' >> errors
       echo 'ERROR: Volume creation error' >> errors
       cinder show $volume_id >> errors
-      return
+      return 1
     fi
     sleep $timeout
     ((timeout+=5))
@@ -79,7 +79,7 @@ function wait_snapshot() {
       echo '' >> errors
       echo "ERROR: Snapshot creation fails (timeout)" >> errors
       cinder snapshot-show $snapshot_id >> errors
-      return
+      return 1
     fi
     echo "attempt $fail of $max_fail"
     status=$(snapshot_status $snapshot_id)
@@ -90,7 +90,7 @@ function wait_snapshot() {
       echo '' >> errors
       echo 'ERROR: Snapshot creation error' >> errors
       cinder snapshot-show $snapshot_id >> errors
-      return
+      return 1
     fi
     sleep $timeout
     ((timeout+=5))
@@ -110,7 +110,7 @@ function wait_image() {
       echo '' >> errors
       echo "ERROR: Image status wait timeout occured" >> errors
       openstack image show $image_id >> errors
-      return 0
+      return 1
     fi
     echo "attempt $fail of $max_fail"
     status=$(image_status $image_id)
@@ -121,7 +121,7 @@ function wait_image() {
       echo '' >> errors
       echo 'ERROR: Image creation error' >> errors
       openstack image show $image_id >> errors
-      return 0
+      return 1
     fi
     sleep $timeout
     ((timeout+=5))
@@ -685,4 +685,3 @@ function check_instance_resize() {
   nova delete $instance_id >/dev/null
   return 0
 }
-
