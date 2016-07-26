@@ -15,6 +15,12 @@
             - '8.0'
             - '7.0'
             - '6.1'
+      - choice:
+          name: PUPPETS_VERSION
+          description: "Version of the puppets(scaleio, scaleio_openstack) to download"
+          choices:
+            - 'master'
+            - 'v1.0.0'
       - string:
           name: FUEL_NODES
           default: '6'
