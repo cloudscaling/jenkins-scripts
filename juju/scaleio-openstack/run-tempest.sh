@@ -14,6 +14,9 @@ keystone_machine=`juju status keystone --format tabular | awk '/keystone\/0/{pri
 juju scp $my_dir/tempest/__setup_cloud_accounts.sh $keystone_machine: 2>/dev/null
 juju ssh $keystone_machine "auth_ip=$auth_ip bash -e __setup_cloud_accounts.sh" 2>/dev/null
 
+nova_api_machine=`juju status nova-cloud-controller --format tabular | awk '/keystone\/0/{print $5}'`
+filters=`juju ssh $nova_api_machine "sudo grep scheduler_default_filters /etc/nova/nova.conf | cut -d '=' -f 2" 2>/dev/null`
+
 export OS_AUTH_URL=http://$auth_ip:5000/v2.0
 export OS_USERNAME=admin
 export OS_TENANT_NAME=admin
@@ -36,6 +39,7 @@ sed -i "s/%AUTH_IP%/$auth_ip/g" $CONF
 sed -i "s|%TEMPEST_DIR%|$(pwd)|g" $CONF
 sed -i "s/%IMAGE_ID%/$image_id/g" $CONF
 sed -i "s/%IMAGE_ID_ALT%/$image_id_alt/g" $CONF
+sed -i "s/%SCHEDULER_FILTERS%/$filters/g" $CONF
 
 source $WORKSPACE/.venv/bin/activate
 pip install -r requirements.txt
