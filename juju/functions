@@ -139,6 +139,16 @@ function create_machine() {
   fi
 }
 
+function get_machine() {
+    local service=$1
+    juju status $service --format tabular | grep "$service/0" | awk '{print $5}'
+}
+
+function get_machine_ip() {
+    local service=$1
+    juju status $service --format tabular | grep "$service/0" | awk '{print $7}'
+}
+
 function apply_developing_puppets() {
   if [[ "${PUPPET_DEV_MODE:-false}" != true ]] ; then
     return

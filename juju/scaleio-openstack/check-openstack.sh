@@ -33,7 +33,7 @@ function get_volume_by_instance() {
 }
 
 echo "INFO: Master MDM found at $master_mdm"
-auth_ip=`juju status keystone --format tabular | awk '/keystone\/0/{print $7}'`
+auth_ip=`get_machine_ip keystone`
 export OS_AUTH_URL=http://$auth_ip:5000/v2.0
 export OS_USERNAME=admin
 export OS_TENANT_NAME=admin

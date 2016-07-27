@@ -9,12 +9,12 @@ source $my_dir/../functions-openstack
 VERSION=${VERSION:-"cloud:trusty-liberty"}
 VERSION=${VERSION#*-}
 
-auth_ip=`juju status keystone --format tabular | awk '/keystone\/0/{print $7}'`
-keystone_machine=`juju status keystone --format tabular | awk '/keystone\/0/{print $5}'`
+auth_ip=`get_machine_ip keystone`
+keystone_machine=`get_machine keystone`
 juju scp $my_dir/tempest/__setup_cloud_accounts.sh $keystone_machine: 2>/dev/null
 juju ssh $keystone_machine "auth_ip=$auth_ip bash -e __setup_cloud_accounts.sh" 2>/dev/null
 
-nova_api_machine=`juju status nova-cloud-controller --format tabular | awk '/keystone\/0/{print $5}'`
+nova_api_machine=`get_machine nova-cloud-controller`
 filters=`juju ssh $nova_api_machine "sudo grep scheduler_default_filters /etc/nova/nova.conf | cut -d '=' -f 2" 2>/dev/null`
 
 export OS_AUTH_URL=http://$auth_ip:5000/v2.0
