@@ -1,0 +1,70 @@
+# Details: {u'code': 400, u'message': u'Missing tenant parameter'} - looks like its broken due to use_dynamic_credentials=false
+tempest.api.compute.admin.test_flavors_access.FlavorsAccessTestJSON.test_flavor_access_add_remove[id-59e622f6-bdf6-45e3-8ba8-fedad905a6b4]
+tempest.api.compute.admin.test_flavors_access_negative.FlavorsAccessNegativeTestJSON.test_add_flavor_access_duplicate[id-f3592cc0-0306-483c-b210-9a7b5346eddc,negative]
+tempest.api.compute.admin.test_flavors_access_negative.FlavorsAccessNegativeTestJSON.test_flavor_non_admin_remove[id-073e79a6-c311-4525-82dc-6083d919cb3a,negative]
+tempest.api.compute.admin.test_flavors_access_negative.FlavorsAccessNegativeTestJSON.test_flavor_non_admin_add[id-41eaaade-6d37-4f28-9c74-f21b46ca67bd,negative]
+
+# New functionality ???
+tempest.api.compute.admin.test_migrations.MigrationsAdminTest.test_resize_server_revert_deleted_flavor[id-33f1fec3-ba18-4470-8e4e-1d888e7c3593]
+
+# ??? [u'cinder-scheduler', u'cinder-volume', u'cinder-volume'] != [u'cinder-scheduler', u'cinder-volume'[1~]
+tempest.api.volume.admin.test_volume_services.VolumesServicesV1TestJSON.test_get_service_by_host_name[id-178710e4-7596-4e08-9333-745cb8bc4f8d]
+tempest.api.volume.admin.test_volume_services.VolumesServicesV2TestJSON.test_get_service_by_host_name[id-178710e4-7596-4e08-9333-745cb8bc4f8d]
+# ??? testtools.matchers._impl.MismatchError: 1 != 2
+tempest.api.volume.admin.test_volume_services.VolumesServicesV1TestJSON.test_get_service_by_service_and_host_name[id-ffa6167c-4497-4944-a464-226bbdb53908]
+tempest.api.volume.admin.test_volume_services.VolumesServicesV2TestJSON.test_get_service_by_service_and_host_name[id-ffa6167c-4497-4944-a464-226bbdb53908]
+
+# misconfiguration issues
+tempest.api.compute.admin.test_servers_on_multinodes.ServersOnMultiNodesTest.test_create_servers_on_same_host[id-26a9d5df-6890-45f2-abc4-a659290cb130]
+# looks like new its misconfigured
+tempest.api.compute.admin.test_simple_tenant_usage.TenantUsagesTestJSON.test_get_usage_tenant[id-94135049-a4c5-4934-ad39-08fa7da4f22e]
+tempest.api.compute.admin.test_simple_tenant_usage.TenantUsagesTestJSON.test_get_usage_tenant_with_non_admin_user[id-9d00a412-b40e-4fd9-8eba-97b496316116]
+
+# timeout
+tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON.test_create_backup[id-b963d4f1-94b3-4c40-9e97-7b583f46e470,image]
+# tempest.api.compute.images.test_images.ImagesTestJSON.test_create_image_from_stopped_server[id-aaacd1d0-55a2-4ce8-818a-b5439df8adc9]
+# tempest.api.compute.servers.test_delete_server.DeleteServersTestJSON.test_delete_server_while_in_shelved_state[id-bb0cb402-09dd-4947-b6e5-5e7e1cfa61ad]
+# tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON.test_shelve_unshelve_server[id-77eba8e0-036e-4635-944b-f7a8f3b78dc9]
+# tempest.api.compute.servers.test_servers_negative.ServersNegativeTestJSON.test_shelve_shelved_server[id-443e4f9b-e6bf-4389-b601-3a710f15fddd,negative]
+# tempest.api.volume.test_volumes_actions.VolumesV1ActionsTest.test_volume_upload[id-d8f1ca95-3d5b-44a3-b8ca-909691c9532d,image]
+
+# Details: {u'code': 403, u'message': u'Access was denied to this resource.'} (Policy doesn't allow os_compute_api:os-quota-sets:show to be performed.)
+tempest.api.compute.servers.test_server_metadata_negative.ServerMetadataNegativeTestJSON.test_metadata_items_limit[id-d8c0a210-a5c3-4664-be04-69d96746b547,negative]
+tempest.api.compute.test_quotas.QuotasTestJSON.test_compare_tenant_quotas_with_default_quotas[id-cd65d997-f7e4-4966-a7e9-d5001b674fdc]
+tempest.api.compute.test_quotas.QuotasTestJSON.test_get_quotas[id-f1ef0a97-dbbb-4cca-adc5-c9fbc4f76107]
+# testtools.matchers._impl.MismatchError: u'None' != None
+tempest.api.compute.test_quotas.QuotasTestJSON.test_get_default_quotas[id-9bfecac7-b966-4f47-913f-1a9e2c12134a]
+# KeyError: 'id'
+tempest.api.compute.test_tenant_networks.ComputeTenantNetworksTest.test_list_show_tenant_networks[id-edfea98e-bbe3-4c7a-9739-87b986baff26,network]
+
+# testtools.matchers._impl.MismatchError: None not in [u'None']
+tempest.api.image.v1.test_image_members.ImageMembersTest.test_add_image_member[id-1d6ef640-3a20-4c84-8710-d95828fdb6ad]
+# Details: 400 Bad Request Member can't be empty
+tempest.api.image.v2.test_images_member.ImagesMemberTest.test_get_image_member[id-a6ee18b9-4378-465e-9ad9-9a6de58a3287]
+tempest.api.image.v2.test_images_member.ImagesMemberTest.test_get_private_image[id-cb961424-3f68-4d21-8e36-30ad66fb6bfb]
+tempest.api.image.v2.test_images_member.ImagesMemberTest.test_image_share_accept[id-5934c6ea-27dc-4d6e-9421-eeb5e045494a]
+tempest.api.image.v2.test_images_member.ImagesMemberTest.test_image_share_reject[id-d9e83e5f-3524-4b38-a900-22abcb26e90e]
+tempest.api.image.v2.test_images_member.ImagesMemberTest.test_remove_image_member[id-72989bc7-2268-48ed-af22-8821e835c914]
+tempest.api.image.v2.test_images_member_negative.ImagesMemberNegativeTest.test_image_share_invalid_status[id-b79efb37-820d-4cf0-b54c-308b00cf842c,negative]
+tempest.api.image.v2.test_images_member_negative.ImagesMemberNegativeTest.test_image_share_owner_cannot_accept[id-27002f74-109e-4a37-acd0-f91cd4597967,negative]
+
+# Details: {u'code': 400, u'message': u'Bad project format: project is not in proper format (None)'}
+tempest.api.volume.admin.test_volume_type_access.VolumeTypesAccessV2Test.test_volume_type_access_list[id-5220eb28-a435-43ce-baaf-ed46f0e95159]
+
+# setUpClass failed
+# tries to create credentials - bug in tempest
+tempest.api.compute.admin.test_quotas.QuotasAdminTestJSON
+tempest.api.compute.admin.test_quotas_negative.QuotasAdminNegativeTestJSON
+tempest.api.volume.admin.test_volume_quotas.BaseVolumeQuotasAdminV2TestJSON
+tempest.api.volume.admin.test_volume_quotas.VolumeQuotasAdminV1TestJSON
+tempest.api.volume.admin.test_volume_quotas_negative.BaseVolumeQuotasNegativeV2TestJSON
+tempest.api.volume.admin.test_volume_quotas_negative.VolumeQuotasNegativeV1TestJSON
+tempest.api.volume.admin.test_volume_snapshot_quotas_negative.VolumeSnapshotNegativeV1TestJSON
+tempest.api.volume.admin.test_volume_snapshot_quotas_negative.VolumeSnapshotQuotasNegativeV2TestJSON
+# there is no floating ips
+tempest.api.compute.floating_ips.test_floating_ips_actions.FloatingIPsTestJSON
+tempest.api.compute.floating_ips.test_list_floating_ips.FloatingIPDetailsTestJSON
+
+# timeout
+# tempest.api.compute.images.test_list_image_filters.ListImageFiltersTestJSON
+# tempest.api.compute.servers.test_server_rescue_negative.ServerRescueNegativeTestJSON
