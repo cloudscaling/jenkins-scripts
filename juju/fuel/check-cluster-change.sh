@@ -51,12 +51,40 @@ configure_cluster mode 3 primary-controller 1 compute 2 controller 6,7
 # 5+2 cluster
 configure_cluster mode 5 primary-controller 1 compute 2,3 controller 4,5,6,7
 
+# switching from 5-node cluster to 1-node doesn't work for now
+#---------------------------------------------------------------
+# TODO: UNCOMMENT AFTER FIX
+#master_mdm=1
+#cluster_output=`juju ssh ${machines[$master_mdm]} "sudo scli --query_cluster --approve_certificate" 2>/dev/null`
+#slave_mdms_ip=(`echo "$output" | grep -A 10 "Slave MDMs:" | grep "Name:" | head -2 | awk '{gsub("[^0-9.]","",$2); print $2}'`)
+#tie_breakers_ip=(`echo "$output" | grep -A 10 "Tie-Breakers:" | grep "Name:" | head -2 | awk '{gsub("[^0-9.]","",$2); print $2}'`)
+#slave_mdms=()
+#tie_breakers=()
+
+#for mdm in 4 5 6 7 ; do
+#  machine=${machines[$mdm]}
+#  mdm_ip=`juju ssh $machine "ifconfig" 2>/dev/null | awk '/inet addr:/{print $2}' | head -1 | sed 's/addr://g'`
+#  if [[ ${slave_mdms_ip[@]} =~ $mdm_ip ]] ; then
+#    slave_mdms+=($mdm)
+#  elif [[ ${tie_breakers_ip[@]} =~ $mdm_ip ]] ; then
+#    tie_breakers+=($mdm)
+#  fi
+#done
+
 # 1+2 cluster
-remove_node_service 1 5 6 7
+#remove_node_service 1 ${slave_mdms[1]}
+#new_master_mdm=${slave_mdms[0]}
+#configure_cluster mode 1 primary-controller $new_master_mdm compute 2,3
+#remove_node_service ${tie_breakers[@]}
+
+# TODO: DELETE AFTER FIX
+remove_node_service 1 2 3 4 5 6 7
 configure_cluster mode 1 primary-controller 4 compute 2,3
+#----------------------------------------------------------
 
 # 5+2 cluster
-configure_cluster mode 5 primary-controller 1 compute 2,3 controller 4,5,6,7
+# TODO: CHANGE PRIMARY-CONTROLLER TO $new_master_mdm AFTER FIX
+configure_cluster mode 5 primary-controller 4 compute 2,3 controller 1,5,6,7
 
 # basic deploy 3+2 cluster
 remove_node_service 1 2 3 4 5 6 7
