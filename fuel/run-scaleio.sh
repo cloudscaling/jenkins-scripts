@@ -24,7 +24,7 @@ function save_logs() {
     if files=`execute_on_slave $i 'ls /var/log/nova/' 2>/dev/null` ; then
       for fl in $files ; do
         execute_on_slave $i "cat /var/log/nova/$fl" > logs/${i}/${fl} 2>/dev/null
-      do
+      done
     fi
   done
   return 0
