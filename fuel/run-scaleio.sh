@@ -21,6 +21,11 @@ function save_logs() {
     mkdir logs/$i
     execute_on_slave $i 'cat /var/log/fuel-plugin-scaleio.log' > logs/${i}/fuel-plugin-scaleio.log 2>/dev/null
     execute_on_slave $i 'cat /var/log/puppet.log' > logs/${i}/puppet.log 2>/dev/null
+    if files=`execute_on_slave $i 'ls /var/log/nova/' 2>/dev/null` ; then
+      for fl in $files ; do
+        execute_on_slave $i "cat /var/log/nova/$fl" > logs/${i}/${fl} 2>/dev/null
+      do
+    fi
   done
   return 0
 }
