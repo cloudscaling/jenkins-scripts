@@ -33,12 +33,13 @@
           s3_url = https://s3.amazonaws.com/
           aws_access =
           aws_secret =
-          aws_region = us-east-1
-          aws_zone = us-east-1a
-          # instance store
-          image_id = ami-11f9aa74
-          image_id_ubuntu = ami-35025050
-          ebs_image_id = ami-35025050
+          aws_region = eu-west-1
+          aws_zone = eu-west-1a
+          # instance store - ubuntu/images/ubuntu-trusty-14.04-amd64-server-20160714
+          image_id = ami-f1bcdd82
+          # ubuntu/images/ebs/ubuntu-trusty-14.04-i386-server-20160714
+          image_id_ubuntu = ami-cf82e3bc
+          ebs_image_id = ami-cf82e3bc
           instance_type = m1.small
           instance_type_alt = m1.medium
           run_incompatible_tests = True
