@@ -145,7 +145,9 @@ function create_image() {
   if ! output=`openstack image show $image_name 2>/dev/null` ; then
     rm -f cirros-0.3.4-x86_64-disk.img
     wget -t 2 -T 60 -q http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-    output=`openstack image create --public --file cirros-0.3.4-x86_64-disk.img $image_name`
+    if ! output=`openstack image create --public --file cirros-0.3.4-x86_64-disk.img $image_name` ; then
+      return 1
+    fi
   fi
   image_id=`echo "$output" | awk '/ id /{print $4}'`
 
@@ -208,7 +210,9 @@ function run_os_checks() {
   fi
   deactivate
 
-  image_id=`create_image`
+  if ! image_id=`create_image` ; then
+    return 1
+  fi
   create_flavors
   # in case of fuel net-id is not emtpy, so skip network creation
   if [ -z "${net_id}" ] ; then
@@ -498,7 +502,7 @@ function check_volume_snapshot() {
     sleep 5
     cinder delete $volume_id >/dev/null
     return 1
-  fi  
+  fi
   echo "INFO: Snapshot created successfully"
 
   echo "INFO: Creating volume from snapshot"
