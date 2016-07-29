@@ -13,9 +13,6 @@
     scm:
       - emc-juju-scaleio
       - jenkins-scripts
-      # temporary
-      - charm-cinder
-      - charm-keystone
     triggers:
       - timed: "{time}"
     builders:

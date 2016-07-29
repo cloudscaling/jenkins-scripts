@@ -64,33 +64,23 @@
           repo: tempest
 
 
-# temporary definition while cinder,keystone,nova-compute charms are not released
-- scm:
-    name: github-tmp
-    scm:
-      - git:
-          url: 'https://github.com/openstack/charm-{charm}.git'
-          basedir: 'juju-scaleio-tmp/trusty/{charm}'
-          branches:
-            - '*/master'
-          clean:
-              after: true
-              before: true
-          prune: true
-          wipe-workspace: true
-          skip-tag: true
-- scm:
-    name: charm-cinder
-    scm:
-      - github-tmp:
-          charm: cinder
-- scm:
-    name: charm-keystone
-    scm:
-      - github-tmp:
-          charm: keystone
-- scm:
-    name: charm-nova-compute
-    scm:
-      - github-tmp:
-          charm: nova-compute
+# temporary definition while we use unreleased OpenStack charms
+#- scm:
+#    name: github-tmp
+#    scm:
+#      - git:
+#          url: 'https://github.com/openstack/charm-{charm}.git'
+#          basedir: 'juju-scaleio-tmp/trusty/{charm}'
+#          branches:
+#            - '*/master'
+#          clean:
+#              after: true
+#              before: true
+#          prune: true
+#          wipe-workspace: true
+#          skip-tag: true
+#- scm:
+#    name: charm-glance
+#    scm:
+#      - github-tmp:
+#          charm: glance

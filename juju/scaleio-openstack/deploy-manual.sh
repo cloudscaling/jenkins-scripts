@@ -41,7 +41,7 @@ create_eth1 $m1
 create_eth1 $m2
 
 echo "INFO: Deploy cinder"
-juju deploy --repository juju-scaleio-tmp local:cinder --to $m1
+juju deploy cs:cinder --to $m1
 juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=$VERSION" "overwrite=true"
 juju expose cinder
 
@@ -51,7 +51,7 @@ juju set nova-cloud-controller "console-access-protocol=novnc" "debug=true" "ope
 juju expose nova-cloud-controller
 
 echo "INFO: Deploy nova-compute"
-juju deploy --repository juju-scaleio-tmp local:nova-compute --to $m1
+juju deploy cs:nova-compute --to $m1
 juju service add-unit nova-compute --to $m2
 juju set nova-compute "debug=true" "openstack-origin=$VERSION" "virt-type=qemu" "enable-resize=True" "enable-live-migration=True" "migration-auth-type=ssh" "libvirt-image-backend=sio"
 
@@ -61,7 +61,7 @@ juju set glance "debug=true" "openstack-origin=$VERSION"
 juju expose glance
 
 echo "INFO: Deploy keystone"
-juju deploy --repository juju-scaleio-tmp local:keystone --to $m2
+juju deploy cs:keystone --to $m2
 juju set keystone "admin-password=password" "debug=true" "openstack-origin=$VERSION"
 juju expose keystone
 

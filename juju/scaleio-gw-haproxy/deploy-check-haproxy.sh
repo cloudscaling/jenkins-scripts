@@ -25,12 +25,12 @@ apply_developing_puppets $m1 $m2 $m3 $m4
 fix_kernel_drivers $m1 $m2 $m3 $m4
 
 echo "Deploy cinder"
-juju deploy --repository juju-scaleio-tmp local:cinder --to $m1
+juju deploy cs:cinder --to $m1
 juju set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=$os_source" "overwrite=true"
 juju expose cinder
 
 echo "Deploy keystone"
-juju deploy --repository juju-scaleio-tmp local:keystone --to $m3
+juju deploy cs:keystone --to $m3
 juju set keystone "admin-password=password" "debug=true" "openstack-origin=$os_source"
 juju expose keystone
 

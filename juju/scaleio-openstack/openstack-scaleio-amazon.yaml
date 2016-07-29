@@ -7,7 +7,7 @@
 series: trusty
 services:
   cinder:
-    charm: "local:trusty/cinder"
+    charm: "cs:cinder"
     num_units: 1
     options:
       "block-device": None
@@ -19,7 +19,7 @@ services:
     to:
       - "1"
   "nova-cloud-controller":
-    charm: "cs:trusty/nova-cloud-controller"
+    charm: "cs:nova-cloud-controller"
     num_units: 1
     options:
       "console-access-protocol": novnc
@@ -29,7 +29,7 @@ services:
     to:
       - "5"
   "nova-compute":
-    charm: "local:trusty/nova-compute"
+    charm: "cs:nova-compute"
     num_units: 2
     options:
       debug: true
@@ -43,7 +43,7 @@ services:
       - "1"
       - "2"
   glance:
-    charm: "cs:trusty/glance"
+    charm: "cs:glance"
     num_units: 1
     options:
       debug: true
@@ -52,7 +52,7 @@ services:
     to:
       - "3"
   keystone:
-    charm: "local:trusty/keystone"
+    charm: "cs:keystone"
     num_units: 1
     options:
       "admin-password": password
@@ -62,14 +62,14 @@ services:
     to:
       - "2"
   "rabbitmq-server":
-    charm: "cs:trusty/rabbitmq-server"
+    charm: "cs:rabbitmq-server"
     num_units: 1
     options:
       source: "%VERSION%"
     to:
       - "4"
   mysql:
-    charm: "cs:trusty/mysql"
+    charm: "cs:mysql"
     num_units: 1
     to:
       - "4"

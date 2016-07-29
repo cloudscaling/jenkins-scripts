@@ -1,12 +1,12 @@
-- builder:
-    name: use-openstack-updated-charms
-    builders:
-      - shell: |
-          #!/bin/bash -e
-          # while these charms are not in official repo - script copies them to one local juju repository
-          for charm in cinder keystone nova-compute ; do
-            cp -R juju-scaleio-tmp/trusty/$charm juju-scaleio/trusty/
-          done
+#- builder:
+#    name: use-openstack-github-charms
+#    builders:
+#      - shell: |
+#          #!/bin/bash -e
+#          # while these charms are not in official repo - script copies them to one local juju repository
+#          for charm in cinder keystone nova-compute ; do
+#            cp -R juju-scaleio-tmp/trusty/$charm juju-scaleio/trusty/
+#          done
 
 
 - job-template:
@@ -16,12 +16,8 @@
     scm:
       - emc-juju-scaleio
       - jenkins-scripts
-      # temporary
-      - charm-cinder
-      - charm-keystone
-      - charm-nova-compute
     builders:
-      - use-openstack-updated-charms
+      #- use-openstack-github-charms
       - shell: |
           #!/bin/bash -e
           export VERSION="{version}"
@@ -90,12 +86,8 @@
       - emc-juju-scaleio
       - jenkins-scripts
       - tempest
-      # temporary
-      - charm-cinder
-      - charm-keystone
-      - charm-nova-compute
     builders:
-      - use-openstack-updated-charms
+      #- use-openstack-github-charms
       - shell: |
           #!/bin/bash -e
           ./jenkins-scripts/juju/run-scaleio-openstack.sh deploy-$DEPLOY_TYPE.sh $DEPLOY_FROM
