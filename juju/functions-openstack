@@ -219,7 +219,7 @@ function run_os_checks() {
     create_network
   fi
 
-  host_attr='OS-EXT-SRV-ATTR:host'
+  host_attr='OS-EXT-SRV-ATTR:host '
 
   # next checks will handle return code manually
   set +e
