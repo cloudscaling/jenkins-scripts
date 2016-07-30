@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
@@ -22,9 +22,9 @@ user='scaleio_client'
 password="$(tr -dc A-Za-z0-9 < /dev/urandom | head -c${1:-8})_$(tr -dc A-Za-z0-9 < /dev/urandom | head -c${1:-8})"
 
 mdm=`get_master_mdm`
-output=`juju ssh $mdm "scli --login --username $USERNAME --password $PASSWORD && scli --reset_password --username $user" 2>/dev/null | grep -v 'Logged in' | sed $'s/\r//'`
+output=`juju ssh $mdm "scli --approve_certificate --login --username $USERNAME --password $PASSWORD && scli --reset_password --username $user" 2>/dev/null | grep 'Password reseted' | sed $'s/\r//'`
 new_password=`echo $output | grep -o " '[a-zA-Z0-9]*'$" | xargs`
-juju ssh $mdm "scli --login --username $user --password $new_password && scli --set_password --old_password $new_password --new_password $password" 2>/dev/null
+juju ssh $mdm "scli --approve_certificate --login --username $user --password $new_password && scli --set_password --old_password $new_password --new_password $password" 2>/dev/null
 
 juju set scaleio-cluster gateway-ip="$ip" gateway-port="$port" gateway-user="$user" gateway-password="$password"
 
