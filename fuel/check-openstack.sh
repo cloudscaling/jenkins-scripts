@@ -16,7 +16,7 @@ function get_provisioning_type() {
 }
 
 apt-get install -fqqy python-dev
-easy_install pip
+easy_install --upgrade pip
 pip install -q virtualenv
 
 export SCALEIO_PROTECTION_DOMAIN='default'
