@@ -18,13 +18,14 @@ fuel_nodes=${FUEL_NODES:-6}
 function save_logs() {
   nodes=`get_slave_nodes`
   for i in ${nodes}; do
-    mkdir logs/$i
+    mkdir -p logs/$i
     execute_on_slave $i 'cat /var/log/fuel-plugin-scaleio.log' > logs/${i}/fuel-plugin-scaleio.log 2>/dev/null
     execute_on_slave $i 'cat /var/log/puppet.log' > logs/${i}/puppet.log 2>/dev/null
     for dr in '/var/log/nova/' '/etc/nova/' ; do
+      execute_on_slave $i "ls -l $dr"
       if files=`execute_on_slave $i "ls $dr" 2>/dev/null` ; then
         for fl in $files ; do
-          execute_on_slave $i "cat /var/log/nova/$fl" > logs/${i}/${fl} 2>/dev/null
+          execute_on_slave $i "cat /var/log/nova/$fl" > logs/${i}/${fl}
         done
       fi
     done
