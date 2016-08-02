@@ -15,7 +15,16 @@ git clone https://github.com/openstack/fuel-plugin-scaleio.git || fail "Failed t
 
 pushd fuel-plugin-scaleio
 
-echo "INFO: Release tag for plugin is $RELEASE_TAG"
+if [[ -n "$FUEL_PLUGIN_TAG" ]]; then
+  echo "INFO: Fuel plugin tag is '$FUEL_PLUGIN_TAG'"
+  if git tag -l | grep -q "$FUEL_PLUGIN_TAG" ; then
+      git checkout "tags/$FUEL_PLUGIN_TAG"
+  else
+      git checkout "$FUEL_PLUGIN_TAG"
+  fi
+fi
+
+echo "INFO: Release tag for plugin is '$RELEASE_TAG'"
 fpb --build . || fail "Failed to build plugin"
 
 fuel plugins --install $(ls scaleio*) --force || fail "Failed to install plugin"
