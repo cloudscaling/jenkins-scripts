@@ -34,7 +34,11 @@ function save_logs() {
 }
 
 function destroy_env() {
-  sudo /home/jenkins/fuel_ci/cleanup_env.sh
+  if [[ $clean_env != 'false' ]] ; then
+    sudo /home/jenkins/fuel_ci/cleanup_env.sh
+  else
+    echo Skip destroy env
+  fi
 }
 
 function catch_errors() {
@@ -54,7 +58,7 @@ rm -rf logs
 mkdir logs
 
 if [[ $clean_env != 'false' ]] ; then
-  #TODO: use provisioning from fuel-qa/fuel-devops or somthing like that
+  #TODO: use provisioning from fuel-qa/fuel-devops or something like that
   sudo /home/jenkins/fuel_ci/cleanup_env.sh
   sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${fuel_version}.iso" ${fuel_nodes}
 else
