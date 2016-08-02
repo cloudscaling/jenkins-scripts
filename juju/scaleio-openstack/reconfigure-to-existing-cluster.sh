@@ -4,7 +4,6 @@ my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
-source $my_dir/functions
 
 echo "INFO: Checing use_existing_cluster feature"
 echo "INFO: Reconfigure cluster to two clusters: ScaleIO and OpenStack. Link them via scaleio-cluster charm."

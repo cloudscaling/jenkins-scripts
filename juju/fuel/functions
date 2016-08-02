@@ -23,6 +23,7 @@ machines=()
 deploy_counter=1
 
 branch=${BRANCH:-"master"}
+storage_iface=""
 
 trap 'catch_errors $LINENO' ERR
 
@@ -129,7 +130,8 @@ function deploy_node_service() {
 
   if ! juju service get ${name} &>/dev/null  ; then
     echo "$name:
-      branch-name:  $branch" >/tmp/config.yaml
+      branch-name:  $branch
+      storage-iface: $storage_iface" >/tmp/config.yaml
     juju deploy --repository fuel-charms local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
     juju add-relation fuel-master $name
   fi
@@ -611,3 +613,29 @@ function check_existing_cluster {
   fi
 }
 
+function check_sds_ip_roles {
+  mch=${machines[$1]}
+  expected_roles=$2
+
+  password=`get_config fuel-master password`
+  login_cmd="scli --login --username $username --password $password --approve_certificate"
+
+  ret=0
+  all_sds_output=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
+  for sds_name in $(echo "$all_sds_output" | awk '/SDS ID/{print $5}') ; do
+    node_details=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
+    if ! node_roles=`echo "$node_details" | grep "Role:" | grep "$expected_roles"` ; then
+      echo "ERROR: SDS $sds_name does not contain required roles (SDS and SDC) $expected_roles."
+      echo "$node_details"
+      ((++ret))
+    elif ! [[ "$node_roles" =~ 'SDC' && "$node_roles" =~ 'SDS' ]]  ; then
+      echo "ERROR: SDS $sds_name does not contain required roles."
+      echo "$node_details"
+      ((++ret))
+    else
+      echo "INFO: Success. SDS $sds_name contains required roles."
+    fi
+  done
+
+  return $ret
+}
