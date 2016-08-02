@@ -28,7 +28,7 @@
           use_syslog = False
           [aws]
           build_timeout = 2400
-          ec2_url = https://ec2.amazonaws.com/
+          ec2_url = https://ec2.eu-west-1.amazonaws.com/
           s3_url = https://s3.amazonaws.com/
           aws_access =
           aws_secret =
