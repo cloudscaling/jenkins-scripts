@@ -57,14 +57,9 @@ trap 'catch_errors $LINENO' ERR
 rm -rf logs
 mkdir logs
 
-if [[ $clean_env != 'false' ]] ; then
-  #TODO: use provisioning from fuel-qa/fuel-devops or something like that
-  sudo /home/jenkins/fuel_ci/cleanup_env.sh
-  sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${fuel_version}.iso" ${fuel_nodes}
-else
-  #TODO: add check fuel_version in existing environment
-  echo WARN: check of version should be added in case of non-clean env
-fi
+#TODO: use provisioning from fuel-qa/fuel-devops or something like that
+sudo /home/jenkins/fuel_ci/cleanup_env.sh
+sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${fuel_version}.iso" ${fuel_nodes}
 
 $my_dir/$inner_script
 
