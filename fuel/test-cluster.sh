@@ -218,13 +218,14 @@ fi
 
 if [[ $start_from < 4 ]]; then
   # remove controller: 2+2
-  fuel --env $env_num node --node-id ${nodes[0]} remove || fail "Failed to remove node ${nodes[$0]} from environment $env_num"
+  fuel --env $env_num node --node-id ${nodes[0]} remove || fail "Failed to remove node ${nodes[0]} from environment $env_num"
   deploy_changes $env_num
   steps_count=$((steps_count-1))
   #update nodes list
-  nodes=($(fuel node | grep 'True' | grep 'controller' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
-  nodes+=($(fuel node | grep 'True' | grep 'compute' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
-  nodes+=($(fuel node | grep 'True' | awk "{if(\$8==\"None\"){print(\$1)}}" | sort))  
+  nodes=($(list_online_nodes $env_num 'controller'))
+  nodes+=($(list_online_nodes $env_num 'compute'))
+  nodes+=($(list_online_nodes 'None'))
+  echo nodes: ${nodes[@]}
 fi
 
 if (( ${steps_count} < 1 )) ; then
@@ -246,13 +247,14 @@ fi
 
 if [[ $start_from < 6 ]]; then
   # remove compute: 3+1
-  fuel --env $env_num node --node-id ${nodes[3]} remove || fail "Failed to remove node ${nodes[$3]} from environment $env_num"
+  fuel --env $env_num node --node-id ${nodes[3]} remove || fail "Failed to remove node ${nodes[3]} from environment $env_num"
   deploy_changes $env_num
   steps_count=$((steps_count-1))
   #update nodes list
-  nodes=($(fuel node | grep 'True' | grep 'controller' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
-  nodes+=($(fuel node | grep 'True' | grep 'compute' | awk "/^[0-9]/ {if(\$8==$env_num){print(\$1)}}" | sort))
-  nodes+=($(fuel node | grep 'True' | awk "{if(\$8==\"None\"){print(\$1)}}" | sort))  
+  nodes=($(list_online_nodes $env_num 'controller'))
+  nodes+=($(list_online_nodes $env_num 'compute'))
+  nodes+=($(list_online_nodes 'None'))
+  echo nodes: ${nodes[@]}
 fi
 
 if (( ${steps_count} < 1 )) ; then
