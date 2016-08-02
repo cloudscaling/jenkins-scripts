@@ -13,7 +13,7 @@
           repo: gce-api
       - jenkins-scripts
     triggers:
-      - timed: "0 0 * * 1,4"
+      - timed: "0 0 * * 1"
     builders:
       - shell: |
           #!/bin/bash -e
