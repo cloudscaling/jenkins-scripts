@@ -8,7 +8,23 @@ source ${my_dir}/fuel-utils
 copy_to_master "${my_dir}/*.sh"
 copy_to_master "${my_dir}/*.py"
 
-execute_on_master "export RELEASE_TAG='$PUPPETS_VERSION' FUEL_PLUGIN_TAG='$PLUGIN_VERSION'; ./prepare_plugin.sh"
+if [[ "$PLUGIN_VERSION" == "auto" ]]; then
+  case $FUEL_VERSION in
+    "6.1" | "7.0")
+      plugin_tag="fuel-package-v2"
+      ;;
+    "8.0" | "9.0")
+      plugin_tag="master"
+      ;;
+    *)
+      plugin_tag=$PLUGIN_VERSION
+      ;;
+  esac
+else
+  plugin_tag=$PLUGIN_VERSION
+fi
+
+execute_on_master "export RELEASE_TAG='$PUPPETS_VERSION' FUEL_PLUGIN_TAG='$plugin_tag'; ./prepare_plugin.sh"
 execute_on_master './test-cluster.sh 0 3'
 ${my_dir}/check-openstack-stub.sh
 execute_on_master './test-cluster.sh 3 8'
