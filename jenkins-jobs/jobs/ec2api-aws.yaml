@@ -2,7 +2,6 @@
     name: ec2api-aws
     description: "Runs ec2 tests against Amazon"
     defaults: global
-    disabled: true
     properties:
       - build-discarder
     scm:
