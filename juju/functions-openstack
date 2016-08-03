@@ -197,6 +197,13 @@ function run_os_checks() {
   exec_on_mdm_callback=$1
   get_provisioning_type_callback=$2
 
+  echo "INFO: Check CLI versions:"
+  set -x
+  cinder --version
+  nova --cinder
+  openstack --version
+  set +x
+
   scli_password=${SCALEIO_mdm_password:-'Default_password'}
   if [ -n "${SCALEIO_mdm_ips}" ] ; then
     mdm_opts="--mdm_ip ${SCALEIO_mdm_ips}"
@@ -331,7 +338,7 @@ function check_cinder_simple_volume() {
   local volumes_before=`$exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null`
   local volume_ids=`_get_volume_ids`
 
-  if ! output=`cinder create --display_name simple_volume 1` ; then
+  if ! output=`cinder create --display-name simple_volume 1` ; then
     echo "ERROR: Couldn't create simple volume"
     echo "$output"
     return 1
@@ -373,7 +380,7 @@ function check_cinder_simple_volume() {
 
 function check_cinder_bootable_volume() {
   echo "INFO: Check volume from image"
-  if ! output=`cinder create --image-id $image_id --display_name volume_from_image 1` ; then
+  if ! output=`cinder create --image-id $image_id --display-name volume_from_image 1` ; then
     echo "ERROR: Couldn't create volume from image"
     echo "$output"
     return 1
@@ -489,7 +496,7 @@ function check_volume_snapshot() {
 
   local volume_ids=`_get_volume_ids`
   echo "INFO: Create simple volume"
-  if ! output=`cinder create --display_name volume_for_snapshot 1` ; then
+  if ! output=`cinder create --display-name volume_for_snapshot 1` ; then
     echo "ERROR: Couldn't create volume"
     echo "$output"
     return 1
@@ -520,7 +527,7 @@ function check_volume_snapshot() {
   echo "INFO: Snapshot created successfully"
 
   echo "INFO: Creating volume from snapshot"
-  if ! output=`cinder create --snapshot_id $snapshot_id --name from_snapshot 8` ; then
+  if ! output=`cinder create --snapshot-id $snapshot_id --display-name from_snapshot` ; then
     echo "ERROR: Couldn't create volume from snapshot"
     echo "$output"
     cinder snapshot-delete $snapshot_id >/dev/null
