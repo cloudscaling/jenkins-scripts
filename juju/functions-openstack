@@ -129,6 +129,18 @@ function wait_image() {
   done
 }
 
+function activate_venv() {
+  if [ -d .venv ]; then
+    source .venv/bin/activate
+  fi
+}
+
+function deactivate_venv() {
+  if [ -d .venv ]; then
+    deactivate
+  fi
+}
+
 function create_virtualenv() {
   rm -rf .venv
   virtualenv .venv
@@ -140,7 +152,7 @@ function create_virtualenv() {
 function create_image() {
   image_name=${1:-cirros}
 
-  source .venv/bin/activate
+  activate_venv
 
   if ! output=`openstack image show $image_name 2>/dev/null` ; then
     rm -f cirros-0.3.4-x86_64-disk.img
@@ -151,12 +163,12 @@ function create_image() {
   fi
   image_id=`echo "$output" | awk '/ id /{print $4}'`
 
-  deactivate
+  deactivate_venv
   echo $image_id
 }
 
 function create_flavors() {
-  source .venv/bin/activate
+  activate_venv
 
   if ! nova flavor-show 51 &>/dev/null ; then
     nova flavor-create fl8gb 51 512 8 1 >/dev/null
@@ -168,17 +180,17 @@ function create_flavors() {
     nova flavor-create fl8gbext --ephemeral 8 --swap 8192 53 512 8 1 >/dev/null
   fi
 
-  deactivate
+  deactivate_venv
 }
 
 function create_network() {
-  source .venv/bin/activate
+  activate_venv
 
   if ! nova network-show private &>/dev/null ; then
     nova network-create --fixed-range-v4 10.0.0.0/24 --gateway 10.0.0.1 --bridge br100 private
   fi
 
-  deactivate
+  deactivate_venv
 }
 
 function run_os_checks() {
@@ -197,7 +209,7 @@ function run_os_checks() {
   pd_name=${SCALEIO_PROTECTION_DOMAIN:-'default_protection_domain'}
 
   # check installed cloud
-  source .venv/bin/activate
+  activate_venv
   echo "INFO: Check OpenStack catalog first"
   openstack catalog list
 
@@ -208,7 +220,7 @@ function run_os_checks() {
   else
     nic_opts=""
   fi
-  deactivate
+  deactivate_venv
 
   if ! image_id=`create_image` ; then
     return 1
@@ -224,7 +236,7 @@ function run_os_checks() {
   # next checks will handle return code manually
   set +e
 
-  source .venv/bin/activate
+  activate_venv
   local ret=0
   check_cinder_simple_volume || ret=1
   echo ''
@@ -250,7 +262,7 @@ function run_os_checks() {
   cinder list
   set +x
 
-  deactivate
+  deactivate_venv
 
   return $ret
 }
