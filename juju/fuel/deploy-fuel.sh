@@ -114,7 +114,7 @@ configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
 
 check_sds_ip_roles 1 "SDS Only"
 check_sds_ip_roles 1 "SDC Only"
-# TODO: UNCOMMENT AFTER FIX
+# TODO: UNCOMMENT AFTER FIX DEPLOYING SDS WITH COUNT MORE THAN LIMIT IN 1 PROTECTION DOMAIN
 #check_protection_domain_nodes 1 '3'
 
 save_logs
