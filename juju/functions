@@ -235,3 +235,10 @@ function cleanup_environment() {
     sleep 3
   done
 }
+
+function create_eth1() {
+  node=$1
+
+  echo "INFO: creating additional network interface on node: $node"
+  juju ssh $node "sudo apt-get -fy install uml-utilities >/dev/null ; sudo ip tuntap add dev eth1 mode tap ; sudo ip link set dev eth1 up ; ifconfig" 2>/dev/null
+}
