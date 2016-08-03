@@ -5,7 +5,7 @@ my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
 
-deploy_from=${1:-charmstore}   # Place where to get ScaleIO charms - github or charmstore
+deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
   JUJU_REPO="local:trusty"
   # script needs to change directory to local charms repository due to absent option for juju-deployer
