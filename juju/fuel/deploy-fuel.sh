@@ -91,7 +91,7 @@ configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
 check_password 1 'Other_password'
 check_protection_domain 1 'pd'
 check_protection_domain_nodes 1 '3'
-check_sds_ip_roles 1 "All"
+check_sds_ip_roles 1 "All (SDS and SDC)"
 check_sds_storage_pool 1 "$new_storage_pools" "$new_device_paths"
 check_storage_pool 1 'Zero padding' 'enabled'
 check_storage_pool 1 'Checksum mode' 'enabled'
@@ -104,7 +104,6 @@ check_sds_on_controller 1 'false'
 
 for node in ${machines[@]} ; do
   create_eth1 $node
-  #TODO: get CIDR automatically
   juju ssh $node "sudo ip addr add 10.0.123.$node/24 dev eth1" 2>/dev/null
 done
 
@@ -113,7 +112,8 @@ storage_iface='eth1'
 set_fuel_options protection-domain-nodes='3'
 configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
 
-check_sds_ip_roles 1 "Only"
+check_sds_ip_roles 1 "SDS Only"
+check_sds_ip_roles 1 "SDC Only"
 # TODO: UNCOMMENT AFTER FIX
 #check_protection_domain_nodes 1 '3'
 
