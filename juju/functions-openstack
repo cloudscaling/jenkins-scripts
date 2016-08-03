@@ -214,7 +214,9 @@ function run_os_checks() {
   openstack catalog list
 
   # in fuel env there is more than 1 network, so it's needed to specify network directly
-  net_id=`nova network-list | awk '/admin_internal_net/{print $2}'`
+  #   'net04 '              - fuel6.1/7.0
+  #   'admin_internal_net'  - fuel8.0/9.0
+  net_id=`nova network-list | awk '/net04 |admin_internal_net/{print $2}'`
   if [ -n "${net_id}" ] ; then
     nic_opts="--nic net-id=$net_id"
   else
