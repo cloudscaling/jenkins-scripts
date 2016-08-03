@@ -21,6 +21,7 @@
     scm:
       - fuel-charms
       - jenkins-scripts
+      - emc-juju-scaleio
     builders:
       - shell: |
           #!/bin/bash -e
