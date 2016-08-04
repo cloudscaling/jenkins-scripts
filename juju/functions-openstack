@@ -528,7 +528,7 @@ function check_volume_snapshot() {
   echo "INFO: Snapshot created successfully"
 
   echo "INFO: Creating volume from snapshot"
-  if ! output=`cinder create --snapshot-id $snapshot_id --display-name from_snapshot` ; then
+  if ! output=`cinder create --snapshot-id $snapshot_id --display-name from_snapshot 8` ; then
     echo "ERROR: Couldn't create volume from snapshot"
     echo "$output"
     cinder snapshot-delete $snapshot_id >/dev/null
