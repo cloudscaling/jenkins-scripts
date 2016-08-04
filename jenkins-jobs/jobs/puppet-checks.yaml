@@ -20,11 +20,12 @@
           puppet module build
 
           echo "INFO: bundle install"
-          $GEM_HOME/bundle install
+          $GEM_HOME/bin/bundle install
 
           # ???
           #echo "INFO: bundle exec rspec"
-          #$GEM_HOME/bundle exec rspec
+          #$GEM_HOME/bin/bundle exec rspec
+
 
 - job:
     name: puppet-scaleio-check
