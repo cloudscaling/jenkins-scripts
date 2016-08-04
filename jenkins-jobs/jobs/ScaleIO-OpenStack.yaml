@@ -5,7 +5,7 @@
 #          #!/bin/bash -e
 #          # while these charms are not in official repo - script copies them to one local juju repository
 #          for charm in cinder keystone nova-compute ; do
-#            cp -R juju-scaleio-tmp/trusty/$charm juju-scaleio/trusty/
+#            cp -R juju-scaleio-tmp/trusty/!!! juju-scaleio/trusty/
 #          done
 
 
