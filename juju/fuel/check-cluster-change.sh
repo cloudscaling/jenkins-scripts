@@ -74,7 +74,7 @@ done
 remove_node_service 1 ${slave_mdms[1]}
 new_master_mdm=${slave_mdms[0]}
 configure_cluster mode 1 primary-controller $new_master_mdm compute 2,3
-remove_node_service ${tie_breakers[@]}
+remove_node_service "${tie_breakers[@]}"
 
 # 5+2 cluster
 configure_cluster mode 5 primary-controller $new_master_mdm compute 2,3 controller 1,${slave_mdms[1]},${tie_breakers[0]},${tie_breakers[1]}
