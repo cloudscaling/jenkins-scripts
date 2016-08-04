@@ -13,7 +13,7 @@
           repo: ec2-api
       - jenkins-scripts
     triggers:
-      - timed: "0 7 * * 1"
+      - timed: "0 1 * * *"
     builders:
       - shell: |
           #!/bin/bash -e
