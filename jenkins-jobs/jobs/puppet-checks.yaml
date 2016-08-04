@@ -1,0 +1,44 @@
+- job:
+    name: puppet-scaleio-check
+    description: "Runs syntax and unit tests for the puppet from github.com/emccode"
+    defaults: global
+    scm:
+      - emc-puppet-scaleio
+    triggers:
+      - pollscm:
+          cron: "H/5 * * * *"
+    builders:
+      - shell: |
+          #!/bin/bash -e
+
+          export GEM_HOME=$WORKSPACE/.gem
+          gem install puppet-lint
+          gem install puppet-lint-absolute_template_path
+          gem install puppet-lint-unquoted_string-check
+          gem install puppet-lint-resource_reference_syntax
+          gem install puppet-lint-trailing_newline-check
+
+          $GEM_HOME/bin/puppet-lint --fail-on-warnings --no-autoloader_layout-check --no-documentation-check puppet-scaleio
+
+
+- job:
+    name: puppet-scaleio-openstack-check
+    description: "Runs just syntax tests for the puppet from github.com/emccode"
+    defaults: global
+    scm:
+      - emc-puppet-scaleio-openstack
+    triggers:
+      - pollscm:
+          cron: "H/5 * * * *"
+    builders:
+      - shell: |
+          #!/bin/bash -e
+
+          export GEM_HOME=$WORKSPACE/.gem
+          gem install puppet-lint
+          gem install puppet-lint-absolute_template_path
+          gem install puppet-lint-unquoted_string-check
+          gem install puppet-lint-resource_reference_syntax
+          gem install puppet-lint-trailing_newline-check
+
+          $GEM_HOME/bin/puppet-lint --fail-on-warnings --no-autoloader_layout-check --no-documentation-check puppet-scaleio-openstack

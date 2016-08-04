@@ -50,6 +50,20 @@
           repo: juju-scaleio
 
 - scm:
+    name: emc-puppet-scaleio
+    scm:
+      - github:
+          organization: emccode
+          repo: puppet-scaleio
+
+- scm:
+    name: emc-puppet-scaleio-openstack
+    scm:
+      - github:
+          organization: emccode
+          repo: puppet-scaleio-openstack
+
+- scm:
     name: openstack-fuel-plugin-scaleio
     scm:
       - github:
