@@ -60,8 +60,8 @@ function wait_running_tasks() {
 }
 
 function check_failed_tasks() {
-    env_num=$1
-    failed_tasks=`fuel task | grep -i 'error\|fail'`
+    local env_num=$1
+    local failed_tasks=`fuel task | grep -i 'error\|fail'`
     if [[ ! -z "$failed_tasks" ]]; then
         echo $failed_tasks
         fail "Failed to execute task $failed_tasks for env $env_num"
@@ -69,10 +69,10 @@ function check_failed_tasks() {
 }
 
 function execute_task() {
-    env_num=$1
-    task=$2
-    nodes_list=$3
-    tries=$4
+    local env_num=$1
+    local task=$2
+    local nodes_list=$3
+    local tries=$4
     
     fuel --env ${env_num} node --${task} --node ${nodes_list} || fail "Failed to $task nodes $nodes_list"
     wait_running_tasks $tries
@@ -81,10 +81,10 @@ function execute_task() {
 }
 
 function deploy_changes() {
-    env_num=$1
+    local env_num=$1
     fuel --env $env_num deploy-changes > /dev/null 2>&1 &
-    pid="$!"
-    tries=360
+    local pid="$!"
+    local tries=360
     while [[ $tries > 0 ]] ; do
       echo wait $tries
       if ! ps $pid ; then
@@ -100,19 +100,36 @@ function deploy_changes() {
 function list_online_nodes() {
   local env=$1
   local role=${2:-""}
+  local role_regexp=""
   if [[ "$env" == "None" && "$fuel_version" == "9.0.0" ]] ; then
     env=""
   fi
   if [ -n "$role" ] ; then
     role_regexp=".*${role}.*"
-  else
-    role_regexp=""
   fi
   fuel node | awk -F '|' "/^[ ]*[0-9]+[ |]+${role_regexp}/ {
     gsub(/[ \t\r\n]+/, \"\", \$1); \
     gsub(/[ \t\r\n]+/, \"\", \$9); \
     gsub(/[ \t\r\n]+/, \"\", \$4); \
     if((\$9==\"True\" || \$9==\"1\") && \$4==\"$env\"){print(\$1)}}" | sort
+}
+
+function update_nodes() {
+   echo wait nodes online
+   for i in {1..60}; do
+    # nodes and env_num are global vars
+    nodes=($(list_online_nodes $env_num 'controller'))
+    nodes+=($(list_online_nodes $env_num 'compute'))
+    nodes+=($(list_online_nodes 'None'))
+    if [[ ${#nodes[@]} == 6 || ${#nodes[@]} > 6  ]]; then
+        break
+    fi
+    sleep 10
+  done
+  echo online nodes: ${nodes[@]}
+  if [[ ${#nodes[@]} < 6 ]]; then
+    fail "There is not enough free online nodes, only ${#nodes[@]} is available but 6 is required"
+  fi
 }
 
 start_from=${1:-0}
@@ -132,10 +149,11 @@ if [[ "$fuel_version" == "8.0.0" || "$fuel_version" == "9.0.0" ]]; then
 else
     ha_mode_opts='--mode ha'
 fi
+nodes=()
+env_num=$(fuel env | awk "/$env_name/ {print(\$1)}")
 
 if [[ $start_from < 1 ]]; then
   echo Cleaunp env if exists
-  env_num=$(fuel env | awk "/$env_name/ {print(\$1)}")
   if [[ ! -z "$env_num" ]]; then
     fuel env --env $env_num --force remove || fail "Failed to cleanup environment"
     wait_running_tasks
@@ -150,30 +168,10 @@ if [[ $start_from < 1 ]]; then
     fail "Failed to create environment"
   fi
 
-  echo wait nodes online
-  
-  nodes=()
-  for i in {1..60}; do
-    nodes=($(list_online_nodes 'None'))
-    if [[ ${#nodes[@]} == 6 || ${#nodes[@]} > 6  ]]; then
-        break
-    fi
-    sleep 10
-  done
-  if [[ ${#nodes[@]} < 6 ]]; then
-    fail "There is not enough free online nodes, only ${#nodes[@]} is available but 6 is required"
-  fi
-
   steps_count=$((steps_count-1))
-
-else
-  env_num=$(fuel env | awk "/$env_name/ {print(\$1)}")
-  nodes=($(list_online_nodes $env_num 'controller'))
-  nodes+=($(list_online_nodes $env_num 'compute'))
-  nodes+=($(list_online_nodes 'None'))
 fi
 
-echo nodes: ${nodes[@]}
+update_nodes
 
 if (( ${steps_count} < 1 )) ; then
   echo "No more steps to execute"
@@ -221,11 +219,7 @@ if [[ $start_from < 4 ]]; then
   fuel --env $env_num node --node-id ${nodes[0]} remove || fail "Failed to remove node ${nodes[0]} from environment $env_num"
   deploy_changes $env_num
   steps_count=$((steps_count-1))
-  #update nodes list
-  nodes=($(list_online_nodes $env_num 'controller'))
-  nodes+=($(list_online_nodes $env_num 'compute'))
-  nodes+=($(list_online_nodes 'None'))
-  echo nodes: ${nodes[@]}
+  update_nodes
 fi
 
 if (( ${steps_count} < 1 )) ; then
@@ -250,11 +244,7 @@ if [[ $start_from < 6 ]]; then
   fuel --env $env_num node --node-id ${nodes[3]} remove || fail "Failed to remove node ${nodes[3]} from environment $env_num"
   deploy_changes $env_num
   steps_count=$((steps_count-1))
-  #update nodes list
-  nodes=($(list_online_nodes $env_num 'controller'))
-  nodes+=($(list_online_nodes $env_num 'compute'))
-  nodes+=($(list_online_nodes 'None'))
-  echo nodes: ${nodes[@]}
+  update_nodes
 fi
 
 if (( ${steps_count} < 1 )) ; then
