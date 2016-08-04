@@ -10,7 +10,10 @@
           gem install puppet-lint-unquoted_string-check
           gem install puppet-lint-resource_reference_syntax
           gem install puppet-lint-trailing_newline-check
-          gem install bundler
+          gem install puppet-lint-absolute_classname-check
+          gem install puppet-lint-leading_zero-check
+          gem install puppet-lint-variable_contains_upcase
+          gem install puppet-lint-numericvariable
 
           cd {repo}
           echo "INFO: puppet-lint"
@@ -20,11 +23,10 @@
           puppet module build
 
           echo "INFO: bundle install"
+          gem install bundler
           $GEM_HOME/bin/bundle install
-
-          # ???
-          #echo "INFO: bundle exec rspec"
-          #$GEM_HOME/bin/bundle exec rspec
+          echo "INFO: bundle exec rspec"
+          $GEM_HOME/bin/bundle exec rspec || /bin/true
 
 
 - job:
