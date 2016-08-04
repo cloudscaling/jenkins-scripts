@@ -10,14 +10,21 @@
           gem install puppet-lint-unquoted_string-check
           gem install puppet-lint-resource_reference_syntax
           gem install puppet-lint-trailing_newline-check
+          gem install bundler
 
           cd {repo}
-          echo "INFO: run puppet-lint"
+          echo "INFO: puppet-lint"
           $GEM_HOME/bin/puppet-lint --fail-on-warnings --no-autoloader_layout-check --no-documentation-check .
 
-          echo "INFO: run puppet module build"
+          echo "INFO: puppet module build"
           puppet module build
 
+          echo "INFO: bundle install"
+          $GEM_HOME/bundle install
+
+          # ???
+          #echo "INFO: bundle exec rspec"
+          #$GEM_HOME/bundle exec rspec
 
 - job:
     name: puppet-scaleio-check
