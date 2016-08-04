@@ -219,7 +219,7 @@ function run_os_checks() {
   set +x
 
   echo "INFO: Check OpenStack catalog first"
-  openstack catalog list
+  openstack catalog list || keystone catalog || /bin/true
 
   # in fuel env there is more than 1 network, so it's needed to specify network directly
   #   'net04 '              - fuel6.1/7.0
