@@ -265,9 +265,9 @@ function run_os_checks() {
 
   # here we try to list all infos from ScaleIO
   set -x
-  $exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null
-  $exec_on_mdm_callback "$scli_query --query_all_sds" 2>/dev/null
-  $exec_on_mdm_callback "$scli_query --query_all_sdc" 2>/dev/null
+  $exec_on_mdm_callback "$scli_query --query_all_volume"
+  $exec_on_mdm_callback "$scli_query --query_all_sds"
+  $exec_on_mdm_callback "$scli_query --query_all_sdc"
   nova list
   cinder list
   set +x
@@ -299,7 +299,7 @@ function _check_provisioning_type() {
 
   local ret=0
   for id in $ids ; do
-    local output=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $id --properties ID,TYPE" 2>/dev/null | sed $'s/\r//'`
+    local output=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $id --properties ID,TYPE" 2>&1 | sed $'s/\r//'`
     if ! echo "$output" | grep -iq $type ; then
       echo "ERROR: Volume $id has another type:"
       echo "$output"
@@ -320,7 +320,7 @@ function _check_size() {
 
   local ret=0
   for id in $ids ; do
-    local output=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $id --properties ID,SIZE" 2>/dev/null | sed $'s/\r//'`
+    local output=`$exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $id --properties ID,SIZE" 2>&1 | sed $'s/\r//'`
     if ! echo "$output" | grep -iq "$size_mb MB" ; then
       echo "ERROR: Volume $id has another size:"
       echo "$output"
@@ -336,7 +336,7 @@ function _check_size() {
 function check_cinder_simple_volume() {
   echo "INFO: Check simple volume"
 
-  local volumes_before=`$exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null`
+  local volumes_before=`$exec_on_mdm_callback "$scli_query --query_all_volume" 2>&1`
   local volume_ids=`_get_volume_ids`
 
   if ! output=`cinder create --display-name simple_volume 1` ; then
@@ -355,7 +355,7 @@ function check_cinder_simple_volume() {
   fi
 
   echo "INFO: Check ScaleIO volume list"
-  local volumes_after=`$exec_on_mdm_callback "$scli_query --query_all_volume" 2>/dev/null`
+  local volumes_after=`$exec_on_mdm_callback "$scli_query --query_all_volume" 2>&1`
   local vc1=`echo "$volumes_before" | grep "Volume ID" | wc -l`
   local vc2=`echo "$volumes_after" | grep "Volume ID" | wc -l`
   if (( vc2 != vc1 + 1 )) ; then
