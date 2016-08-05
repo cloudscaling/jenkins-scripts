@@ -570,10 +570,11 @@ function _check_descendants() {
   local exp_count=$2
 
   local query_str="--query_properties --object_type VOLUME --object_id $id --properties NUM_OF_DESCENDANT_VOLUMES"
-  local count=`$exec_on_mdm_callback "$scli_query $query_str" 2>/dev/null | sed $'s/\r//' | awk '/NUM_OF_D/{print $2}'`
+  local output=`$exec_on_mdm_callback "$scli_query $query_str" 2>&1`
+  local count=`echo "$output" | sed $'s/\r//' | awk '/NUM_OF_D/{print $2}'`
   if [[ $count != "$exp_count" ]] ; then
     echo "ERROR: Invalid count of descendant volumes for base volume $id (expected = $exp_count)."
-    $exec_on_mdm_callback "$scli_query --query_properties --object_type VOLUME --object_id $id --preset ALL"
+    echo "$output"
     return 1
   fi
   echo "INFO: Correct count of descendant volumes for base volume $id ($exp_count)."
