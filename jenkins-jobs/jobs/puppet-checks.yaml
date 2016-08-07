@@ -24,7 +24,7 @@
           echo "INFO: puppet module build"
           puppet module build
 
-          export PUPPETFILE="$(pwd)/spec/fixtures.mod
+          export PUPPETFILE="$(pwd)/spec/fixtures.mod"
           echo "INFO: bundle install"
           gem install bundler
           $GEM_HOME/bin/bundle install
