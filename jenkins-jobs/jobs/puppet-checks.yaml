@@ -17,11 +17,6 @@
           gem install puppet-lint-numericvariable
 
           cd {repo}
-          mkdir -p spec/fixtures
-          mkdir -p spec/fixtures/manifests
-          mkdir -p spec/fixtures/modules
-          touch spec/fixtures/manifests/site.pp
-          ln -s ../../.. spec/fixtures/modules/{module}
 
           echo "INFO: puppet-lint"
           $GEM_HOME/bin/puppet-lint --fail-on-warnings --no-autoloader_layout-check --no-documentation-check .
@@ -29,11 +24,12 @@
           echo "INFO: puppet module build"
           puppet module build
 
+          export PUPPETFILE="$(pwd)/spec/fixtures.mod
           echo "INFO: bundle install"
           gem install bundler
           $GEM_HOME/bin/bundle install
-          echo "INFO: bundle exec rspec"
-          $GEM_HOME/bin/bundle exec rspec || /bin/true
+          echo "INFO: bundle exec rake spec"
+          $GEM_HOME/bin/bundle exec rake spec || /bin/true
 
 
 - job:
@@ -48,7 +44,6 @@
     builders:
       - puppet-syntax-check:
           repo: "puppet-scaleio"
-          module: "scaleio"
 
 
 - job:
@@ -63,4 +58,3 @@
     builders:
       - puppet-syntax-check:
           repo: "puppet-scaleio-openstack"
-          module: "scaleio_openstack"
