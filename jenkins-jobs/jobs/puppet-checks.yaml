@@ -6,6 +6,7 @@
 
           export PUPPET_GEM_VERSION="<4.0.0"
           export GEM_HOME=$WORKSPACE/.gem
+          rm -rf $GEM_HOME
           gem install puppet-lint
           gem install puppet-lint-absolute_template_path
           gem install puppet-lint-unquoted_string-check
