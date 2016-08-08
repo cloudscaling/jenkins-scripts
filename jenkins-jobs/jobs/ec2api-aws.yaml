@@ -44,6 +44,8 @@
           run_incompatible_tests = True
           image_user = ubuntu
           run_long_tests = True
+          # register_image can work only with objects that were uploaded to same region
+          ami_image_location = tmp-bundled-image/cirros-0.3.4-x86_64.manifest.xml
           [service_available]
           trove = False
           ironic = False
