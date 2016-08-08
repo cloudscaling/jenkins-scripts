@@ -67,7 +67,7 @@ tie_breakers=()
 for mdm in 1 4 5 6 7 ; do
   mdm_ip=`juju ssh ${machines[$mdm]} "ifconfig" 2>/dev/null | awk '/inet addr:/{print $2}' | head -1 | sed 's/addr://g'`
   if [[ ${machines[$mdm]} == $current_master_mdm ]] ; then
-    old_master_mdm_index=$mdm
+    current_master_mdm_index=$mdm
   elif [[ ${slave_mdms_ip[@]} =~ $mdm_ip ]] ; then
     slave_mdms+=($mdm)
   elif [[ ${tie_breakers_ip[@]} =~ $mdm_ip ]] ; then
@@ -76,13 +76,13 @@ for mdm in 1 4 5 6 7 ; do
 done
 
 # 1+2 cluster
-remove_node_service $old_master_mdm_index ${slave_mdms[1]}
+remove_node_service $current_master_mdm_index ${slave_mdms[1]}
 new_master_mdm=${slave_mdms[0]}
 configure_cluster mode 1 primary-controller $new_master_mdm compute 2,3
 remove_node_service "${tie_breakers[@]}"
 
 # 5+2 cluster
-configure_cluster mode 5 primary-controller $new_master_mdm compute 2,3 controller $old_master_mdm_index,${slave_mdms[1]},${tie_breakers[0]},${tie_breakers[1]}
+configure_cluster mode 5 primary-controller $new_master_mdm compute 2,3 controller $current_master_mdm_index,${slave_mdms[1]},${tie_breakers[0]},${tie_breakers[1]}
 
 
 # basic deploy 3+2 cluster
