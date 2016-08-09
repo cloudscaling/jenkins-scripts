@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -eu
 
 # set this flag to true because fuel-plugin-scaleio is from master branch and dependent puppets also should be last version
 export PUPPET_DEV_MODE='true'
