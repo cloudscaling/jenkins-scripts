@@ -80,7 +80,7 @@ new_master_mdm=${slave_mdms[0]}
 configure_cluster mode 1 primary-controller $new_master_mdm compute 2,3
 
 echo "INFO: 1->5 mode cluster"
-configure_cluster mode 5 primary-controller $new_master_mdm compute 2,3 controller $old_master_mdm_index,${slave_mdms[1]},${tie_breakers[0]},${tie_breakers[1]}
+configure_cluster mode 5 primary-controller $new_master_mdm compute 2,3 controller $current_master_mdm_index,${slave_mdms[1]},${tie_breakers[0]},${tie_breakers[1]}
 
 
 echo "INFO: Basic deploy 3+2 cluster"
