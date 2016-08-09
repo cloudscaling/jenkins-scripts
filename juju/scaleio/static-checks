@@ -134,8 +134,10 @@ function check-sds() {
     local node_errors=0
     local node_details=`$SSH $NODE "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_sds --sds_name $node_name" 2>/dev/null`
     if ! echo "$node_details" | grep -q 'Role: All (SDS and SDC)' ; then
-      ((++node_errors))
-      echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) query_sds for $node_name does not contain required roles"
+      if ! echo "$node_details" | grep -q 'Role: SDC Only' || ! echo "$node_details" | grep -q 'Role: SDS Only' ; then
+        ((++node_errors))
+        echo "ERROR: (${BASH_SOURCE[0]}:$LINENO) query_sds for $node_name does not contain required roles"
+      fi
     fi
     if [[ -n $DEVICE_PATH ]] ; then
       if ! echo "$node_details" | grep -q "Path: $DEVICE_PATH" ; then
