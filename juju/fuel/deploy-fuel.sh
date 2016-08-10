@@ -14,7 +14,8 @@ provision_machines 0 1 2 3 4
 # prepare fuel master
 prepare_fuel_master 0
 
-# 3+1 cluster with default parameters:
+echo ""
+echo "Deploying 3+1 cluster with default parameters"
 configure_cluster mode 1 primary-controller 1 compute 2,3
 # Adding compute node to check that it will get to the same protection domain (parameter protection-domain-nodes is 100 by default)
 configure_cluster mode 1 primary-controller 1 compute 2,3,4
@@ -30,16 +31,21 @@ check_storage_pool 1 'Background device scanner' 'Disabled'
 check_storage_pool 1 'Spare policy' '10%'
 check_capacity_alerts 1 '80' '90'
 check_storage_pool 1 'Flash Read Cache' "Doesn't use"
+check_storage_pool 1 'RAM Read Cache' "Doesn't use"
 check_sds_on_controller 1 'true'
 
 remove_node_service 1 2 3 4
 
+echo ""
+echo "Deploying cluster with metadata-enabled=false (cluster shouldn't be installed)"
 set_fuel_options metadata-enabled='false'
 configure_cluster mode 1 primary-controller 1 compute 2
 check_scaleio_not_installed 1
 remove_node_service 1 2
 
 # Deploy bundle
+echo ""
+echo "Deploying with existing cluster"
 $my_dir/../scaleio/deploy-scaleio-cluster.sh
 
 gateway_ip=`juju status scaleio-gw | grep public-address | awk '{print $2}'`
@@ -62,6 +68,8 @@ wait_for_removed "scaleio-sds"
 wait_for_removed "scaleio-mdm"
 wait_for_removed "scaleio-gw"
 
+echo ""
+echo "Deploying cluster with changed parameters"
 provision_machines 5 6 7
 
 new_storage_pools='sp1,sp2'
@@ -84,7 +92,10 @@ set_fuel_options capacity-high-alert-threshold='79'
 set_fuel_options capacity-critical-alert-threshold='89'
 set_fuel_options cached-storage-pools='sp2'
 set_fuel_options rfcache-devices=$rfcache_paths
+set_fuel_options rmcache-usage='true'
+set_fuel_options rmcache-passthrough-pools='sp1,sp2'
 set_fuel_options sds-on-controller='false'
+
 configure_cluster mode 1 primary-controller 1 compute 2,3,4
 configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
 
@@ -99,9 +110,13 @@ check_storage_pool 1 'Background device scanner' 'Mode: device_only'
 check_storage_pool 1 'Spare policy' '15%'
 check_capacity_alerts 1 '79' '89'
 check_specific_storage_pool 1 'Flash Read Cache' "Uses" 'sp2'
+check_specific_storage_pool 1 'RAM Read Cache' "Uses" 'sp1,sp2'
+check_specific_storage_pool 1 'write handling mode' "passthrough" 'sp1,sp2'
 check_rfcache 1 "$rfcache_paths"
 check_sds_on_controller 1 'false'
 
+echo ""
+echo "Deploying cluster for testing protection domain nodes limet, rmcache, sds ip roles"
 for node in ${machines[@]} ; do
   create_eth1 $node
   juju ssh $node "sudo ip addr add 10.0.123.$node/24 dev eth1" 2>/dev/null
@@ -110,10 +125,16 @@ done
 remove_node_service 1 2 3 4 5 6 7
 storage_iface='eth1'
 set_fuel_options protection-domain-nodes='3'
+set_fuel_options rmcache-usage='true'
+set_fuel_options rmcache-passthrough-pools='sp1'
+set_fuel_options rmcache-cached-pools='sp2'
 configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
 
 check_sds_ip_roles 1 "SDS Only"
 check_sds_ip_roles 1 "SDC Only"
 check_protection_domain_nodes 1 '3'
+check_specific_storage_pool 1 'RAM Read Cache' "Uses" 'sp1,sp2'
+check_specific_storage_pool 1 'write handling mode' "cached" 'sp2'
+check_specific_storage_pool 1 'write handling mode' "passthrough" 'sp1'
 
 save_logs
