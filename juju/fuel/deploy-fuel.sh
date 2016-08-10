@@ -37,7 +37,7 @@ check_sds_on_controller 1 'true'
 remove_node_service 1 2 3 4
 
 echo ""
-echo "Deploying cluster with metadata-enabled=false (shouldn't be installed)"
+echo "Deploying cluster with metadata-enabled=false (cluster shouldn't be installed)"
 set_fuel_options metadata-enabled='false'
 configure_cluster mode 1 primary-controller 1 compute 2
 check_scaleio_not_installed 1
@@ -45,7 +45,7 @@ remove_node_service 1 2
 
 # Deploy bundle
 echo ""
-echo "Deploying on existing cluster"
+echo "Deploying with existing cluster"
 $my_dir/../scaleio/deploy-scaleio-cluster.sh
 
 gateway_ip=`juju status scaleio-gw | grep public-address | awk '{print $2}'`
@@ -94,8 +94,8 @@ set_fuel_options cached-storage-pools='sp2'
 set_fuel_options rfcache-devices=$rfcache_paths
 set_fuel_options rmcache-usage='true'
 set_fuel_options rmcache-passthrough-pools='sp1,sp2'
-
 set_fuel_options sds-on-controller='false'
+
 configure_cluster mode 1 primary-controller 1 compute 2,3,4
 configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
 
@@ -136,16 +136,5 @@ check_protection_domain_nodes 1 '3'
 check_specific_storage_pool 1 'RAM Read Cache' "Uses" 'sp1,sp2'
 check_specific_storage_pool 1 'write handling mode' "cached" 'sp2'
 check_specific_storage_pool 1 'write handling mode' "passthrough" 'sp1'
-
-echo ""
-echo "Deploying cluster for testing rmcahe"
-remove_node_service 1 2 3 4 5 6 7
-set_fuel_options rmcache-usage='true'
-set_fuel_options rmcache-passthrough-pools=''
-set_fuel_options rmcache-cached-pools='sp1,sp2'
-configure_cluster mode 1 primary-controller 1 compute 2,3,4
-
-check_specific_storage_pool 1 'RAM Read Cache' "Uses" 'sp1,sp2'
-check_specific_storage_pool 1 'write handling mode' "cached" 'sp1,sp2'
 
 save_logs
