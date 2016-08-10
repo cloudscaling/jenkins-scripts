@@ -34,6 +34,8 @@ def main(args):
     set_parameter(scaleio_config, 'scanner_mode', args.scanner_mode)
     set_parameter(scaleio_config, 'checksum_mode', args.checksum_mode)
     set_parameter(scaleio_config, 'spare_policy', args.spare_policy)
+    if args.fuel_version in ['9.0.0', '10.0.0']:
+        set_parameter(scaleio_config, 'use_scaleio_for_glance', not args.disable_scaleio_for_glance)
     with open(args.config_file, 'w') as stream:
         stream.write(yaml.dump(config, default_flow_style=False))
 
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument('--rfcache_devices', dest='rfcache_devices', type=str, default=None)
     parser.add_argument('--storage_roles', dest='storage_roles', type=str, default=None)
     parser.add_argument('--cached_storage_pools', dest='cached_storage_pools', type=str, default=None)
-    
-    
+    parser.add_argument('--disable_scaleio_for_glance', dest='disable_scaleio_for_glance', action='store_true')
+
     main(parser.parse_args())
 
