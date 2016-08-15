@@ -23,6 +23,7 @@ def main(args):
         scaleio_config = config['editable']['scaleio']['metadata']
         scaleio_config['enabled'] = True
         scaleio_config = scaleio_config['versions'][0]
+    config['editable']['common']['debug']['value'] = True
     set_parameter(scaleio_config, 'password', args.password)
     set_parameter(scaleio_config, 'protection_domain_nodes', args.protection_domain_nodes)
     set_parameter(scaleio_config, 'device_paths', args.device_paths)
