@@ -30,7 +30,7 @@
           gem install bundler
           $GEM_HOME/bin/bundle install
           echo "INFO: bundle exec rake spec"
-          $GEM_HOME/bin/bundle exec rake spec || /bin/true
+          $GEM_HOME/bin/bundle exec rake spec
 
 
 - job:
