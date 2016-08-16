@@ -58,10 +58,10 @@ rm -rf logs
 mkdir logs
 
 #TODO: use provisioning from fuel-qa/fuel-devops or something like that
-sudo /home/jenkins/fuel_ci/cleanup_env.sh
-sudo /home/jenkins/fuel_ci/provision_fuel.sh "MirantisOpenStack-${fuel_version}.iso" ${fuel_nodes}
+sudo ${my_dir}/cleanup_env.sh
+sudo ${my_dir}/provision_fuel.sh "MirantisOpenStack-${fuel_version}.iso" ${fuel_nodes}
 
-$my_dir/$inner_script
+${my_dir}/$inner_script
 
 save_logs
 destroy_env

@@ -21,8 +21,13 @@ if [ -f /root/.ssh/known_hosts ] ; then
   ssh-keygen -f /root/.ssh/known_hosts  -R $fuel_master
 fi
 
-pushd ${my_dir}/fuel-kvm
-  if ! ./deploy_fuel.sh ${my_dir}/${mos} ${nodes} ; then
+pushd ${WORKSPACE}/fuel-kvm
+  if [[ ! -f ${WORKSPACE}/../../iso/${mos} ]]; then
+    echo ERROR: There is no iso image ${WORKSPACE}/../../iso/${mos}
+    popd
+    exit -1
+  fi
+  if ! ./deploy_fuel.sh ${WORKSPACE}/../../iso/${mos} ${nodes} ; then
     echo ERROR: failed to deploy environment
     popd
     exit -1

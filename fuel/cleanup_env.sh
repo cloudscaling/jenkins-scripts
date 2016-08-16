@@ -9,7 +9,7 @@ if [[ "`whoami`" != 'root' ]] ; then
   exit -1
 fi
 
-pushd ${my_dir}/fuel-kvm
+pushd ${WORKSPACE}/fuel-kvm
 ./manage.sh cleanup
 popd
 

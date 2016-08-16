@@ -43,6 +43,12 @@
           repo: "fuel-charms"
 
 - scm:
+    name: fuel-kvm
+    scm:
+      - cspgithub:
+          repo: "fuel-kvm"
+
+- scm:
     name: emc-juju-scaleio
     scm:
       - github:
