@@ -658,6 +658,7 @@ function check_instance_snapshot() {
 
 function check_instance_resize() {
   echo "INFO: Check resize from 'empty' flavor to flavor with set PD (volume must be recreated)"
+  current_type=`$get_provisioning_type_callback`
   if [[ $current_type == 'thin' ]] ; then otype='thick' ; else otype='thin' ; fi
   nova flavor-key 52 set sio:pd_name=${pd_name} sio:provisioning_type=$otype
 
