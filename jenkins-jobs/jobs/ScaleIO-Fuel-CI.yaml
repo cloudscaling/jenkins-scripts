@@ -21,6 +21,7 @@
           choices:
             - 'master'
             - 'v1.0.0'
+            - 'v1.0.1'
       - choice:
           name: PLUGIN_VERSION
           description: "Version of the fuel plugin to download (auto - branch according to fuel version, or specific branch/tag)"
@@ -29,7 +30,9 @@
             - 'master'
             - 'fuel-package-v2'
             - 'v2.0.0'
+            - 'v2.0.1'
             - 'v2.1.0'
+            - 'v2.1.1'
       - string:
           name: FUEL_NODES
           default: '6'
