@@ -26,5 +26,9 @@ fi
 
 execute_on_master "export RELEASE_TAG='$PUPPETS_VERSION' FUEL_PLUGIN_TAG='$plugin_tag'; ./prepare_plugin.sh"
 execute_on_master './test-cluster.sh 0 3'
-${my_dir}/check-openstack-stub.sh
-execute_on_master './test-cluster.sh 3 8'
+if [[ ! "$FUEL_CHECKS" =~ "skip_openstack" ]] ; then
+  ${my_dir}/check-openstack-stub.sh
+fi
+if [[ "$FUEL_CHECKS" =~ "full" ]] ; then
+  execute_on_master './test-cluster.sh 3 8'
+fi

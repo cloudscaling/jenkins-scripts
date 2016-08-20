@@ -6,7 +6,7 @@
     parameters:
       - bool:
           name: CLEAN_ENV
-          default: true
+          default: false
       - choice:
           name: FUEL_VERSION
           description: "Version of the FUEL to test"
@@ -15,6 +15,14 @@
             - '8.0'
             - '7.0'
             - '6.1'
+      - choice:
+          name: FUEL_CHECKS
+          description: "What tests should be run"
+          choices:
+            - 'bvt'
+            - 'full'
+            - 'bvt_skip_openstack'
+            - 'full_skip_openstack'
       - choice:
           name: PUPPETS_VERSION
           description: "Version of the puppets(scaleio, scaleio_openstack) to download"
