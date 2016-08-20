@@ -77,6 +77,7 @@ juju service add-unit scaleio-sdc --to $m2
 
 echo "INFO: Deploy subordinate to OpenStack"
 juju deploy ${params}scaleio-openstack
+juju set scaelio-openstack "provisioning-type=thick"
 
 echo "INFO: Deploy gateway"
 juju deploy ${params}scaleio-gw --to $m4
