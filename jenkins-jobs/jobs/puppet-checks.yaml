@@ -14,8 +14,8 @@
           gem install puppet-lint-trailing_newline-check
           gem install puppet-lint-absolute_classname-check
           gem install puppet-lint-leading_zero-check
-          gem install puppet-lint-variable_contains_upcase
-          gem install puppet-lint-numericvariable
+          #gem install puppet-lint-variable_contains_upcase
+          #gem install puppet-lint-numericvariable
 
           cd {repo}
 
