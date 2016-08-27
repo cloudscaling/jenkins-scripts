@@ -16,6 +16,8 @@
     scm:
       - emc-juju-scaleio
       - jenkins-scripts
+    triggers:
+      - timed: "{time}"
     builders:
       #- use-openstack-github-charms
       - shell: |
@@ -33,12 +35,16 @@
    os_ver:
     - Juno:
        version: 'cloud:trusty-juno'
+       time: "H 20 * * 6"
     - Kilo:
        version: 'cloud:trusty-kilo'
+       time: "H 21 * * 6"
     - Liberty:
        version: 'cloud:trusty-liberty'
+       time: "H 22 * * 6"
     - Mitaka:
        version: 'cloud:trusty-mitaka'
+       time: "H 23 * * 6"
    jobs:
     - 'ScaleIO-OpenStack-{os_ver}'
 
