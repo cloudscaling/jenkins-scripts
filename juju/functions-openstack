@@ -145,7 +145,7 @@ function create_virtualenv() {
   rm -rf .venv
   virtualenv .venv
   source .venv/bin/activate
-  pip install -q "python-openstackclient<3.0.0" 2>/dev/null
+  pip install -q python-openstackclient 2>/dev/null
   deactivate
 }
 
