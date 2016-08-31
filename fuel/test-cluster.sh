@@ -186,7 +186,7 @@ if [[ $start_from < 2 ]]; then
     else
         roles="compute"
     fi
-    
+
     add_node $env_num ${nodes[$i]} $roles ${device_paths}
   done
 
@@ -194,6 +194,11 @@ if [[ $start_from < 2 ]]; then
   fuel --env $env_num settings --download || fail "Failed to download env settings"
   python ${my_dir}/set_plugin_parameters.py --fuel_version "${fuel_version}" --config_file "./settings_${env_num}.yaml" --device_paths ${device_paths} --sds_on_controller=true || fail "Failed to set plugin parameters"
   fuel --env $env_num settings --upload || fail "Failed to download env settings"
+
+  # prepare network settings
+  fuel --env $env_num network --download || fail "Failed to download env settings"
+  python ${my_dir}/set_network_parameters.py --config_file "./network_${env_num}.yaml" || fail "Failed to set network parameters"
+  fuel --env $env_num network --upload || fail "Failed to download env settings"
 
   steps_count=$((steps_count-1))
 fi
