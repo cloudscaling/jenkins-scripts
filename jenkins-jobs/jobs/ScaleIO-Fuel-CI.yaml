@@ -41,7 +41,7 @@
       - string:
           name: FUEL_NODES
           default: '6'
-      - choices:
+      - choice:
           name: CLEAN_ENV
           description: "Cleanup environment policy (auto - cleanup before and after except errors)"
           choices:
