@@ -11,8 +11,8 @@ if [ -z "$inner_script" ] ; then
   exit 1
 fi
 
-clean_env=${CLEAN_ENV:-'true'}
-fuel_version=${FUEL_VERSION:-'8.0'}
+clean_env=${CLEAN_ENV:-'auto'}
+fuel_version=${FUEL_VERSION:-'9.0'}
 fuel_nodes=${FUEL_NODES:-6}
 
 function save_logs() {
@@ -34,7 +34,21 @@ function save_logs() {
 }
 
 function destroy_env() {
-  if [[ $clean_env != 'false' ]] ; then
+  local step=$1
+  local do_cleanup='false'
+  case $clean_env in
+    "auto")
+      if [[ $step == 'before' || $step == 'after' ]] ; then
+        do_cleanup='true'
+      fi
+      ;;
+    "before_only")
+      if [[ $step == 'before' ]] ; then
+        do_cleanup='true'
+      fi
+      ;;
+  esac
+  if [[ $do_cleanup != 'false' ]] ; then
     sudo /home/jenkins/fuel_ci/cleanup_env.sh
   else
     echo Skip destroy env
@@ -48,7 +62,7 @@ function catch_errors() {
   trap - ERR
   # sleep some time to flush logs
   save_logs
-  destroy_env
+  destroy_env 'error'
   exit $exit_code
 }
 
@@ -58,11 +72,11 @@ rm -rf logs
 mkdir logs
 
 #TODO: use provisioning from fuel-qa/fuel-devops or something like that
-sudo ${my_dir}/cleanup_env.sh
+destroy_env 'before'
 sudo ${my_dir}/provision_fuel.sh "MirantisOpenStack-${fuel_version}.iso" ${fuel_nodes}
 
 ${my_dir}/$inner_script
 
 save_logs
-destroy_env
+destroy_env 'after'
 trap - ERR

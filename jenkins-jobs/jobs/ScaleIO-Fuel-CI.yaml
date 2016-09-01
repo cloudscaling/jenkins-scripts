@@ -4,9 +4,6 @@
     defaults: global
     node: fuel-ci-slave
     parameters:
-      - bool:
-          name: CLEAN_ENV
-          default: false
       - choice:
           name: FUEL_VERSION
           description: "Version of the FUEL to test"
@@ -44,6 +41,13 @@
       - string:
           name: FUEL_NODES
           default: '6'
+      - choices:
+          name: CLEAN_ENV
+          description: "Cleanup environment policy (auto - cleanup before and after except errors)"
+          choices:
+            - 'auto'
+            - 'before_only'
+            - 'never'
     scm:
       - jenkins-scripts
       - fuel-kvm
