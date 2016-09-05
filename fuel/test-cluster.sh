@@ -195,13 +195,13 @@ if [[ $start_from < 2 ]]; then
   # prepare plugin settings
   fuel --env $env_num settings --download || fail "Failed to download env settings"
   python ${my_dir}/set_plugin_parameters.py --fuel_version "${fuel_version}" --config_file "./settings_${env_num}.yaml" --device_paths ${device_paths} --sds_on_controller=true || fail "Failed to set plugin parameters"
-  fuel --env $env_num settings --upload || fail "Failed to download env settings"
+  fuel --env $env_num settings --upload || fail "Failed to upload env settings"
 
   # prepare network settings
-  fuel --env $env_num network --download || fail "Failed to download env settings"
+  fuel --env $env_num network --download || fail "Failed to download network settings"
   python ${my_dir}/set_network_parameters.py --fuel_version "${fuel_version}" --config_file "./network_${env_num}.yaml" --env_number $fuel_env_number || fail "Failed to set network parameters"
   cat ./network_${env_num}.yaml
-  fuel --env $env_num network --upload || fail "Failed to download env settings"
+  fuel --env $env_num network --upload || fail "Failed to upload network settings"
 
   steps_count=$((steps_count-1))
 fi
