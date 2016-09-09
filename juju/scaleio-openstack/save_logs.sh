@@ -19,6 +19,7 @@ function save_logs() {
       local dirs='/var/log/nova /etc/nova'
       echo "  version info:"
       juju ssh $mch "dpkg -s python-nova | grep 'Version:'" 2>/dev/null
+      juju ssh $mch "virsh --version | /bin/true" 2>/dev/null
     elif [[ $service =~ 'cinder' ]] ; then
       local dirs='/var/log/cinder /etc/cinder'
       echo "  version info:"
