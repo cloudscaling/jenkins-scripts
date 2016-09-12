@@ -49,7 +49,7 @@ function destroy_env() {
       ;;
   esac
   if [[ $do_cleanup != 'false' ]] ; then
-    sudo /home/jenkins/fuel_ci/cleanup_env.sh
+    sudo ${my_dir}/cleanup_env.sh
   else
     echo Skip destroy env
   fi
