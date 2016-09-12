@@ -33,6 +33,7 @@ check_capacity_alerts 1 '80' '90'
 check_storage_pool 1 'Flash Read Cache' "Doesn't use"
 check_storage_pool 1 'RAM Read Cache' "Doesn't use"
 check_sds_on_controller 1 'true'
+check_hyper_converged_deployment 1,2,3,4
 
 remove_node_service 1 2 3 4
 
@@ -70,7 +71,7 @@ wait_for_removed "scaleio-gw"
 
 echo ""
 echo "Deploying cluster with changed parameters"
-provision_machines 5 6 7
+provision_machines 5 6 7 8
 
 new_storage_pools='sp1,sp2'
 new_device_paths='/dev/xvdf,/dev/xvdg'
@@ -95,9 +96,10 @@ set_fuel_options rfcache-devices=$rfcache_paths
 set_fuel_options rmcache-usage='true'
 set_fuel_options rmcache-passthrough-pools='sp1,sp2'
 set_fuel_options sds-on-controller='false'
+set_fuel_options hyper-converged-deployment='false'
 
-configure_cluster mode 1 primary-controller 1 compute 2,3,4
-configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
+configure_cluster mode 1 primary-controller 1 compute 2 scaleio 3,4,5
+configure_cluster mode 1 primary-controller 1 compute 2 scaleio 3,4,5,6,7,8
 
 check_password 1 'Other_password'
 check_protection_domain 1 'pd'
@@ -114,6 +116,7 @@ check_specific_storage_pool 1 'RAM Read Cache' "Uses" 'sp1,sp2'
 check_specific_storage_pool 1 'write handling mode' "passthrough" 'sp1,sp2'
 check_rfcache 1 "$rfcache_paths"
 check_sds_on_controller 1 'false'
+check_hyper_converged_deployment 3,4,5,6,7,8
 
 echo ""
 echo "Deploying cluster for testing protection domain nodes limet, rmcache, sds ip roles"
@@ -128,6 +131,7 @@ set_fuel_options protection-domain-nodes='3'
 set_fuel_options rmcache-usage='true'
 set_fuel_options rmcache-passthrough-pools='sp1'
 set_fuel_options rmcache-cached-pools='sp2'
+set_fuel_options hyper-converged-deployment='true'
 configure_cluster mode 1 primary-controller 1 compute 2,3,4,5,6,7
 
 check_sds_ip_roles 1 "SDS Only"
@@ -136,5 +140,6 @@ check_protection_domain_nodes 1 '3'
 check_specific_storage_pool 1 'RAM Read Cache' "Uses" 'sp1,sp2'
 check_specific_storage_pool 1 'write handling mode' "cached" 'sp2'
 check_specific_storage_pool 1 'write handling mode' "passthrough" 'sp1'
+check_hyper_converged_deployment 2,3,4,5,6,7
 
 save_logs

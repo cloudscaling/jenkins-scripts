@@ -142,6 +142,12 @@ function configure_cluster() {
   mdms=""
   while (( "$#" )); do
     case "$1" in
+      "scaleio")
+        shift
+        for i in `echo $1 | sed 's/,/ /g'`; do
+          deploy_node_service $i "scaleio"
+        done
+      ;;
       "compute")
         shift
         for i in `echo $1 | sed 's/,/ /g'`; do
@@ -630,6 +636,36 @@ function check_sds_ip_roles {
       ((++ret))
     else
       echo "INFO: Success. SDS $sds_name contains required roles."
+    fi
+  done
+
+  return $ret
+}
+
+function check_hyper_converged_deployment {
+  nodes=`echo $1 | sed 's/,/ /g'`  # Nodes added in fuel deploy
+
+  scaleio_sds=()
+  for node in ${nodes} ; do
+    scaleio_sds+=("${machines[$node]}")
+  done
+  ret=0
+  for node in ${machines[@]} ; do
+    #check emc-packages"
+    if [[ ${scaleio_sds[@]} =~ $node ]] ; then
+      if juju ssh $node "dpkg -l | grep 'emc-'" 2>/dev/null | grep 'scaleio-sds' ; then
+        echo "INFO: Success. There is scaleio-sds package on machine $node."
+      else
+        echo "ERROR: There is no scaleio-sds packages on machine $node."
+        ((++ret))
+      fi
+    else
+      if juju ssh $node "dpkg -l | grep 'emc-'" 2>/dev/null | grep 'scaleio-sds' ; then
+        echo "ERROR: There is scaleio-sds package on machine $node."
+        ((++ret))
+      else
+        echo "INFO: Success. There is no scaleio-sds packages on machine $node."
+      fi
     fi
   done
 
