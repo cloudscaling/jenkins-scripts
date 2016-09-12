@@ -3,6 +3,7 @@
     description: 'ScaleIO Fuel Plugin CI'
     defaults: global
     node: fuel-ci-slave
+    concurrent: true
     parameters:
       - choice:
           name: FUEL_VERSION
