@@ -652,7 +652,7 @@ function check_hyper_converged_deployment {
   ret=0
   for node in ${machines[@]} ; do
     #check emc-packages"
-    if [[ ${scaleio_sds[@]} =~ $node ]] ; then
+    if echo ${scaleio_sds[@]} | grep -qw "$node" ; then
       if juju ssh $node "dpkg -l | grep 'emc-'" 2>/dev/null | grep 'scaleio-sds' ; then
         echo "INFO: Success. There is scaleio-sds package on machine $node."
       else
