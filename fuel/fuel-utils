@@ -3,7 +3,8 @@
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
-fuel_master=${FUEL_MASTER_ADDR:-'10.20.0.2'}
+env_number=${FUEL_ENV_NUMBER:-'0'}
+fuel_master=${FUEL_MASTER_ADDR:-"10.21.$env_number.2"}
 fuel_ssh_opts='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 function copy_to_master() {

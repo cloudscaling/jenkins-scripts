@@ -6,12 +6,14 @@ my_dir="$(dirname "$0")"
 mos=${1:-'MirantisOpenStack-6.1.iso'}
 nodes=${2:-6}
 
+env_number=${FUEL_ENV_NUMBER:-'0'} 
+
 if [[ "`whoami`" != 'root' ]] ; then
   echo Provisioning should be run under root
   exit -1
 fi
 
-fuel_master=${FUEL_MASTER_ADDR:-'10.20.0.2'}
+fuel_master=${FUEL_MASTER_ADDR:-"10.21.$env_number.2"}
 
 if [ -f /home/jenkins/.ssh/known_hosts ] ; then
   ssh-keygen -f /home/jenkins/.ssh/known_hosts  -R $fuel_master
