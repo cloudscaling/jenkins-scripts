@@ -121,14 +121,14 @@ function update_nodes() {
     nodes=($(list_online_nodes $env_num 'controller'))
     nodes+=($(list_online_nodes $env_num 'compute'))
     nodes+=($(list_online_nodes 'None'))
-    if [[ ${#nodes[@]} == 6 || ${#nodes[@]} > 6  ]]; then
+    if [[ ${#nodes[@]} == $fuel_nodes || ${#nodes[@]} > $fuel_nodes  ]]; then
         break
     fi
     sleep 10
   done
   echo online nodes: ${nodes[@]}
-  if [[ ${#nodes[@]} < 6 ]]; then
-    fail "There is not enough free online nodes, only ${#nodes[@]} is available but 6 is required"
+  if [[ ${#nodes[@]} < $fuel_nodes ]]; then
+    fail "There is not enough free online nodes, only ${#nodes[@]} is available but ${fuel_nodes} is required"
   fi
 }
 
@@ -142,6 +142,7 @@ if (( ${steps_count} < 1 )) ; then
 fi
 
 fuel_env_number=${FUEL_ENV_NUMBER:-'0'}
+fuel_nodes=${FUEL_NODES:-6}
 
 fuel_version=$(fuel --version 2>&1 | grep -o '[0-9]\.[0-9]\.[0-9]')
 env_name="emc"
