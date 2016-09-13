@@ -119,13 +119,13 @@ check_sds_on_controller 1 'false'
 check_hyper_converged_deployment 3,4,5,6,7,8
 
 echo ""
-echo "Deploying cluster for testing protection domain nodes limet, rmcache, sds ip roles"
+echo "Deploying cluster for testing protection domain nodes limit, rmcache, sds ip roles"
 for node in ${machines[@]} ; do
   create_eth1 $node
   juju ssh $node "sudo ip addr add 10.0.123.$node/24 dev eth1" 2>/dev/null
 done
 
-remove_node_service 1 2 3 4 5 6 7
+remove_node_service 1 2 3 4 5 6 7 8
 storage_iface='eth1'
 set_fuel_options protection-domain-nodes='3'
 set_fuel_options rmcache-usage='true'
