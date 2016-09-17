@@ -132,6 +132,31 @@ function update_nodes() {
   fi
 }
 
+function test_hyper_converged() {
+  ret=0
+  for node in ${nodes[@]} ; do
+    node_role=$(fuel --env $env_num node --node-id $node | awk '/ready/{print $14}')
+    node_ip=$(fuel --env $env_num node --node-id $node | awk '/ready/{print $10}')
+    if [[ $node_role =~ scaleio ]] ; then
+      if ssh $node_ip "dpkg -l" 2>/dev/null | grep 'scaleio-sds' ; then
+        echo "Success. There is scaleio-sds package on node $node with role $node_role."
+      else
+        echo "ERROR. There is no scaleio-sds package on node $node with role $node_role."
+        ((++ret))
+      fi
+    else
+      if ssh $node_ip "dpkg -l" 2>/dev/null | grep 'scaleio-sds' ; then
+        echo "ERROR. There is scaleio-sds package on node $node with role $node_role."
+        ((++ret))
+      else
+        echo "Success. There is no scaleio-sds package on node $node with role $node_role."
+      fi
+    fi
+  done
+
+  return $ret
+}
+
 start_from=${1:-0}
 end_to=${2:-8}
 steps_count=$((end_to-start_from))
@@ -143,6 +168,7 @@ fi
 
 fuel_env_number=${FUEL_ENV_NUMBER:-'0'}
 fuel_nodes=${FUEL_NODES:-6}
+hyper_converged_deployment=${FUEL_HYPER_CONVERGED:-'true'}
 
 fuel_version=$(fuel --version 2>&1 | grep -o '[0-9]\.[0-9]\.[0-9]')
 env_name="emc"
@@ -182,20 +208,14 @@ if (( ${steps_count} < 1 )) ; then
 fi
 
 if [[ $start_from < 2 ]]; then
-  # configure nodes: disks and network
-  for i in {0..4}; do
-    if [[ $i < 3 ]]; then
-        roles="cinder,controller"
-    else
-        roles="compute"
-    fi
-
-    add_node $env_num ${nodes[$i]} $roles ${device_paths}
-  done
+  hyper_converged_deploy_option=''
+  if ! $hyper_converged_deployment ; then
+    hyper_converged_deploy_option='--disable_hyper_converged_deploy'
+  fi
 
   # prepare plugin settings
   fuel --env $env_num settings --download || fail "Failed to download env settings"
-  python ${my_dir}/set_plugin_parameters.py --fuel_version "${fuel_version}" --config_file "./settings_${env_num}.yaml" --device_paths ${device_paths} --sds_on_controller=true || fail "Failed to set plugin parameters"
+  python ${my_dir}/set_plugin_parameters.py --fuel_version "${fuel_version}" --config_file "./settings_${env_num}.yaml" --device_paths ${device_paths} --sds_on_controller=true $hyper_converged_deploy_option || fail "Failed to set plugin parameters"
   fuel --env $env_num settings --upload || fail "Failed to upload env settings"
 
   # prepare network settings
@@ -204,12 +224,40 @@ if [[ $start_from < 2 ]]; then
   cat ./network_${env_num}.yaml
   fuel --env $env_num network --upload || fail "Failed to upload network settings"
 
+  # configure nodes: disks and network
+  if $hyper_converged_deployment ; then
+    for i in {0..4}; do
+      if [[ $i < 3 ]]; then
+          roles="cinder,controller"
+      else
+          roles="compute"
+      fi
+
+      add_node $env_num ${nodes[$i]} $roles ${device_paths}
+    done
+  else
+    for i in {0..4}; do
+      if [[ $i < 1 ]]; then
+          roles="cinder,controller"
+      elif [[ $i < 4 ]]; then
+          roles="scaleio"
+      else
+          roles="compute"
+      fi
+      add_node $env_num ${nodes[$i]} $roles ${device_paths}
+    done
+  fi
+
   steps_count=$((steps_count-1))
 fi
 
 if (( ${steps_count} < 1 )) ; then
   echo "No more steps to execute"
   exit 0
+fi
+
+if ! $hyper_converged_deployment ; then
+  test_hyper_converged
 fi
 
 if [[ $start_from < 3 ]]; then
