@@ -46,6 +46,12 @@
           name: FUEL_ENV_NUMBER
           default: '0'
       - choice:
+          name: FUEL_HYPER_CONVERGED
+          description: "Hyper converged deployment"
+          choices:
+            - 'yes'
+            - 'no'
+      - choice:
           name: CLEAN_ENV
           description: "Cleanup environment policy (auto - cleanup before and after except errors)"
           choices:
