@@ -52,21 +52,21 @@
     name: emc-juju-scaleio
     scm:
       - github:
-          organization: emccode
+          organization: codedellemc
           repo: juju-scaleio
 
 - scm:
     name: emc-puppet-scaleio
     scm:
       - github:
-          organization: emccode
+          organization: codedellemc
           repo: puppet-scaleio
 
 - scm:
     name: emc-puppet-scaleio-openstack
     scm:
       - github:
-          organization: emccode
+          organization: codedellemc
           repo: puppet-scaleio-openstack
 
 - scm:

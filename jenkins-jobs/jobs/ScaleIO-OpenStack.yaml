@@ -11,7 +11,7 @@
 
 - job-template:
     name: ScaleIO-OpenStack-{os_ver}
-    description: "Deploys ScaleIO cluster(from bundle, from github/emccode) with OpenStack({os_ver}) and use puppets from github. Then checks it"
+    description: "Deploys ScaleIO cluster(from bundle, from github/codedellemc) with OpenStack({os_ver}) and use puppets from github. Then checks it"
     defaults: global
     scm:
       - emc-juju-scaleio

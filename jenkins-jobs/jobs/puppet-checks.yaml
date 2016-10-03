@@ -35,7 +35,7 @@
 
 - job:
     name: puppet-scaleio-check
-    description: "Runs syntax and unit tests for the puppet from github.com/emccode"
+    description: "Runs syntax and unit tests for the puppet from github.com/codedellemc"
     defaults: global
     scm:
       - emc-puppet-scaleio
@@ -49,7 +49,7 @@
 
 - job:
     name: puppet-scaleio-openstack-check
-    description: "Runs just syntax tests for the puppet from github.com/emccode"
+    description: "Runs just syntax tests for the puppet from github.com/codedellemc"
     defaults: global
     scm:
       - emc-puppet-scaleio-openstack

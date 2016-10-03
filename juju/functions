@@ -161,12 +161,12 @@ function apply_developing_puppets() {
     if [[ "$puppet4" == true ]] ; then
       juju ssh $mch "sudo apt-get -qqfy install git ruby" &>>$logf
       juju ssh $mch "sudo gem install puppet" &>>$logf
-      juju ssh $mch "sudo git clone -q https://github.com/emccode/puppet-scaleio /etc/puppetlabs/code/modules/scaleio" 2>/dev/null
-      juju ssh $mch "sudo git clone -q https://github.com/emccode/puppet-scaleio-openstack /etc/puppetlabs/code/modules/scaleio_openstack" 2>/dev/null
+      juju ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio /etc/puppetlabs/code/modules/scaleio" 2>/dev/null
+      juju ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio-openstack /etc/puppetlabs/code/modules/scaleio_openstack" 2>/dev/null
     else
       juju ssh $mch "sudo apt-get -qqfy install git puppet" &>>$logf
-      juju ssh $mch "sudo git clone -q https://github.com/emccode/puppet-scaleio /etc/puppet/modules/scaleio" 2>/dev/null
-      juju ssh $mch "sudo git clone -q https://github.com/emccode/puppet-scaleio-openstack /etc/puppet/modules/scaleio_openstack" 2>/dev/null
+      juju ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio /etc/puppet/modules/scaleio" 2>/dev/null
+      juju ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio-openstack /etc/puppet/modules/scaleio_openstack" 2>/dev/null
     fi
     for dep in puppetlabs-firewall puppetlabs-stdlib puppetlabs-inifile ; do
       juju ssh $mch "sudo puppet module install $dep || /bin/true" &>>$logf

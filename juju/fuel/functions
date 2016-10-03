@@ -42,7 +42,7 @@ function provision_machines() {
   # wait for machines up
   wait_for_machines ${new_mx[@]}
 
-  # install scaleio and scaleio_openstack puppets from githab.com/emccode from master branch
+  # install scaleio and scaleio_openstack puppets from githab.com/codedellemc from master branch
   apply_developing_puppets ${new_mx[@]}
 
   # if not EC2:
