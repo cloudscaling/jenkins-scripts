@@ -168,7 +168,7 @@ fi
 
 fuel_env_number=${FUEL_ENV_NUMBER:-'0'}
 fuel_nodes=${FUEL_NODES:-6}
-hyper_converged_deployment=${FUEL_HYPER_CONVERGED:-'true'}
+hyper_converged_deployment=${FUEL_HYPER_CONVERGED:-'yes'}
 
 fuel_version=$(fuel --version 2>&1 | grep -o '[0-9]\.[0-9]\.[0-9]')
 env_name="emc"
@@ -256,13 +256,12 @@ if (( ${steps_count} < 1 )) ; then
   exit 0
 fi
 
-if ! $hyper_converged_deployment ; then
-  test_hyper_converged
-fi
-
 if [[ $start_from < 3 ]]; then
   # deploy 3+2 config
   deploy_changes $env_num
+  if [[ "$hyper_converged_deployment" != 'yes' ]] ; then
+    test_hyper_converged
+  fi
   steps_count=$((steps_count-1))
 fi
 
@@ -272,6 +271,9 @@ if (( ${steps_count} < 1 )) ; then
 fi
 
 if [[ $start_from < 4 ]]; then
+  if [[ "$hyper_converged_deployment" != 'yes' ]] ; then
+    fail "Re-deploys are not supported for non-hyper-converged deploy"
+  fi
   # remove controller: 2+2
   fuel --env $env_num node --node-id ${nodes[0]} remove || fail "Failed to remove node ${nodes[0]} from environment $env_num"
   deploy_changes $env_num
