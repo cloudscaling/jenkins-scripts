@@ -59,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument('--storage_roles', dest='storage_roles', type=str, default=None)
     parser.add_argument('--cached_storage_pools', dest='cached_storage_pools', type=str, default=None)
     parser.add_argument('--disable_scaleio_for_glance', dest='disable_scaleio_for_glance', action='store_true')
-    parser.add_argument('--hyper_converged_deployment', dest='hyper_converged_deployment', type=str, default=None)
+    parser.add_argument('--disable_hyper_converged_deploy', dest='hyper_converged_deployment', action='store_false')
 
     main(parser.parse_args())
 
