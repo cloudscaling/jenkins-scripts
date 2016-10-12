@@ -21,19 +21,19 @@ function add_node() {
     local node_id=$2
     local roles=$3
     local device_paths=$4
-    
+
     if [[ ! -z "`echo $roles | grep controller`" ]]; then
         local is_controller_opts='--is_controller=true'
     else
         local is_controller_opts=''
     fi
-   
+
     local query=`echo $roles | sed 's/,/, /g'`
     fuel node --node-id $node_id | grep "^$node_id" | grep -q "$query" || fuel node set --env $env_num --node $node_id --role "$roles" || fail "Failed to add node"
 
     node_opts="node --node-id ${node_id}"
     base_dir="./node_${node_id}"
-    
+
     fuel $node_opts --disk --download || fail "Failed to download node ${node_id} disk settings"
     python ${my_dir}/set_node_volumes_layout.py --config_file "${base_dir}/disks.yaml" --device_paths ${device_paths} ${is_controller_opts} || fail "Failed to patch node ${node_id} disk layout"
     fuel $node_opts --disk --upload || fail "Failed to upload node  ${node_id} disk settings"    
@@ -73,7 +73,7 @@ function execute_task() {
     local task=$2
     local nodes_list=$3
     local tries=$4
-    
+
     fuel --env ${env_num} node --${task} --node ${nodes_list} || fail "Failed to $task nodes $nodes_list"
     wait_running_tasks $tries
 
@@ -132,6 +132,37 @@ function update_nodes() {
   fi
 }
 
+function test_sds_packages() {
+  local hyper_converged_deployment=$1
+  local sds_on_controller=$2
+  ret=0
+  for node in ${nodes[@]} ; do
+    node_info=$(fuel --env $env_num node --node-id $node | grep 'ready')
+    node_ip=$(echo $node_info | awk '{print $10}')
+    if [[ $hyper_converged_deployment == 'no' && $node_info =~ 'scaleio' || $hyper_converged_deployment == 'yes' && $node_info =~ 'compute' || $hyper_converged_deployment == 'yes' && $sds_on_controller &&  $node_info =~ 'controller' ]] ; then
+      if ssh $node_ip "dpkg -l" 2>/dev/null | grep 'scaleio-sds' ; then
+        echo "Success. There is scaleio-sds package on node $node."
+        echo $node_info
+      else
+        echo "ERROR. There is no scaleio-sds package on node $node."
+        echo $node_info
+        ((++ret))
+      fi
+    else
+      if ssh $node_ip "dpkg -l" 2>/dev/null | grep 'scaleio-sds' ; then
+        echo "ERROR. There is scaleio-sds package on node $node."
+        echo $node_info
+        ((++ret))
+      else
+        echo "Success. There is no scaleio-sds package on node $node."
+        echo $node_info
+      fi
+    fi
+  done
+
+  return $ret
+}
+
 start_from=${1:-0}
 end_to=${2:-8}
 steps_count=$((end_to-start_from))
@@ -143,6 +174,7 @@ fi
 
 fuel_env_number=${FUEL_ENV_NUMBER:-'0'}
 fuel_nodes=${FUEL_NODES:-6}
+hyper_converged_deployment=${FUEL_HYPER_CONVERGED:-'yes'}
 
 fuel_version=$(fuel --version 2>&1 | grep -o '[0-9]\.[0-9]\.[0-9]')
 env_name="emc"
@@ -182,20 +214,14 @@ if (( ${steps_count} < 1 )) ; then
 fi
 
 if [[ $start_from < 2 ]]; then
-  # configure nodes: disks and network
-  for i in {0..4}; do
-    if [[ $i < 3 ]]; then
-        roles="cinder,controller"
-    else
-        roles="compute"
-    fi
-
-    add_node $env_num ${nodes[$i]} $roles ${device_paths}
-  done
+  hyper_converged_deploy_option=''
+  if [[ "$hyper_converged_deployment" != 'yes' ]] ; then
+    hyper_converged_deploy_option='--disable_hyper_converged_deploy'
+  fi
 
   # prepare plugin settings
   fuel --env $env_num settings --download || fail "Failed to download env settings"
-  python ${my_dir}/set_plugin_parameters.py --fuel_version "${fuel_version}" --config_file "./settings_${env_num}.yaml" --device_paths ${device_paths} --sds_on_controller=true || fail "Failed to set plugin parameters"
+  python ${my_dir}/set_plugin_parameters.py --fuel_version "${fuel_version}" --config_file "./settings_${env_num}.yaml" --device_paths ${device_paths} --sds_on_controller=true $hyper_converged_deploy_option || fail "Failed to set plugin parameters"
   fuel --env $env_num settings --upload || fail "Failed to upload env settings"
 
   # prepare network settings
@@ -203,6 +229,30 @@ if [[ $start_from < 2 ]]; then
   python ${my_dir}/set_network_parameters.py --fuel_version "${fuel_version}" --config_file "./network_${env_num}.yaml" --env_number $fuel_env_number || fail "Failed to set network parameters"
   cat ./network_${env_num}.yaml
   fuel --env $env_num network --upload || fail "Failed to upload network settings"
+
+  # configure nodes: disks and network
+  if [[ $hyper_converged_deployment == 'yes' ]] ; then
+    for i in {0..4}; do
+      if [[ $i < 3 ]]; then
+          roles="cinder,controller"
+      else
+          roles="compute"
+      fi
+
+      add_node $env_num ${nodes[$i]} $roles ${device_paths}
+    done
+  else
+    for i in {0..4}; do
+      if [[ $i < 1 ]]; then
+          roles="cinder,controller"
+      elif [[ $i < 4 ]]; then
+          roles="scaleio"
+      else
+          roles="compute"
+      fi
+      add_node $env_num ${nodes[$i]} $roles ${device_paths}
+    done
+  fi
 
   steps_count=$((steps_count-1))
 fi
@@ -215,6 +265,7 @@ fi
 if [[ $start_from < 3 ]]; then
   # deploy 3+2 config
   deploy_changes $env_num
+  test_sds_packages $hyper_converged_deployment true
   steps_count=$((steps_count-1))
 fi
 
@@ -224,6 +275,9 @@ if (( ${steps_count} < 1 )) ; then
 fi
 
 if [[ $start_from < 4 ]]; then
+  if [[ "$hyper_converged_deployment" != 'yes' ]] ; then
+    fail "Re-deploys are not supported for non-hyper-converged deploy"
+  fi
   # remove controller: 2+2
   fuel --env $env_num node --node-id ${nodes[0]} remove || fail "Failed to remove node ${nodes[0]} from environment $env_num"
   deploy_changes $env_num
