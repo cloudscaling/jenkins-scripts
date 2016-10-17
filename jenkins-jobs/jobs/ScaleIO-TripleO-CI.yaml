@@ -1,0 +1,35 @@
+- job:
+    name: ScaleIO-TripleO-CI
+    description: 'ScaleIO TripleO CI'
+    defaults: global
+    node: fuel-ci-slave
+    concurrent: true
+    parameters:
+      - choice:
+          name: NUM
+          description: "Enironment Nubmer"
+          choices:
+            - '3'
+            - '4'
+            - '5'
+            - '6'
+      - choice:
+          name: PUPPETS_VERSION
+          description: "Version of the puppets(scaleio, scaleio_openstack) to download"
+          choices:
+            - 'master'
+            - '<1.2.0'
+      - bool:
+          name: CLEAN_ENV
+          default: true
+    scm:
+      - jenkins-scripts
+      - redhat-kvm
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          ./jenkins-scripts/tripleo/run-scaleio.sh
+    publishers:
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: 'true'
