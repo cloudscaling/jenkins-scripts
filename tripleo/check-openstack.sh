@@ -14,6 +14,7 @@ source $my_dir/../juju/functions-openstack
 master_mdm=`nova list | grep controller-0 | awk '{print $12}' | cut -d '=' -f 2`
 
 . ~/overcloudrc
+# create network with same name as in fuel - run_os_checks will check this name
 if ! neutron net-list | grep net04 ; then
   neutron net-create net04
   neutron subnet-create --gateway 10.1.0.1 net04 10.1.0.0/24
@@ -24,6 +25,7 @@ function exec_on_mdm() {
 }
 
 function get_provisioning_type() {
+  # TODO: get real value from overcloud settings
   echo 'thin'
 }
 
