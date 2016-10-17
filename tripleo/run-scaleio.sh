@@ -43,7 +43,7 @@ function catch_errors() {
 if [[ "$PUPPETS_VERSION" != "master" ]] ; then
   sed -i "s/PuppetsVerion: \"master\"/PuppetsVerion: \"$PUPPETS_VERSION\"/g" "$WORKSPACE/redhat-kvm/overcloud/scaleio-env.yaml"
 fi
-sudo $WORKSPACE/redhat-kvm/install_all.sh
+sudo -E $WORKSPACE/redhat-kvm/install_all.sh
 
 
 save_logs
