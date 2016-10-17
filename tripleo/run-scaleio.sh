@@ -45,6 +45,13 @@ if [[ "$PUPPETS_VERSION" != "master" ]] ; then
 fi
 sudo -E $WORKSPACE/redhat-kvm/install_all.sh
 
+BASE_ADDR=${BASE_ADDR:-172}
+((env_addr=BASE_ADDR+NUM*10))
+ip_addr="192.168.${env_addr}.2"
+ssh_opts="-i $my_dir/kp-$NUM -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ssh_addr="root@${ip_addr}"
+ssh -t $ssh_opts $ssh_addr "sudo -u stack 'cd /home/stack ; git clone https://github.com/cloudscaling/jenkins-scrips ; ./jenkins-scripts/tripleo/check-openstack.sh'"
+
 
 save_logs
 
