@@ -6,6 +6,7 @@ if [[ -z "$NUM" ]] ; then
   exit 1
 fi
 
+export NUM
 CLEAN_ENV=${CLEAN_ENV:-'true'}
 export CLEAN_ENV
 PUPPETS_VERSION="${PUPPETS_VERSION:-'master'}"
