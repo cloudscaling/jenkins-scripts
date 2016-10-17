@@ -15,6 +15,7 @@ PUPPETS_VERSION="${PUPPETS_VERSION:-'master'}"
 trap 'catch_errors $LINENO' ERR
 
 function cleanup_environment() {
+  # TODO: do not cleanup in case of error due to existed environment
   sudo -E $WORKSPACE/redhat-kvm/clean_env.sh
 }
 
@@ -45,12 +46,17 @@ if [[ "$PUPPETS_VERSION" != "master" ]] ; then
 fi
 sudo -E $WORKSPACE/redhat-kvm/install_all.sh
 
+# TODO: move it somewhere
 BASE_ADDR=${BASE_ADDR:-172}
 ((env_addr=BASE_ADDR+NUM*10))
 ip_addr="192.168.${env_addr}.2"
-ssh_opts="-i $my_dir/kp-$NUM -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ssh_opts="-i $WORKSPACE/redhat-kvm/kp-$NUM -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ssh_addr="root@${ip_addr}"
-ssh -t $ssh_opts $ssh_addr "sudo -u stack 'cd /home/stack ; git clone https://github.com/cloudscaling/jenkins-scrips ; ./jenkins-scripts/tripleo/check-openstack.sh'"
+cd $WORKSPACE
+tar cf js.tar jenkins-scripts
+scp $ssh_opts js.tar $ssh_addr:/home/stack/js.tar
+ssh -t $ssh_opts $ssh_addr "sudo -u stack tar xf /home/stack/js.tar -C /home/stack"
+ssh -t $ssh_opts $ssh_addr "cd /home/stack && sudo -u stack ./jenkins-scripts/tripleo/check-openstack.sh"
 
 
 save_logs

@@ -10,10 +10,10 @@ sudo pip install virtualenv
 source $my_dir/../juju/functions
 source $my_dir/../juju/functions-openstack
 
-. ~/stackrc
+. /home/stack/stackrc
 master_mdm=`nova list | grep controller-0 | awk '{print $12}' | cut -d '=' -f 2`
 
-. ~/overcloudrc
+. /home/stack/overcloudrc
 # create network with same name as in fuel - run_os_checks will check this name
 if ! neutron net-list | grep net04 ; then
   neutron net-create net04
@@ -21,7 +21,7 @@ if ! neutron net-list | grep net04 ; then
 fi
 
 function exec_on_mdm() {
-  ssh heat-admin@$master_mdm "$@"
+  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null heat-admin@$master_mdm "$@"
 }
 
 function get_provisioning_type() {
