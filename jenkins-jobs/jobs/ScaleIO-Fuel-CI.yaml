@@ -1,3 +1,31 @@
+- job-template:
+    name: ScaleIO-Fuel-CI-ver{fuel_version}
+    description: "Deploys ScaleIO Fuel Plugin CI version {fuel_version} and checks."
+    defaults: global
+    node: fuel-ci-slave
+    concurrent: true
+    scm:
+      - jenkins-scripts
+      - fuel-kvm
+    triggers:
+      - timed: "{time}"
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          export FUEL_VERSION="{fuel_version}"
+          export FUEL_CHECKS='bvt'
+          export FUEL_ENV_NUMBER="{env_number}"
+          export PUPPETS_VERSION='master'
+          export PLUGIN_VERSION='auto'
+          export FUEL_NODES='6'
+          export FUEL_HYPER_CONVERGED='yes'
+          export CLEAN_ENV='auto'
+          ./jenkins-scripts/fuel/run-scaleio.sh test-cluster-stub.sh
+    publishers:
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: 'true'
+
 - job:
     name: ScaleIO-Fuel-CI
     description: 'ScaleIO Fuel Plugin CI'
@@ -69,3 +97,21 @@
       - archive:
           artifacts: 'logs/**'
           allow-empty: 'true'
+
+- project:
+   name: ScaleIO-Fuel-CI
+   fuel_version:
+    - 6.1:
+       env_number: '6'
+       time: "H 23 * * 2"
+    - 7.0:
+       env_number: '7'
+       time: "H 23 * * 4"
+    - 8.0:
+       env_number: '8'
+       time: "H 23 * * 5"
+    - 9.0:
+       env_number: '9'
+       time: "H 23 * * 0"
+   jobs:
+    - 'ScaleIO-FUEL-CI-ver{fuel_version}'
