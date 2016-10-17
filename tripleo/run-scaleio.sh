@@ -15,7 +15,7 @@ PUPPETS_VERSION="${PUPPETS_VERSION:-'master'}"
 trap 'catch_errors $LINENO' ERR
 
 function cleanup_environment() {
-  sudo $WORKSPACE/redhat-kvm/cleanup_env.sh
+  sudo $WORKSPACE/redhat-kvm/clean_env.sh
 }
 
 function save_logs() {
