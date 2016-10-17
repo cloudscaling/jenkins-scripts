@@ -38,6 +38,7 @@ def main(args):
     set_parameter(scaleio_config, 'hyper_converged_deployment', args.hyper_converged_deployment)
     if args.fuel_version in ['9.0.0', '10.0.0']:
         set_parameter(scaleio_config, 'use_scaleio_for_glance', not args.disable_scaleio_for_glance)
+        set_parameter(config['editable']['common'], 'propagate_task_deploy', True)
     with open(args.config_file, 'w') as stream:
         stream.write(yaml.dump(config, default_flow_style=False))
 
