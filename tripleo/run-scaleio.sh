@@ -19,6 +19,7 @@ function cleanup_environment() {
 
 function save_logs() {
   # save status to file
+  echo 'Please save my logs!'
 }
 
 function catch_errors() {
