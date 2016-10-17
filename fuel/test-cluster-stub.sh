@@ -34,5 +34,5 @@ if [[ ! "$FUEL_CHECKS" =~ "skip_openstack" ]] ; then
   ${my_dir}/check-openstack-stub.sh
 fi
 if [[ "$FUEL_CHECKS" =~ "full" ]] ; then
-  execute_on_master './test-cluster.sh 3 8'
+  execute_on_master "export FUEL_ENV_NUMBER=$fuel_env_number FUEL_NODES=$fuel_nodes FUEL_HYPER_CONVERGED=$fuel_hyper_converged; ./test-cluster.sh 3 8"
 fi
