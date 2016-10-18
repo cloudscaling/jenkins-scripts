@@ -15,6 +15,12 @@ my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
 
+BASE_ADDR=${BASE_ADDR:-172}
+((env_addr=BASE_ADDR+NUM*10))
+ip_addr="192.168.${env_addr}.2"
+ssh_opts="-i $my_dir/kp-$NUM -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ssh_addr="root@${ip_addr}"
+
 trap 'catch_errors $LINENO' ERR
 
 function cleanup_environment() {
@@ -23,8 +29,15 @@ function cleanup_environment() {
 }
 
 function save_logs() {
-  # save status to file
-  echo 'Please save my logs!'
+  rm -rf logs
+  mkdir logs
+  scp $ssh_opts $ssh_addr:/home/stack/heat.log logs/heat.log
+  for lf in `ssh $ssh_opts $ssh_addr ls /home/stack/*-logs.tar` ; do
+    nm=`echo $lf | rev | cut -d '/' -f 1 | rev`
+    scp $ssh_opts $ssh_addr:$lf $nm
+    mkdir logs/$nm
+    tar xf $nm -C logs/$nm
+  done
 }
 
 function catch_errors() {
