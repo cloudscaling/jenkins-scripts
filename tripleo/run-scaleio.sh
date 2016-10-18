@@ -19,7 +19,7 @@ trap 'catch_errors $LINENO' ERR
 
 function cleanup_environment() {
   # TODO: do not cleanup in case of error due to existed environment
-  sudo -E $WORKSPACE/redhat-kvm/clean_env.sh
+  sudo -t -E $WORKSPACE/redhat-kvm/clean_env.sh
 }
 
 function save_logs() {
@@ -47,7 +47,7 @@ function catch_errors() {
 if [[ "$PUPPETS_VERSION" != "master" ]] ; then
   sed -i "s/PuppetsVerion: \"master\"/PuppetsVerion: \"$PUPPETS_VERSION\"/g" "$WORKSPACE/redhat-kvm/overcloud/scaleio-env.yaml"
 fi
-sudo -E $WORKSPACE/redhat-kvm/deploy_all.sh "$my_dir/check-scaleio-proxy.sh"
+sudo -t -E $WORKSPACE/redhat-kvm/deploy_all.sh "$my_dir/check-scaleio-proxy.sh"
 
 
 save_logs
