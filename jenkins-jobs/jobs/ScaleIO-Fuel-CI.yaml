@@ -1,6 +1,6 @@
 - job-template:
-    name: ScaleIO-Fuel-CI-ver{fuel_version}
-    description: "Deploys ScaleIO Fuel Plugin CI version {fuel_version} and checks."
+    name: ScaleIO-Fuel-CI-{fuel_version}
+    description: "Deploys ScaleIO with Fuel Plugin {fuel_version} and checks."
     defaults: global
     node: fuel-ci-slave
     concurrent: true
@@ -114,4 +114,4 @@
        env_number: '9'
        time: "H 23 * * 0"
    jobs:
-    - 'ScaleIO-FUEL-CI-ver{fuel_version}'
+    - 'ScaleIO-Fuel-CI-{fuel_version}'
