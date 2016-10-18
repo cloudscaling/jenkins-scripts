@@ -34,10 +34,13 @@ function add_node() {
     node_opts="node --node-id ${node_id}"
     base_dir="./node_${node_id}"
 
-    fuel $node_opts --disk --download || fail "Failed to download node ${node_id} disk settings"
-    python ${my_dir}/set_node_volumes_layout.py --config_file "${base_dir}/disks.yaml" --device_paths ${device_paths} ${is_controller_opts} || fail "Failed to patch node ${node_id} disk layout"
-    fuel $node_opts --disk --upload || fail "Failed to upload node  ${node_id} disk settings"    
-
+    # for scaleio role keep disk configuration by default
+    if [[ ! $roles =~ 'scaleio' ]] ; then
+      fuel $node_opts --disk --download || fail "Failed to download node ${node_id} disk settings"
+      python ${my_dir}/set_node_volumes_layout.py --config_file "${base_dir}/disks.yaml" --device_paths ${device_paths} ${is_controller_opts} || fail "Failed to patch node ${node_id} disk layout"
+      fuel $node_opts --disk --upload || fail "Failed to upload node  ${node_id} disk settings"    
+    fi
+  
     fuel $node_opts --network --download || fail "Failed to download node network settings"
     python ${my_dir}/set_node_network.py --config_file "${base_dir}/interfaces.yaml" || fail "Failed to patch node ${node_id} network config"
     fuel $node_opts --network --upload || fail "Failed to upload node  ${node_id} network settings"
@@ -245,8 +248,10 @@ if [[ $start_from < 2 ]]; then
     for i in {0..4}; do
       if [[ $i < 1 ]]; then
           roles="cinder,controller"
-      elif [[ $i < 4 ]]; then
+      elif [[ $i < 3 ]]; then
           roles="scaleio"
+      elif [[ $i < 4 ]]; then
+          roles="scaleio,compute"
       else
           roles="compute"
       fi
