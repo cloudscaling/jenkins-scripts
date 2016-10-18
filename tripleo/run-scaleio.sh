@@ -11,6 +11,9 @@ CLEAN_ENV=${CLEAN_ENV:-'true'}
 export CLEAN_ENV
 PUPPETS_VERSION="${PUPPETS_VERSION:-'master'}"
 
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
+
 
 trap 'catch_errors $LINENO' ERR
 
@@ -44,19 +47,7 @@ function catch_errors() {
 if [[ "$PUPPETS_VERSION" != "master" ]] ; then
   sed -i "s/PuppetsVerion: \"master\"/PuppetsVerion: \"$PUPPETS_VERSION\"/g" "$WORKSPACE/redhat-kvm/overcloud/scaleio-env.yaml"
 fi
-sudo -E $WORKSPACE/redhat-kvm/install_all.sh
-
-# TODO: move it somewhere
-BASE_ADDR=${BASE_ADDR:-172}
-((env_addr=BASE_ADDR+NUM*10))
-ip_addr="192.168.${env_addr}.2"
-ssh_opts="-i $WORKSPACE/redhat-kvm/kp-$NUM -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ssh_addr="root@${ip_addr}"
-cd $WORKSPACE
-tar cf js.tar jenkins-scripts
-scp $ssh_opts js.tar $ssh_addr:/home/stack/js.tar
-ssh -t $ssh_opts $ssh_addr "sudo -u stack tar xf /home/stack/js.tar -C /home/stack"
-ssh -t $ssh_opts $ssh_addr "cd /home/stack && sudo -u stack ./jenkins-scripts/tripleo/check-openstack.sh"
+sudo -E $WORKSPACE/redhat-kvm/deploy_all.sh "$my_dir/check-scaleio-proxy.sh"
 
 
 save_logs
