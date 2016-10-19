@@ -16,7 +16,7 @@ def main(args):
     config = None
     with open(args.config_file, 'r') as stream:
         config = yaml.load(stream)
-    if args.fuel_version not in ['8.0.0', '9.0.0']:
+    if args.fuel_version not in ['8.0.0', '9.0.0', '10.0.0']:
         scaleio_config = config['editable']['scaleio']
         scaleio_config['metadata']['enabled'] = True
     else:
@@ -35,7 +35,8 @@ def main(args):
     set_parameter(scaleio_config, 'scanner_mode', args.scanner_mode)
     set_parameter(scaleio_config, 'checksum_mode', args.checksum_mode)
     set_parameter(scaleio_config, 'spare_policy', args.spare_policy)
-    set_parameter(scaleio_config, 'hyper_converged_deployment', args.hyper_converged_deployment)
+    if args.fuel_version not in ['6.1.0', '7.0.0']:
+        set_parameter(scaleio_config, 'hyper_converged_deployment', args.hyper_converged_deployment)
     if args.fuel_version in ['9.0.0', '10.0.0']:
         set_parameter(scaleio_config, 'use_scaleio_for_glance', not args.disable_scaleio_for_glance)
     with open(args.config_file, 'w') as stream:
