@@ -9,6 +9,7 @@ sudo pip install virtualenv
 
 source $my_dir/../juju/functions
 source $my_dir/../juju/functions-openstack
+source $my_dir/../juju/scaleio/static-checks
 
 . /home/stack/stackrc
 master_mdm=`nova list | grep controller-0 | awk '{print $12}' | cut -d '=' -f 2`
