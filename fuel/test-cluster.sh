@@ -142,7 +142,7 @@ function test_sds_packages() {
   for node in ${nodes[@]} ; do
     node_info=$(fuel --env $env_num node --node-id $node | grep 'ready')
     node_ip=$(echo $node_info | awk '{print $10}')
-    if [[ $hyper_converged_deployment == 'no' && $node_info =~ 'scaleio' || $hyper_converged_deployment == 'yes' && $node_info =~ 'compute' || $hyper_converged_deployment == 'yes' && $sds_on_controller &&  $node_info =~ 'controller' ]] ; then
+    if [[ $hyper_converged_deployment == 'no' && $node_info =~ 'scaleio' || $hyper_converged_deployment == 'yes' && $node_info =~ 'compute' || $hyper_converged_deployment == 'yes' && $sds_on_controller == 'yes' &&  $node_info =~ 'controller' ]] ; then
       if ssh $node_ip "dpkg -l" 2>/dev/null | grep 'scaleio-sds' ; then
         echo "Success. There is scaleio-sds package on node $node."
         echo $node_info
@@ -178,6 +178,7 @@ fi
 fuel_env_number=${FUEL_ENV_NUMBER:-'0'}
 fuel_nodes=${FUEL_NODES:-6}
 hyper_converged_deployment=${FUEL_HYPER_CONVERGED:-'yes'}
+sds_on_controller=${FUEL_SDS_ON_CONTROLLER:-'yes'}
 
 fuel_version=$(fuel --version 2>&1 | grep -o '[0-9]\.[0-9]\.[0-9]')
 env_name="emc"
@@ -224,7 +225,12 @@ if [[ $start_from < 2 ]]; then
 
   # prepare plugin settings
   fuel --env $env_num settings --download || fail "Failed to download env settings"
-  python ${my_dir}/set_plugin_parameters.py --fuel_version "${fuel_version}" --config_file "./settings_${env_num}.yaml" --device_paths ${device_paths} --sds_on_controller=true $hyper_converged_deploy_option || fail "Failed to set plugin parameters"
+  if [[ $sds_on_controller == 'yes' ]] ; then
+    sds_on_controller_opts='--sds_on_controller=true'
+  else
+    sds_on_controller_opts='--sds_on_controller=false'
+  fi
+  python ${my_dir}/set_plugin_parameters.py --fuel_version "${fuel_version}" --config_file "./settings_${env_num}.yaml" --device_paths ${device_paths} $sds_on_controller_opts $hyper_converged_deploy_option || fail "Failed to set plugin parameters"
   fuel --env $env_num settings --upload || fail "Failed to upload env settings"
 
   # prepare network settings
@@ -270,7 +276,7 @@ fi
 if [[ $start_from < 3 ]]; then
   # deploy 3+2 config
   deploy_changes $env_num
-  test_sds_packages $hyper_converged_deployment true
+  test_sds_packages $hyper_converged_deployment $sds_on_controller
   steps_count=$((steps_count-1))
 fi
 
