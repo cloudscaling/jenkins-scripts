@@ -690,6 +690,7 @@ function check_instance_resize() {
   fi
   echo "INFO: Waiting instance for resize-confirm"
   if ! wait_instance $instance_id $MAX_FAIL VERIFY_RESIZE ; then
+    echo "ERROR: verify_resize status is not reached"
     nova show $instance_id
     nova delete $instance_id >/dev/null
     return 1
