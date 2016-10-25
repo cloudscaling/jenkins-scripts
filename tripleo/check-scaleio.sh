@@ -26,7 +26,7 @@ echo "INFO: Master MDM found at $master_mdm"
 
 # basic checks
 # TODO: change cluster mode/user/password to real values
-cluster_mode='1'
+cluster_mode='3'
 USERNAME="admin"
 PASSWORD="Default_password"
 
