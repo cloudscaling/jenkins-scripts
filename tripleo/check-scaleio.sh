@@ -26,7 +26,7 @@ echo "INFO: Master MDM found at $master_mdm"
 
 # basic checks
 # TODO: change user/password to real values
-cluster_mode=`nova list | grep '-controller-' | wc -l`
+cluster_mode=`nova list | grep '\-controller\-' | wc -l`
 USERNAME="admin"
 PASSWORD="Default_password"
 
