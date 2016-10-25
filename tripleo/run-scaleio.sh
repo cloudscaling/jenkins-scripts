@@ -5,11 +5,13 @@ if [[ -z "$NUM" ]] ; then
   echo "Please set NUM variable to specific environment number. (export NUM=4)"
   exit 1
 fi
-
 export NUM
+
 CLEAN_ENV=${CLEAN_ENV:-'true'}
 export CLEAN_ENV
 PUPPETS_VERSION="${PUPPETS_VERSION:-'master'}"
+
+export CONTROLLER_COUNT=3
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
