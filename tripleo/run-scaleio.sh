@@ -10,9 +10,11 @@ export NUM
 CLEAN_ENV=${CLEAN_ENV:-'true'}
 export CLEAN_ENV
 PUPPETS_VERSION="${PUPPETS_VERSION:-'master'}"
+export PUPPETS_VERSION
 OPENSTACK_VERSION="${OPENSTACK_VERSION:-'newton'}"
-
-export CONTROLLER_COUNT=3
+export OPENSTACK_VERSION
+CONTROLLER_COUNT="${CONTROLLER_COUNT:-1}"
+export CONTROLLER_COUNT
 
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
