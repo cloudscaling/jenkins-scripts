@@ -38,7 +38,8 @@ check-performance "ssh $ssh_to_mdm_opts" heat-admin@$master_mdm $USERNAME $PASSW
 
 if (( errors > 0 )) ; then
   echo "ERROR: basic checks errors ($errors) !"
-  #exit $errors
+else
+  echo "INFO: basic checks was successful"
 fi
 
 # openstack checks
@@ -50,8 +51,6 @@ if ! neutron net-list | grep net04 ; then
 fi
 
 create_virtualenv
-run_os_checks exec_on_mdm get_provisioning_type
+run_os_checks exec_on_mdm get_provisioning_type || ((++errors))
 
-if (( errors > 0 )) ; then
-  exit $errors
-fi
+exit $errors
