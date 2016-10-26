@@ -19,8 +19,8 @@
           choices:
             - 'mitaka'
             - 'newton'
-      - choise:
-          name: CONTROLLERS_COUNT
+      - choice:
+          name: CONTROLLER_COUNT
           description: "Count of controllers to deploy"
           choices:
             - '1'
