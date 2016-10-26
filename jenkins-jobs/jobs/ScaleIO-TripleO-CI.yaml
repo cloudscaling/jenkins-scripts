@@ -19,6 +19,13 @@
           choices:
             - 'mitaka'
             - 'newton'
+      - choise:
+          name: CONTROLLERS_COUNT
+          description: "Count of controllers to deploy"
+          choices:
+            - '1'
+            - '3'
+            - '5'
       - choice:
           name: PUPPETS_VERSION
           description: "Version of the puppets(scaleio, scaleio_openstack) to download"
