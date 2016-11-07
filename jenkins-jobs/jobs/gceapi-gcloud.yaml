@@ -2,6 +2,7 @@
     name: gceapi-gcloud
     description: "Runs gce tests against Google cloud"
     defaults: global
+    disabled: false
     properties:
       - build-discarder
     scm:
