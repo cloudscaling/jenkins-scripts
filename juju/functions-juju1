@@ -1,7 +1,7 @@
 #!/bin/bash
 
 fjmy_file="${BASH_SOURCE[0]}"
-fjmy_dir="$(dirname $my_fjfile)"
+fjmy_dir="$(dirname $fjmy_file)"
 source $fjmy_dir/functions-juju
 
 function juju-bootstrap() {
