@@ -1,0 +1,45 @@
+#!/bin/bash
+
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
+
+source $my_dir/functions-juju
+
+function juju-bootstrap() {
+  juju bootstrap --bootstrap-series=trusty aws amazon
+  juju-deploy juju-gui
+  juju-expose juju-gui
+  juju-status
+}
+
+function juju-destroy-environment() {
+  juju destroy-controller  -y --destroy-all-models amazon
+}
+
+function juju-set() {
+  juju config $@
+}
+
+function juju-remove-service() {
+  juju remove-application $@
+}
+
+function juju-get() {
+  local value=`juju config $1 | grep -v "^      " | grep -A 4 " $2:"`
+  if echo "$value" | grep -q "value:" ; then
+    echo "$value" | grep "value:" | awk '{print $2}'
+  else
+    echo "$value" | grep "default:" | awk '{print $2}'
+  fi
+}
+
+function get_machine() {
+  local service=$1
+  juju status $service --format tabular | grep "$service/" | head -1 | awk '{print $4}'
+}
+
+function get_machine_ip() {
+  local service=$1
+  juju status $service --format tabular | grep "$service/" | head -1 | awk '{print $5}'
+}
+

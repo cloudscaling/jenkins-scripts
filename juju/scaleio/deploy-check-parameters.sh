@@ -25,9 +25,9 @@ apply_developing_puppets 0 $m1 $m2 $m3
 fix_kernel_drivers $m1 $m2 $m3
 
 # deploy fake charms to prevent machines removing
-juju deploy ubuntu --to $m1
-juju service add-unit ubuntu --to $m2
-juju service add-unit ubuntu --to $m3
+juju-deploy ubuntu --to $m1
+juju-add-unit ubuntu --to $m2
+juju-add-unit ubuntu --to $m3
 
 errors=0
 

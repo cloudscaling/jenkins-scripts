@@ -20,8 +20,8 @@ function catch_errors() {
   echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
   trap - ERR EXIT
 
-  juju remove-service scaleio-sds || /bin/true
-  juju remove-service scaleio-mdm || /bin/true
+  juju-remove-service scaleio-sds || /bin/true
+  juju-remove-service scaleio-mdm || /bin/true
   wait_for_removed "scaleio-sds" || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
   exit $exit_code
@@ -30,14 +30,14 @@ function catch_errors() {
 ret=0
 
 echo "INFO: Deploy MDM to 0"
-juju deploy --repository juju-scaleio local:scaleio-mdm --to 0
+juju-deploy --repository juju-scaleio local:scaleio-mdm --to 0
 
 echo "INFO: Deploy SDS with disabled RMCache and RFCache"
-juju deploy --repository juju-scaleio local:scaleio-sds --to $m1
-juju add-unit scaleio-sds --to $m2
-juju add-unit scaleio-sds --to $m3
-juju set scaleio-sds protection-domain='pd' storage-pools='sp' device-paths='/dev/xvdf' rmcache-usage=dont_use rfcache-usage=dont_use
-juju add-relation scaleio-sds scaleio-mdm
+juju-deploy --repository juju-scaleio local:scaleio-sds --to $m1
+juju-add-unit scaleio-sds --to $m2
+juju-add-unit scaleio-sds --to $m3
+juju-set scaleio-sds protection-domain='pd' storage-pools='sp' device-paths='/dev/xvdf' rmcache-usage=dont_use rfcache-usage=dont_use
+juju-add-relation scaleio-sds scaleio-mdm
 wait_status
 
 
@@ -45,7 +45,7 @@ function check_cache() {
   local param_name=$1
   local param_value=$2
 
-  if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp" 2>/dev/null` ; then
+  if ! output=`juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp" 2>/dev/null` ; then
     echo "ERROR: ($my_name:$LINENO) Login and command 'scli --query_storage_pool --protection_domain_name pd --storage_pool_name sp' failed"
     echo "$output"
     return 1
@@ -66,33 +66,33 @@ echo "INFO: Check RFCache"
 check_cache 'Flash Read Cache' "Doesn't use"
 
 echo "INFO: Enable RMCache"
-juju set scaleio-sds rmcache-usage=use
+juju-set scaleio-sds rmcache-usage=use
 wait_status
 echo "INFO: Check RMCache"
 check_cache 'RAM Read Cache' "Uses"
 check_cache 'RAM Read Cache write handling mode' "cached"
 
 echo "INFO: Set caching write-mode to passthrough"
-juju set scaleio-sds rmcache-write-handling-mode=passthrough
+juju-set scaleio-sds rmcache-write-handling-mode=passthrough
 wait_status
 echo "INFO: Check RMCache write-mode"
 check_cache 'RAM Read Cache write handling mode' "passthrough"
 
 echo "INFO: Set caching write-mode to cached"
-juju set scaleio-sds rmcache-write-handling-mode=cached
+juju-set scaleio-sds rmcache-write-handling-mode=cached
 wait_status
 echo "INFO: Check RMCache write-mode"
 check_cache 'RAM Read Cache write handling mode' "cached"
 
 rfcache_path='/dev/xvdg'
 echo "INFO: Enable RFCache"
-juju set scaleio-sds rfcache-usage=use rfcache-device-paths=$rfcache_path
+juju-set scaleio-sds rfcache-usage=use rfcache-device-paths=$rfcache_path
 wait_status
 echo "INFO: Check RFCache"
 check_cache 'Flash Read Cache' "Uses"
 
 echo "INFO: Check RFCache path"
-if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_all_sds" 2>/dev/null` ; then
+if ! output=`juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_all_sds" 2>/dev/null` ; then
   echo "ERROR: ($my_name:$LINENO) Login and command 'scli --query_all_sds' failed"
   echo "$output"
   exit 1
@@ -100,7 +100,7 @@ fi
 
 sds_names=(`echo "$output" | grep 'SDS ID:' | awk '{print$5}'`)
 for sds_name in ${sds_names[@]} ; do
-  output_sds=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_sds --sds_name $sds_name" 2>/dev/null`
+  output_sds=`juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_sds --sds_name $sds_name" 2>/dev/null`
   if ! echo "$output_sds" | grep 'Rfcache device information' | grep -q 'total 1 devices'  ; then
     echo "ERROR: ($my_name:$LINENO) Unexpected number of rfcache devices."
     echo "$output_sds" | grep 'Rfcache device information'
@@ -114,8 +114,8 @@ for sds_name in ${sds_names[@]} ; do
   fi
 done
 
-juju remove-service scaleio-sds
-juju remove-service scaleio-mdm
+juju-remove-service scaleio-sds
+juju-remove-service scaleio-mdm
 wait_for_removed "scaleio-sds"
 wait_for_removed "scaleio-mdm"
 

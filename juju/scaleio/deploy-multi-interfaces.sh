@@ -41,9 +41,9 @@ echo "Machine created: $m3"
 wait_for_machines $m1 $m2 $m3
 
 # deploy fake charms to prevent machines removing
-juju deploy ubuntu --to $m1
-juju service add-unit ubuntu --to $m2
-juju service add-unit ubuntu --to $m3
+juju-deploy ubuntu --to $m1
+juju-add-unit ubuntu --to $m2
+juju-add-unit ubuntu --to $m3
 
 eni01=`aws ec2 create-network-interface --subnet-id $subnet1 | grep '"NetworkInterfaceId":' | sed 's/.*"\(eni-[0-9a-f]*\)",/\1/'`
 eni02=`aws ec2 create-network-interface --subnet-id $subnet2 | grep '"NetworkInterfaceId":' | sed 's/.*"\(eni-[0-9a-f]*\)",/\1/'`
@@ -57,9 +57,9 @@ eni21=`aws ec2 create-network-interface --subnet-id $subnet1 | grep '"NetworkInt
 eni22=`aws ec2 create-network-interface --subnet-id $subnet2 | grep '"NetworkInterfaceId":' | sed 's/.*"\(eni-[0-9a-f]*\)",/\1/'`
 eni23=`aws ec2 create-network-interface --subnet-id $subnet3 | grep '"NetworkInterfaceId":' | sed 's/.*"\(eni-[0-9a-f]*\)",/\1/'`
 
-ec2m1=`juju status --format tabular | grep -A 10 '\[Machines\]' | grep "^$m1 .*" | awk '{print $5}'`
-ec2m2=`juju status --format tabular | grep -A 10 '\[Machines\]' | grep "^$m2 .*" | awk '{print $5}'`
-ec2m3=`juju status --format tabular | grep -A 10 '\[Machines\]' | grep "^$m3 .*" | awk '{print $5}'`
+ec2m1=`juju-status-tabular | grep -A 10 '\[Machines\]' | grep "^$m1 .*" | awk '{print $5}'`
+ec2m2=`juju-status-tabular | grep -A 10 '\[Machines\]' | grep "^$m2 .*" | awk '{print $5}'`
+ec2m3=`juju-status-tabular | grep -A 10 '\[Machines\]' | grep "^$m3 .*" | awk '{print $5}'`
 
 id=`aws ec2 attach-network-interface --network-interface-id $eni01 --instance-id $ec2m1 --device-index 1 | grep '"AttachmentId":' | sed 's/.*"\(eni-attach-[0-9a-f]*\)"/\1/'`
 aws ec2 modify-network-interface-attribute --network-interface-id $eni01 --attachment AttachmentId=$id,DeleteOnTermination=true
@@ -84,7 +84,7 @@ aws ec2 modify-network-interface-attribute --network-interface-id $eni23 --attac
 
 for mm in $m1 $m2 $m3 ; do
   for ii in 1 2 3 ; do 
-    juju ssh $mm "sudo bash -c 'echo \"auto eth$ii\" > /etc/network/interfaces.d/eth$ii.cfg && echo \"iface eth$ii inet dhcp\" >> /etc/network/interfaces.d/eth$ii.cfg && ifup eth$ii'" 2>/dev/null
+    juju-ssh $mm "sudo bash -c 'echo \"auto eth$ii\" > /etc/network/interfaces.d/eth$ii.cfg && echo \"iface eth$ii inet dhcp\" >> /etc/network/interfaces.d/eth$ii.cfg && ifup eth$ii'" 2>/dev/null
   done
-  juju ssh $mm ip addr 2>/dev/null
+  juju-ssh $mm ip addr 2>/dev/null
 done

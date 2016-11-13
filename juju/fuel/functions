@@ -51,8 +51,8 @@ function provision_machines() {
   if [[ "${cloud}" == "gce" ]]; then
     for i in ${new_mx[@]}; do
       paths=$(echo ${device_paths} | sed 's/,/ /g')
-      juju ssh $i "for p in ${paths}; do sudo rm -f \$p && sudo truncate --size 100G \$p; done" 2>/dev/null
-      juju ssh $i "sudo sed -i 's/\(juju-\)\(.*\)\(machine.*\)/\1\3/g' /etc/hostname && sudo hostname -F /etc/hostname" 2>/dev/null
+      juju-ssh $i "for p in ${paths}; do sudo rm -f \$p && sudo truncate --size 100G \$p; done" 2>/dev/null
+      juju-ssh $i "sudo sed -i 's/\(juju-\)\(.*\)\(machine.*\)/\1\3/g' /etc/hostname && sudo hostname -F /etc/hostname" 2>/dev/null
     done
   fi
 
@@ -60,7 +60,7 @@ function provision_machines() {
 
   # deploy fake module to avoid removal of machines in case of remove last service
   for i in ${new_mx[@]}; do
-    juju deploy ubuntu fuel-null-service${i} --to ${i}
+    juju-deploy ubuntu fuel-null-service${i} --to ${i}
   done
 }
 
@@ -68,8 +68,8 @@ function copy_log() {
   mch=$1
   log=$2
   dst=$3
-  if juju ssh $mch "test -f $log" 2>/dev/null ; then
-    juju ssh $mch "cat $log" > "$dst" 2>/dev/null
+  if juju-ssh $mch "test -f $log" 2>/dev/null ; then
+    juju-ssh $mch "cat $log" > "$dst" 2>/dev/null
   fi
 }
 
@@ -77,7 +77,7 @@ function save_logs() {
   # save status to file
   for mch in ${machines[@]:1} ; do
     name=fuel-node${mch}
-    if juju service get ${name} ; then
+    if juju-status | grep -q ${name} ; then
       mdir="$cdir/logs/$mch"
       mkdir -p "$mdir"
       copy_log $mch '/var/log/fuel-puppet-scaleio.log' "$mdir/fuel-puppet-scaleio.log"
@@ -100,9 +100,9 @@ function remove_node_service() {
     mch=${machines[$node]}
     name=fuel-node${mch}
     echo "Remove EMC packages from machine $node/$#"
-    juju ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' &>/dev/null
+    juju-ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' &>/dev/null
     echo "Remove service ${name} from machine $node/$#"
-    juju remove-service ${name}
+    juju-remove-service ${name}
   done
   # wait for remove
   for node in $@ ; do
@@ -116,11 +116,11 @@ function prepare_fuel_master() {
   echo "fuel-master:
     branch-name:  $branch
     device-paths: $device_paths" >/tmp/config.yaml
-  juju deploy --repository fuel-charms local:trusty/fuel-master --to $mch --config /tmp/config.yaml
+  juju-deploy --repository fuel-charms local:trusty/fuel-master --to $mch --config /tmp/config.yaml
 }
 
 function set_fuel_options() {
-  juju set fuel-master $*
+  juju-set fuel-master $*
 }
 
 function deploy_node_service() {
@@ -128,14 +128,14 @@ function deploy_node_service() {
   name=fuel-node${mch}
   roles=$2
 
-  if ! juju service get ${name} &>/dev/null  ; then
+  if ! juju-status | grep -q ${name} ; then
     echo "$name:
       branch-name:  $branch
       storage-iface: $storage_iface" >/tmp/config.yaml
-    juju deploy --repository fuel-charms local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
-    juju add-relation fuel-master $name
+    juju-deploy --repository fuel-charms local:trusty/fuel-node $name --to $mch --config /tmp/config.yaml
+    juju-add-relation fuel-master $name
   fi
-  juju set $name roles="${roles}"
+  juju-set $name roles="${roles}"
 }
 
 function configure_cluster() {
@@ -178,7 +178,7 @@ function configure_cluster() {
   wait_absence_status_for_services "executing|blocked|waiting|allocating"
   echo "Wait for services end: $(date)"
 
-  juju set fuel-master deploy=$deploy_counter
+  juju-set fuel-master deploy=$deploy_counter
   ((deploy_counter++))
 
   echo "Wait for services start: $(date)"
@@ -186,25 +186,25 @@ function configure_cluster() {
   echo "Wait for services end: $(date)"
 
   # check for errors
-  if juju status | grep "current" | grep error ; then
+  if juju-status | grep "current" | grep error ; then
     echo "ERROR: Some services went to error state"
-    juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
+    juju-ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
     return 1
   fi
 
-  metadata_enable=`get_config fuel-master metadata-enable`
-  existing_cluster=`get_config fuel-master existing-cluster`
+  metadata_enable=`juju-get fuel-master metadata-enable`
+  existing_cluster=`juju-get fuel-master existing-cluster`
   if [[ $metadata_enable == true && $existing_cluster == false ]] ; then
     # check query_cluster output before exit on error if exists
     master_mdm=`get_master_mdm "echo $mdms"`
     echo "INFO: query cluster on machine $master_mdm"
-    juju ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
+    juju-ssh $master_mdm 'scli --query_cluster --approve_certificate' 2>/dev/null
 
-    check-cluster "juju ssh" $master_mdm $mode
+    check-cluster "juju-ssh" $master_mdm $mode
 
     # check query_all_sds output
-    local password=`get_config fuel-master password`
-    check-sds "juju ssh" $master_mdm $username $password
+    local password=`juju-get fuel-master password`
+    check-sds "juju-ssh" $master_mdm $username $password
   fi
 }
 
@@ -215,7 +215,7 @@ function get_pd_list {
   login_cmd="scli --login --username $username --password $password --approve_certificate"
   pd_names_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME"
 
-  pd_output=`juju ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
+  pd_output=`juju-ssh $mch "$login_cmd && $pd_names_cmd" 2>/dev/null `
   echo "$pd_output" | awk '/NAME/{print$2}' | sed 's/\r//g'
 }
 
@@ -224,10 +224,10 @@ function check_storage_pool {
   key_to_check=$2
   expected_value=$3
 
-  storage_pools=`get_config fuel-master storage-pools`
+  storage_pools=`juju-get fuel-master storage-pools`
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
 
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
 
@@ -237,7 +237,7 @@ function check_storage_pool {
   for pd in $pd_list ; do
     for sp in $sp_list ; do
       query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-      output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null`
+      output=`juju-ssh $mch "$login_cmd && $query_cmd" 2>/dev/null`
       if echo "$output" | grep "$key_to_check" | grep -q "$expected_value" ; then
         echo "INFO: Success. Parameter $key_to_check in storage pool $sp in protection domain $pd is $expected_value."
       else
@@ -255,13 +255,13 @@ function check_specific_storage_pool {
   mch=${machines[$1]}
   key_to_check=$2
   expected_value=$3
-  storage_pools=`get_config fuel-master storage-pools`
+  storage_pools=`juju-get fuel-master storage-pools`
   checked_sps=${4:-"$storage_pools"}
 
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
   checked_sp_list=(`echo "$checked_sps" | sed 's/,/ /g'`)
 
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
 
@@ -271,7 +271,7 @@ function check_specific_storage_pool {
   for pd in $pd_list ; do
     for sp in $sp_list ; do
       query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-      output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null`
+      output=`juju-ssh $mch "$login_cmd && $query_cmd" 2>/dev/null`
       if [[ ${checked_sp_list[@]} =~ "$sp" ]] ; then
         if echo "$output" | grep "$key_to_check" | grep -q "$expected_value" ; then
           echo "INFO: Success. Parameter $key_to_check in storage pool $sp in protection domain $pd is $expected_value."
@@ -300,10 +300,10 @@ function check_capacity_alerts {
   high_alert=$2
   critical_alert=$3
 
-  storage_pools=`get_config fuel-master storage-pools`
+  storage_pools=`juju-get fuel-master storage-pools`
   sp_list=`echo "$storage_pools" | sed 's/,/ /g'`
 
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
 
@@ -313,7 +313,7 @@ function check_capacity_alerts {
   for pd in $pd_list ; do
     for sp in $sp_list ; do
       query_cmd="scli --query_storage_pool --protection_domain_name $pd --storage_pool_name $sp"
-      output_storage_pool=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null | grep "Capacity alert thresholds"`
+      output_storage_pool=`juju-ssh $mch "$login_cmd && $query_cmd" 2>/dev/null | grep "Capacity alert thresholds"`
       if echo "$output_storage_pool" | awk '{print$5}' | grep -q "$high_alert" ; then
          echo "INFO: Success. Capacity alert thresholds on $sp storage pool in protection domain $pd: high is $high_alert."
       else
@@ -339,14 +339,14 @@ function check_rfcache {
   rfcache_list=(`echo $2 | sed 's/,/ /g'`)
   rfcache_count=${#rfcache_list[@]}
 
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null| grep 'SDS ID:' | awk '{print$5}'`)
+  sds_names=(`juju-ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null| grep 'SDS ID:' | awk '{print$5}'`)
 
   ret=0
   for sds_name in ${sds_names[@]} ; do
-    rfcache_output=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null | grep "Rfcache device information" -A $(($rfcache_count*2+1))`
+    rfcache_output=`juju-ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null | grep "Rfcache device information" -A $(($rfcache_count*2+1))`
     if ! echo "$rfcache_output" | grep -q "total $rfcache_count devices"  ; then
       echo "ERROR: Unexpected number of devices on $sds_name."
       echo "$rfcache_output" | grep "Rfcache device information"
@@ -370,15 +370,15 @@ function check_protection_domain {
   mch=${machines[$1]}
   expected_pd_name=$2
 
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
 
-  sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$5}'`)
+  sds_names=(`juju-ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$5}'`)
 
   ret=0
   for sds_name in ${sds_names[@]} ; do
-    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
+    output_sds=`juju-ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
     current_pd_name=`echo "$output_sds" | awk '/Protection Domain:/{print$5}' | sed 's/\r//g'`
     if [[ "${current_pd_name%%_*}" == "${expected_pd_name}" ]] ; then
       echo "INFO: Success. Protection domain on $sds_name is $current_pd_name."
@@ -397,7 +397,7 @@ function check_password {
   password=$2
 
   ret=0
-  if juju ssh $mch "scli --login --username $username --password $2 --approve_certificate" 2>/dev/null ; then
+  if juju-ssh $mch "scli --login --username $username --password $2 --approve_certificate" 2>/dev/null ; then
     echo "INFO: Success. Password was changed to $password"
   else
     echo "ERROR: Wrong password. Please check."
@@ -412,14 +412,14 @@ function check_sds_storage_pool {
   sp_list=(`echo $2 | sed 's/,/ /g'`)
   device_paths_list=(`echo $3 | sed 's/,/ /g'`)
 
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
-  sds_names=(`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$5}'`)
+  sds_names=(`juju-ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null | grep 'SDS ID:' | awk '{print$5}'`)
 
   ret=0
   for sds_name in ${sds_names[@]} ; do
-    output_sds=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
+    output_sds=`juju-ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
     if ! echo "$output_sds" | grep "Device information" | grep -q "total ${#device_paths_list[@]} devices" ; then
       echo "ERROR: Error in number of devices in $sds_name"
       echo "$output_sds"
@@ -446,23 +446,23 @@ function check_sds_storage_pool {
 
 function check_fuel_performance {
   mch=${machines[$1]}
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
 
-  check-performance "juju ssh" "$mch" "$username" "$password"
+  check-performance "juju-ssh" "$mch" "$username" "$password"
 }
 
 function check_sds_on_controller {
   mch=${machines[$1]}
   expected=$2
 
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
 
   #TODO: change check in case there are several mdms
-  mdm_ip=`juju ssh $mch "scli --query_cluster | grep 'Management IPs'" 2>/dev/null | awk '{print$5}' | sed 's/,//g'`
+  mdm_ip=`juju-ssh $mch "scli --query_cluster | grep 'Management IPs'" 2>/dev/null | awk '{print$5}' | sed 's/,//g'`
   sds_on_controller='false'
-  all_sds=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
+  all_sds=`juju-ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
   if echo "$all_sds" | grep $mdm_ip >/dev/null ; then
     sds_on_controller='true'
   fi
@@ -479,11 +479,11 @@ function check_protection_domain_nodes {
   mch=${machines[$1]}
   max_nodes=$2
 
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
 
   login_cmd="scli --login --username $username --password $password --approve_certificate"
   query_cmd="scli --query_properties --all_objects --object_type PROTECTION_DOMAIN --properties NAME,NUM_OF_SDS"
-  pd_output=`juju ssh $mch "$login_cmd && $query_cmd" 2>/dev/null `
+  pd_output=`juju-ssh $mch "$login_cmd && $query_cmd" 2>/dev/null `
   names_of_pd=(`echo "$pd_output" | awk '/NAME/{print$2}' | sed "s/\r//g"`)
   num_of_sds=`echo "$pd_output"  | awk '/NUM_OF_SDS/{print$2}' | sed "s/\r//g"`
   ret=0
@@ -515,7 +515,7 @@ function check_protection_domain_nodes {
 function check_scaleio_not_installed {
   mch=${machines[$1]}
 
-  if juju ssh $mch "dpkg -l emc*" &>/dev/null ; then
+  if juju-ssh $mch "dpkg -l emc*" &>/dev/null ; then
     echo "ERROR: ScaleIO packages was installed to controller, but should not."
     return 1
   else
@@ -526,7 +526,7 @@ function check_scaleio_not_installed {
 function check_branch {
   mch=${machines[$1]}
 
-  branch=`get_config fuel-master branch-name`
+  branch=`juju-get fuel-master branch-name`
 
   master_file=' deployment_tasks.yaml'
   branch_file=' tasks.yaml'
@@ -541,8 +541,8 @@ function check_branch {
     absent_file=$master_file
   fi
 
-  if juju ssh $mch "$files" 2>/dev/null | grep "$present_file" ; then
-    if ! juju ssh $mch "$files" 2>/dev/null | grep "$absent_file" ; then
+  if juju-ssh $mch "$files" 2>/dev/null | grep "$present_file" ; then
+    if ! juju-ssh $mch "$files" 2>/dev/null | grep "$absent_file" ; then
       echo "INFO: Success. Your branch is $branch. All files are corresponding."
     else
       echo "ERROR: Your branch is $branch. There is unexpected file $absent_file in /root/fuel-plugin-scaleio."
@@ -558,13 +558,13 @@ function check_existing_cluster {
   mdm=`get_master_mdm`                 # Master MDM on existing cluster (juju scaleio bundle)
   sdc_nodes=`echo $1 | sed 's/,/ /g'`  # Nodes added in fuel deploy
 
-  cluster_mdm_ips=(`juju ssh $mdm "scli --query_cluster --approve_certificate" 2>/dev/null | awk '/Management IPs/{print $5}' | sed 's/,//g'`)
+  cluster_mdm_ips=(`juju-ssh $mdm "scli --query_cluster --approve_certificate" 2>/dev/null | awk '/Management IPs/{print $5}' | sed 's/,//g'`)
 
   ret=0
   for node in $sdc_nodes ; do
     sdc=${machines[$node]}
     #check emc-packages"
-    if output=`juju ssh $sdc "dpkg -l | grep 'emc-'" 2>/dev/null | grep -v 'scaleio-sdc'` ; then
+    if output=`juju-ssh $sdc "dpkg -l | grep 'emc-'" 2>/dev/null | grep -v 'scaleio-sdc'` ; then
       echo "ERROR: There is scaleio packages on machine $sdc besides scaleio-sdc."
       echo $output
       ((++ret))
@@ -572,9 +572,9 @@ function check_existing_cluster {
       echo "INFO: Success. There is no scaleio packages on machine $sdc besides scaleio-sdc."
     fi
 
-    sdc_mdm_ips=(`juju ssh $sdc "sudo /bin/emc/scaleio/drv_cfg --query_mdms" 2>/dev/null | grep -Eo '([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})'`)
+    sdc_mdm_ips=(`juju-ssh $sdc "sudo /bin/emc/scaleio/drv_cfg --query_mdms" 2>/dev/null | grep -Eo '([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})'`)
 
-    environment_file=`juju ssh $sdc "cat /etc/environment" 2>/dev/null`
+    environment_file=`juju-ssh $sdc "cat /etc/environment" 2>/dev/null`
 
     #check MDM addresses"
     mdm_err=0
@@ -600,7 +600,7 @@ function check_existing_cluster {
       ((++ret))
     fi
 
-    gateway_ip=`juju status scaleio-gw | awk '/public-address/{print $2}'`
+    gateway_ip=`juju-status scaleio-gw | awk '/public-address/{print $2}'`
     #check gateway address
     if echo "$environment_file" | grep "gateway_ips.*$gateway_ip" ; then
       echo "INFO: Success. The SDC node $sdc has correct information about gateway ip in file /etc/environment."
@@ -623,13 +623,13 @@ function check_sds_ip_roles {
   mch=${machines[$1]}
   expected_roles=$2
 
-  password=`get_config fuel-master password`
+  password=`juju-get fuel-master password`
   login_cmd="scli --login --username $username --password $password --approve_certificate"
 
   ret=0
-  all_sds_output=`juju ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
+  all_sds_output=`juju-ssh $mch "$login_cmd && scli --query_all_sds" 2>/dev/null`
   for sds_name in $(echo "$all_sds_output" | awk '/SDS ID/{print $5}') ; do
-    node_details=`juju ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
+    node_details=`juju-ssh $mch "$login_cmd && scli --query_sds --sds_name $sds_name" 2>/dev/null`
     if ! node_roles=`echo "$node_details" | grep " Role: $expected_roles"` ; then
       echo "ERROR: SDS $sds_name does not contain required roles $expected_roles."
       echo "$node_details"
@@ -653,14 +653,14 @@ function check_hyper_converged_deployment {
   for node in ${machines[@]} ; do
     #check emc-packages"
     if echo ${scaleio_sds[@]} | grep -qw "$node" ; then
-      if juju ssh $node "dpkg -l | grep 'emc-'" 2>/dev/null | grep 'scaleio-sds' ; then
+      if juju-ssh $node "dpkg -l | grep 'emc-'" 2>/dev/null | grep 'scaleio-sds' ; then
         echo "INFO: Success. There is scaleio-sds package on machine $node."
       else
         echo "ERROR: There is no scaleio-sds packages on machine $node."
         ((++ret))
       fi
     else
-      if juju ssh $node "dpkg -l | grep 'emc-'" 2>/dev/null | grep 'scaleio-sds' ; then
+      if juju-ssh $node "dpkg -l | grep 'emc-'" 2>/dev/null | grep 'scaleio-sds' ; then
         echo "ERROR: There is scaleio-sds package on machine $node."
         ((++ret))
       else

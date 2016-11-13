@@ -13,11 +13,11 @@ source $my_dir/scaleio/static-checks
 export USERNAME="admin"
 export PASSWORD="Default_password"
 
-if ! juju bootstrap ; then
+if ! juju-bootstrap ; then
   echo "Bootstrap error. exiting..."
   exit 1
 fi
-AZ=`juju status | grep -Po " availability-zone=.*[ $]*" | cut -d '=' -f 2`
+AZ=`juju-status | grep -Po " availability-zone=.*[ $]*" | cut -d '=' -f 2`
 echo "INFO: Availability zone of this deployment is $AZ"
 export AZ
 
@@ -41,12 +41,12 @@ echo "--------------------------------------------- Run deploy script: $inner_sc
 $my_dir/scaleio-openstack/$inner_script $script_params
 
 master_mdm=`get_master_mdm`
-cluster_mode=`get_config scaleio-mdm cluster-mode`
+cluster_mode=`juju-get scaleio-mdm cluster-mode`
 errors=0
-check-cluster "juju ssh" $master_mdm $cluster_mode || ((++errors))
-check-sds "juju ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdf' || ((++errors))
-check-sdc "juju ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
-check-performance "juju ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
+check-cluster "juju-ssh" $master_mdm $cluster_mode || ((++errors))
+check-sds "juju-ssh" $master_mdm $USERNAME $PASSWORD '/dev/xvdf' || ((++errors))
+check-sdc "juju-ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
+check-performance "juju-ssh" $master_mdm $USERNAME $PASSWORD || ((++errors))
 
 if (( errors > 0 )) ; then
   exit $errors

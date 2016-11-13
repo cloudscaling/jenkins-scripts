@@ -1,22 +1,28 @@
 #!/bin/bash
 
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
+
+jver="$(juju --version | cut -d . -f 1)"
+source $my_dir/functions-juju$jver
+
 function wait_absence_status_for_services() {
   sleep 10
   check_str=$1
   local max_iter=${2:-30}
   # waiting for services
   local iter=0
-  while juju status | grep -P $check_str &>/dev/null
+  while juju-status | grep -P $check_str &>/dev/null
   do
     echo "Waiting for all service to be active - $iter/$max_iter"
     if ((iter >= max_iter)); then
       echo "ERROR: Services didn't up."
-      juju status --format tabular
+      juju-status-tabular
       return 1
     fi
-    if juju status | grep "current" | grep error ; then
+    if juju-status | grep "current" | grep error ; then
       echo "ERROR: Some services went to error state"
-      juju status --format tabular
+      juju-status-tabular
       return 1
     fi
     sleep 30
@@ -30,17 +36,17 @@ function wait_for_removed() {
   local max_iter=${2:-5}
   # waiting for services
   local iter=0
-  while juju status | grep "$check_str/" &>/dev/null
+  while juju-status | grep "$check_str/" &>/dev/null
   do
     echo "Waiting for all units to be removed - $iter/$max_iter"
     if ((iter >= max_iter)); then
       echo "ERROR: Units didn't removed."
-      juju status --format tabular
+      juju-status-tabular
       return 1
     fi
-    if juju status | grep "current" | grep error ; then
+    if juju-status | grep "current" | grep error ; then
       echo "ERROR: Some services went to error state"
-      juju status --format tabular
+      juju-status-tabular
       return 1
     fi
     sleep 30
@@ -49,7 +55,7 @@ function wait_for_removed() {
 }
 
 function get_mdm_machines() {
-  juju status scaleio-mdm --format json | jq .machines | jq keys | tail -n +2 | head -n -1 | sed -e "s/[\",]//g"
+  juju-status-json scaleio-mdm | jq .machines | jq keys | tail -n +2 | head -n -1 | sed -e "s/[\",]//g"
 }
 
 function get_master_mdm() {
@@ -57,7 +63,7 @@ function get_master_mdm() {
   get_mdms=${1:-get_mdm_machines}
   master_mdm=''
   for mch in `$get_mdms` ; do
-    if juju ssh $mch sudo scli --query_cluster --approve_certificate 2>/dev/null 1>/dev/null ; then
+    if juju-ssh $mch sudo scli --query_cluster --approve_certificate 2>/dev/null 1>/dev/null ; then
       echo "$mch"
       return
     fi
@@ -71,7 +77,7 @@ function wait_for_machines() {
   for machine in $@ ; do
     echo "Waiting for machine: $machine"
     local fail=0
-    while ! output=`juju ssh $machine "sudo apt-get install -fy joe" 2>/dev/null` ; do
+    while ! output=`juju-ssh $machine "sudo apt-get install -fy joe" 2>/dev/null` ; do
       if ((fail >= 12)); then
         echo "ERROR: Machine $machine did not up."
         echo $output
@@ -80,7 +86,7 @@ function wait_for_machines() {
       sleep 10
       ((++fail))
     done
-    juju ssh $machine uname -a 2>/dev/null
+    juju-ssh $machine uname -a 2>/dev/null
   done
 }
 
@@ -88,11 +94,11 @@ function wait_status() {
   wait_absence_status_for_services "executing|blocked|waiting|allocating"
 
   # check for errors
-  if juju status | grep "current" | grep -q error ; then
+  if juju-status | grep "current" | grep -q error ; then
     echo "ERROR: Some services went to error state"
-    juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
+    juju-ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
     echo "---------------------------------------------------------------------------"
-    juju status --format tabular
+    juju-status-tabular
     echo "---------------------------------------------------------------------------"
     return 2
   fi
@@ -133,20 +139,10 @@ function create_machine() {
     for (( i=0; i<sds_disks_count; ++i )) ; do da=(${da[@]-} ebs-ssd,100G) ; done
     disks="${da[@]}"
 
-    juju machine add $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" --disks "$disks" 2>&1 | awk '{print $3}'
+    juju-add-machine $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" --disks "$disks" 2>&1 | awk '{print $3}'
   else
-    juju machine add $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" 2>&1 | awk '{print $3}'
+    juju-add-machine $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" 2>&1 | awk '{print $3}'
   fi
-}
-
-function get_machine() {
-    local service=$1
-    juju status $service --format tabular | grep "$service/0" | awk '{print $5}'
-}
-
-function get_machine_ip() {
-    local service=$1
-    juju status $service --format tabular | grep "$service/0" | awk '{print $7}'
 }
 
 function apply_developing_puppets() {
@@ -157,34 +153,28 @@ function apply_developing_puppets() {
   local logf="$WORKSPACE/logs/apt.log"
   for mch in $@ ; do
     echo "INFO: install development puppets to machine $mch (puppet4 = $puppet4)" | tee -a $logf
-    juju ssh $mch "sudo apt-get -qy update && sudo apt-get -qfy upgrade && sudo apt-get -qqfy purge puppet ruby facter" &>>$logf
+    juju-ssh $mch "sudo apt-get -qy update && sudo apt-get -qfy upgrade && sudo apt-get -qqfy purge puppet ruby facter" &>>$logf
     if [[ "$puppet4" == true ]] ; then
-      juju ssh $mch "sudo apt-get -qqfy install git ruby" &>>$logf
-      juju ssh $mch "sudo gem install puppet" &>>$logf
-      juju ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio /etc/puppetlabs/code/modules/scaleio" 2>/dev/null
-      juju ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio-openstack /etc/puppetlabs/code/modules/scaleio_openstack" 2>/dev/null
+      juju-ssh $mch "sudo apt-get -qqfy install git ruby" &>>$logf
+      juju-ssh $mch "sudo gem install puppet" &>>$logf
+      juju-ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio /etc/puppetlabs/code/modules/scaleio" 2>/dev/null
+      juju-ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio-openstack /etc/puppetlabs/code/modules/scaleio_openstack" 2>/dev/null
     else
-      juju ssh $mch "sudo apt-get -qqfy install git puppet" &>>$logf
-      juju ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio /etc/puppet/modules/scaleio" 2>/dev/null
-      juju ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio-openstack /etc/puppet/modules/scaleio_openstack" 2>/dev/null
+      juju-ssh $mch "sudo apt-get -qqfy install git puppet" &>>$logf
+      juju-ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio /etc/puppet/modules/scaleio" 2>/dev/null
+      juju-ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio-openstack /etc/puppet/modules/scaleio_openstack" 2>/dev/null
     fi
     for dep in puppetlabs-firewall puppetlabs-stdlib puppetlabs-inifile ; do
-      juju ssh $mch "sudo puppet module install $dep || /bin/true" &>>$logf
+      juju-ssh $mch "sudo puppet module install $dep || /bin/true" &>>$logf
     done
   done
-}
-
-function get_config() {
-  service_type="$1"
-  parameter_name=" $2"
-  juju get $service_type | grep -A 5 "$parameter_name" | grep "value:" | head -1 | awk '{print $2}'
 }
 
 # -------------------------- fix scini/xcache problems
 function check_kernel() {
   local machine=$1
 
-  kernel=`juju ssh $machine "uname -r" 2>/dev/null`
+  kernel=`juju-ssh $machine "uname -r" 2>/dev/null`
   kernel=`echo $kernel | sed 's/\r//'`
 
   rm -f index.html
@@ -206,8 +196,8 @@ function upgrade_kernel() {
 
   local logf="$WORKSPACE/logs/apt.log"
   echo "WARNING: driver for kernel $kernel not found on ftp.emc.com. Upgrade kernel to 4.2.0-30" | tee -a $logf
-  juju ssh $machine "sudo apt-get install -fqy linux-image-4.2.0-30-generic linux-headers-4.2.0-30-generic" 2>/dev/null >>$logf
-  juju ssh $machine "sudo reboot" 2>/dev/null >>$logf
+  juju-ssh $machine "sudo apt-get install -fqy linux-image-4.2.0-30-generic linux-headers-4.2.0-30-generic" 2>/dev/null >>$logf
+  juju-ssh $machine "sudo reboot" 2>/dev/null >>$logf
 }
 
 function fix_kernel_drivers() {
@@ -224,12 +214,12 @@ function fix_kernel_drivers() {
 }
 
 function cleanup_environment() {
-  if juju destroy-environment -y amazon ; then
+  if juju-destroy-environment ; then
     return 0
   fi
 
   # sometime Juju couldn't delete amazon environment and volumes - try to do it manually
-  juju destroy-environment -y amazon || /bin/true
+  juju-destroy-environment || /bin/true
   for volid in `aws ec2 describe-volumes --filters Name=tag-value,Values="juju-amazon-volume*" Name=status,Values=available --query 'Volumes[*].{ID:VolumeId}' --output text` ; do
     aws ec2 delete-volume --volume-id "$volid"
     sleep 3
@@ -240,5 +230,5 @@ function create_eth1() {
   node=$1
 
   echo "INFO: creating additional network interface on node: $node"
-  juju ssh $node "sudo apt-get -fy install uml-utilities >/dev/null ; sudo ip tuntap add dev eth1 mode tap ; sudo ip link set dev eth1 up ; ifconfig" 2>/dev/null
+  juju-ssh $node "sudo apt-get -fy install uml-utilities >/dev/null ; sudo ip tuntap add dev eth1 mode tap ; sudo ip link set dev eth1 up ; ifconfig" 2>/dev/null
 }

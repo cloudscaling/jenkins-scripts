@@ -49,7 +49,7 @@ echo ""
 echo "Deploying with existing cluster"
 $my_dir/../scaleio/deploy-scaleio-cluster.sh
 
-gateway_ip=`juju status scaleio-gw | grep public-address | awk '{print $2}'`
+gateway_ip=`juju-status scaleio-gw | grep public-address | awk '{print $2}'`
 
 set_fuel_options metadata-enabled='true'
 set_fuel_options existing-cluster="true"
@@ -61,9 +61,9 @@ configure_cluster primary-controller 1 compute 2,3
 
 check_existing_cluster 1,2,3
 
-juju remove-service scaleio-sds
-juju remove-service scaleio-mdm
-juju remove-service scaleio-gw
+juju-remove-service scaleio-sds
+juju-remove-service scaleio-mdm
+juju-remove-service scaleio-gw
 remove_node_service 1 2 3
 wait_for_removed "scaleio-sds"
 wait_for_removed "scaleio-mdm"
@@ -122,7 +122,7 @@ echo ""
 echo "Deploying cluster for testing protection domain nodes limit, rmcache, sds ip roles"
 for node in ${machines[@]} ; do
   create_eth1 $node
-  juju ssh $node "sudo ip addr add 10.0.123.$node/24 dev eth1" 2>/dev/null
+  juju-ssh $node "sudo ip addr add 10.0.123.$node/24 dev eth1" 2>/dev/null
 done
 
 remove_node_service 1 2 3 4 5 6 7 8

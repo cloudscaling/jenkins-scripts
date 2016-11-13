@@ -1,0 +1,45 @@
+#!/bin/bash
+
+my_file="$(readlink -e "$0")"
+my_dir="$(dirname $my_file)"
+
+source $my_dir/functions-juju
+
+function juju-bootstrap() {
+  juju bootstrap
+  juju-deploy juju-gui --to 0
+  juju-expose juju-gui
+  juju-status
+}
+
+function juju-destroy-environment() {
+  juju destroy-environment -y amazon
+}
+
+function juju-set() {
+  juju-set $@
+}
+
+function juju-remove-service() {
+  juju remove-service $@
+}
+
+function juju-get() {
+  local value=`juju get $1 | grep -v "^      " | grep -A 4 " $2:"`
+  if echo "$value" | grep -q "value:" ; then
+    echo "$value" | grep "value:" | awk '{print $2}'
+  else
+    echo "$value" | grep "default:" | awk '{print $2}'
+  fi
+}
+
+function get_machine() {
+  local service=$1
+  juju status $service --format tabular | grep "$service/0" | awk '{print $5}'
+}
+
+function get_machine_ip() {
+  local service=$1
+  uju status $service --format tabular | grep "$service/0" | awk '{print $7}'
+}
+

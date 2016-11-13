@@ -12,17 +12,17 @@ function catch_errors() {
   echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
   trap - ERR EXIT
 
-  juju remove-service scaleio-mdm || /bin/true
+  juju-remove-service scaleio-mdm || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
   exit $exit_code
 }
 
 echo "INFO: Deploy MDM to 0"
-juju deploy --repository juju-scaleio local:scaleio-mdm --to 0
+juju-deploy --repository juju-scaleio local:scaleio-mdm --to 0
 wait_status
 
 echo "INFO: check mdm password"
-if ! mdm_output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_all" 2>/dev/null` ; then
+if ! mdm_output=`juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_all" 2>/dev/null` ; then
   echo "ERROR: ($my_name:$LINENO) Couldn't login or execute 'scli --query_all'"
   echo "$mdm_output"
   exit 1
@@ -31,13 +31,13 @@ echo "INFO: Success"
 
 echo "INFO: Set another password"
 new_password="No_password"
-juju set scaleio-mdm password=$new_password
+juju-set scaleio-mdm password=$new_password
 wait_status
 
 ret=0
 
 echo "INFO: check that old password doesn't work"
-if mdm_output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null " 2>/dev/null` ; then
+if mdm_output=`juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null " 2>/dev/null` ; then
   ret=1
   echo "ERROR: ($my_name:$LINENO) Illegal success with old password"
   echo "$mdm_output"
@@ -50,7 +50,7 @@ else
 fi
 
 echo "INFO: check new password works"
-if ! mdm_output=`juju ssh 0 "scli --login --username $USERNAME --password $new_password >/dev/null && scli --query_all" 2>/dev/null` ; then
+if ! mdm_output=`juju-ssh 0 "scli --login --username $USERNAME --password $new_password >/dev/null && scli --query_all" 2>/dev/null` ; then
   ret=3
   echo "ERROR: ($my_name:$LINENO) Couldn't login or execute 'scli --query_all'"
   echo "$mdm_output"
@@ -58,7 +58,7 @@ else
   echo "INFO: Success"
 fi
 
-juju remove-service scaleio-mdm
+juju-remove-service scaleio-mdm
 wait_for_removed "scaleio-mdm"
 
 trap - ERR EXIT

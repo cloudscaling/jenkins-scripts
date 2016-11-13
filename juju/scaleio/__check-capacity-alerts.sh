@@ -12,17 +12,17 @@ function catch_errors() {
   echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
   trap - ERR EXIT
 
-  juju remove-service scaleio-mdm || /bin/true
+  juju-remove-service scaleio-mdm || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
   exit $exit_code
 }
 
 echo "INFO: Deploy MDM to 0"
-juju deploy --repository juju-scaleio local:scaleio-mdm --to 0
+juju-deploy --repository juju-scaleio local:scaleio-mdm --to 0
 wait_status
 
 echo "INFO: Check capacity alert thresholds"
-query_all=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_all" 2>/dev/null`
+query_all=`juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_all" 2>/dev/null`
 current_capacity_threshold_high=`echo "$query_all" | grep 'Capacity alert thresholds' | awk '{print$5}'`
 current_capacity_threshold_critical=`echo "$query_all" | grep 'Capacity alert thresholds' | awk '{print$7}'`
 echo "INFO: Current capacity thresholds are $current_capacity_threshold_high and $current_capacity_threshold_critical"
@@ -31,11 +31,11 @@ new_capacity_threshold_high=79
 new_capacity_threshold_critical=89
 
 echo "INFO: set another capacity alert thresholds"
-juju set scaleio-mdm capacity-high-alert-threshold="$new_capacity_threshold_high" capacity-critical-alert-threshold="$new_capacity_threshold_critical"
+juju-set scaleio-mdm capacity-high-alert-threshold="$new_capacity_threshold_high" capacity-critical-alert-threshold="$new_capacity_threshold_critical"
 wait_status
 
 echo "INFO: check new capacity alert thresholds"
-query_all=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_all" 2>/dev/null`
+query_all=`juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_all" 2>/dev/null`
 current_capacity_threshold_high=`echo "$query_all" | grep 'Capacity alert thresholds' | awk '{print$5}' | sed "s/,//"`
 current_capacity_threshold_critical=`echo "$query_all" | grep 'Capacity alert thresholds' | awk '{print$7}' | sed "s/\r//"`
 
@@ -51,7 +51,7 @@ if [[ "$current_capacity_threshold_critical" != "$new_capacity_threshold_critica
 fi
 echo "INFO: Success. New capacity thresholds are $current_capacity_threshold_high and $current_capacity_threshold_critical."
 
-juju remove-service scaleio-mdm
+juju-remove-service scaleio-mdm
 wait_for_removed "scaleio-mdm"
 
 trap - ERR EXIT

@@ -57,14 +57,14 @@ for node in 1 4 5 6 7 ; do
   mdms+="${machines[$node]} "
 done
 current_master_mdm=`get_master_mdm "echo $mdms"`
-cluster_output=`juju ssh $current_master_mdm "sudo scli --query_cluster --approve_certificate" 2>/dev/null`
+cluster_output=`juju-ssh $current_master_mdm "sudo scli --query_cluster --approve_certificate" 2>/dev/null`
 slave_mdms_ip=(`echo "$cluster_output" | grep -A 10 "Slave MDMs:" | grep "Name:" | head -2 | awk '{gsub("[^0-9.]","",$2); print $2}'`)
 tie_breakers_ip=(`echo "$cluster_output" | grep -A 10 "Tie-Breakers:" | grep "Name:" | head -2 | awk '{gsub("[^0-9.]","",$2); print $2}'`)
 slave_mdms=()
 tie_breakers=()
 
 for mdm in 1 4 5 6 7 ; do
-  mdm_ip=`juju ssh ${machines[$mdm]} "ifconfig" 2>/dev/null | awk '/inet addr:/{print $2}' | head -1 | sed 's/addr://g'`
+  mdm_ip=`juju-ssh ${machines[$mdm]} "ifconfig" 2>/dev/null | awk '/inet addr:/{print $2}' | head -1 | sed 's/addr://g'`
   if [[ ${machines[$mdm]} == $current_master_mdm ]] ; then
     current_master_mdm_index=$mdm
   elif [[ ${slave_mdms_ip[@]} =~ $mdm_ip ]] ; then

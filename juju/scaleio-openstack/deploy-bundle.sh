@@ -17,10 +17,6 @@ BUNDLE="$my_dir/openstack-scaleio-amazon.yaml"
 VERSION=${VERSION:-"cloud:trusty-liberty"}
 echo "---------------------------------------------------- From: $JUJU_REPO  Version: $VERSION"
 
-juju deploy juju-gui --to 0
-juju expose juju-gui
-juju status --format tabular
-
 # ---------------------------------------- pre-deployment stage start
 # due to inability to create instances with additional disks via bundle
 # script will create machines before bundle
@@ -58,9 +54,9 @@ wait_absence_status_for_services "executing|blocked|waiting"
 echo "INFO: Wait for services end: $(date)"
 
 # check for errors
-if juju status | grep "current" | grep error ; then
+if juju-status | grep "current" | grep error ; then
   echo "ERROR: Some services went to error state"
-  juju ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
+  juju-ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
   exit 1
 fi
 

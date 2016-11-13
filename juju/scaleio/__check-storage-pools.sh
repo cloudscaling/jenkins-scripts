@@ -15,10 +15,10 @@ if [[ -z "$m1" || -z "$m2" || -z "$m3" ]] ; then
 fi
 
 function remove_services() {
-  juju remove-service scaleio-mdm || /bin/true
-  juju remove-service scaleio-sds1 || /bin/true
-  juju remove-service scaleio-sds2 || /bin/true
-  juju remove-service scaleio-sds3 || /bin/true
+  juju-remove-service scaleio-mdm || /bin/true
+  juju-remove-service scaleio-sds1 || /bin/true
+  juju-remove-service scaleio-sds2 || /bin/true
+  juju-remove-service scaleio-sds3 || /bin/true
   wait_for_removed "scaleio-mdm" || /bin/true
   wait_for_removed "scaleio-sds1" || /bin/true
   wait_for_removed "scaleio-sds2" || /bin/true
@@ -36,7 +36,7 @@ function catch_errors() {
 }
 
 echo "INFO: Deploy MDM"
-juju deploy --repository juju-scaleio local:scaleio-mdm --to 0
+juju-deploy --repository juju-scaleio local:scaleio-mdm --to 0
 
 machines[1]=$m1
 machines[2]=$m2
@@ -44,16 +44,16 @@ machines[3]=$m3
 for (( i=1; i<4; ++i )) ; do
   echo "INFO: Deploy SDS $i (sp1,sp1,sp2; /dev/xvdf,/dev/xvdg,/dev/xvdh)"
   sds="scaleio-sds$i"
-  juju deploy --repository juju-scaleio local:scaleio-sds $sds --to ${machines[$i]}
-  juju set $sds storage-pools="sp1,sp1,sp2" protection-domain=pd device-paths="/dev/xvdf,/dev/xvdg,/dev/xvdh"
-  juju add-relation $sds scaleio-mdm
+  juju-deploy --repository juju-scaleio local:scaleio-sds $sds --to ${machines[$i]}
+  juju-set $sds storage-pools="sp1,sp1,sp2" protection-domain=pd device-paths="/dev/xvdf,/dev/xvdg,/dev/xvdh"
+  juju-add-relation $sds scaleio-mdm
 done
 
 wait_status
 
 ret=0
 
-if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_all_sds" 2>/dev/null` ; then
+if ! output=`juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_all_sds" 2>/dev/null` ; then
   echo "ERROR: ($my_name:$LINENO) The command scli --login --username $USERNAME --password $PASSWORD --approve_certificate >/dev/null && scli --query_all_sds --approve_certificate 2>/dev/null failed"
   echo "$output"
   exit 1
@@ -69,11 +69,11 @@ fi
 
 
 echo "INFO: check volume creation"
-juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --add_volume --size_gb 16 --storage_pool_name sp1 --protection_domain_name pd" 2>/dev/null || (( ++ret ))
-juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --add_volume --size_gb 8 --storage_pool_name sp2 --protection_domain_name pd" 2>/dev/null || (( ++ret ))
+juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --add_volume --size_gb 16 --storage_pool_name sp1 --protection_domain_name pd" 2>/dev/null || (( ++ret ))
+juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --add_volume --size_gb 8 --storage_pool_name sp2 --protection_domain_name pd" 2>/dev/null || (( ++ret ))
 sleep 5
 
-if ! output=`juju ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_all_volumes" 2>/dev/null` ; then
+if ! output=`juju-ssh 0 "scli --login --username $USERNAME --password $PASSWORD >/dev/null && scli --query_all_volumes" 2>/dev/null` ; then
   (( ++ret ))
   echo "ERROR: ($my_name:$LINENO) The command scli --login --username $USERNAME --password $PASSWORD --approve_certificate && scli --query_all_volumes"
   echo "$output"
