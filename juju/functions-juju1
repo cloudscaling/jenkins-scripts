@@ -16,11 +16,11 @@ function juju-destroy-environment() {
 }
 
 function juju-set() {
-  juju-set $@
+  juju-set "$@"
 }
 
 function juju-remove-service() {
-  juju remove-service $@
+  juju remove-service "$@"
 }
 
 function juju-get() {
