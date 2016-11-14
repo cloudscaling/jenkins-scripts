@@ -7,7 +7,13 @@ source $my_dir/../functions
 
 deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
-  params="--repository juju-scaleio local:"
+  jver="$(juju --version | cut -d . -f 1)"
+  if [[ "$jver" == 1 ]] ; then
+    params="--repository juju-scaleio local:"
+  else
+    # version 2
+    params="$WORKSPACE/juju-scaleio/$SERIES/"
+  fi
 else
   # deploy_from=charmstore
   params="cs:~cloudscaling/"
