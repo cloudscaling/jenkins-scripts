@@ -4,10 +4,10 @@
 # separately because they rewrite haproxy configuration
 # If openstack-dashboard is added it also should be placed separately from these.
 
-series: trusty
+series: %SERIES%
 services:
   cinder:
-    charm: "cs:trusty/cinder"
+    charm: "cs:%SERIES%/cinder"
     num_units: 1
     options:
       "block-device": None
@@ -19,7 +19,7 @@ services:
     to:
       - "1"
   "nova-cloud-controller":
-    charm: "cs:trusty/nova-cloud-controller"
+    charm: "cs:%SERIES%/nova-cloud-controller"
     num_units: 1
     options:
       "console-access-protocol": novnc
@@ -29,7 +29,7 @@ services:
     to:
       - "5"
   "nova-compute":
-    charm: "cs:trusty/nova-compute"
+    charm: "cs:%SERIES%/nova-compute"
     num_units: 2
     options:
       debug: true
@@ -43,7 +43,7 @@ services:
       - "1"
       - "2"
   glance:
-    charm: "cs:trusty/glance"
+    charm: "cs:%SERIES%/glance"
     num_units: 1
     options:
       debug: true
@@ -52,7 +52,7 @@ services:
     to:
       - "3"
   keystone:
-    charm: "cs:trusty/keystone"
+    charm: "cs:%SERIES%/keystone"
     num_units: 1
     options:
       "admin-password": password
@@ -62,14 +62,14 @@ services:
     to:
       - "2"
   "rabbitmq-server":
-    charm: "cs:trusty/rabbitmq-server"
+    charm: "cs:%SERIES%/rabbitmq-server"
     num_units: 1
     options:
       source: "%VERSION%"
     to:
       - "4"
   mysql:
-    charm: "cs:trusty/percona-cluster"
+    charm: "cs:%SERIES%/percona-cluster"
     num_units: 1
     to:
       - "4"
@@ -154,12 +154,12 @@ relations:
     - "scaleio-openstack:ephemeral-backend"
 machines:
   "1":
-    series: trusty
+    series: %SERIES%
   "2":
-    series: trusty
+    series: %SERIES%
   "3":
-    series: trusty
+    series: %SERIES%
   "4":
-    series: trusty
+    series: %SERIES%
   "5":
-    series: trusty
+    series: %SERIES%

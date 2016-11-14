@@ -13,6 +13,11 @@ source $my_dir/scaleio/static-checks
 export USERNAME="admin"
 export PASSWORD="Default_password"
 
+SERIES=${SERIES:-trusty}
+export SERIES
+VERSION=${VERSION:-"cloud:$SERIES-liberty"}
+export VERSION
+
 if ! juju-bootstrap ; then
   echo "Bootstrap error. exiting..."
   exit 1
@@ -36,6 +41,9 @@ function catch_errors() {
 
   exit $exit_code
 }
+
+rm -rf logs
+mkdir logs
 
 echo "--------------------------------------------- Run deploy script: $inner_script"
 $my_dir/scaleio-openstack/$inner_script $script_params

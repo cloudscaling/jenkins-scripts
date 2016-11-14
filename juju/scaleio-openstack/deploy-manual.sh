@@ -6,7 +6,6 @@ my_dir="$(dirname $my_file)"
 source $my_dir/../functions
 
 deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
-
 if [[ "$deploy_from" == github ]] ; then
   params="--repository juju-scaleio local:"
 else
@@ -14,7 +13,6 @@ else
   params="cs:~cloudscaling/"
 fi
 
-VERSION=${VERSION:-"cloud:trusty-liberty"}
 echo "---------------------------------------------------- From: $deploy_from  Version: $VERSION"
 
 m1=$(create_machine 1 0)
