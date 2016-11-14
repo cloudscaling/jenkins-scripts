@@ -11,6 +11,9 @@ my_dir="$(dirname $my_file)"
 
 source $my_dir/functions
 
+SERIES=${SERIES:-trusty}
+export SERIES
+
 if ! juju-bootstrap ; then
   echo "Bootstrap error. exiting..."
   exit 1
