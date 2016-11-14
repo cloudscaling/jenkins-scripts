@@ -42,6 +42,9 @@ function catch_errors() {
   exit $exit_code
 }
 
+rm -rf logs
+mkdir logs
+
 echo "--------------------------------------------- Run deploy script: $inner_script"
 $my_dir/scaleio-openstack/$inner_script $script_params
 
