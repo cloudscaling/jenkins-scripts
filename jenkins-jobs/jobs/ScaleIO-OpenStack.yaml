@@ -10,7 +10,7 @@
 
 
 - job-template:
-    name: ScaleIO-OpenStack-{os_ver}
+    name: ScaleIO-Juju-OpenStack-{os_ver}
     description: "Deploys ScaleIO cluster(from bundle, from github/codedellemc) with OpenStack({os_ver}) and use puppets from github. Then checks it"
     defaults: global
     scm:
@@ -50,7 +50,7 @@
 
 
 - job:
-    name: ScaleIO-OpenStack-dev
+    name: ScaleIO-Juju-OpenStack-dev
     description: "Deploys ScaleIO cluster(from bundle) with OpenStack and checks it. Can be used for debug purposes."
     defaults: global
     parameters:
