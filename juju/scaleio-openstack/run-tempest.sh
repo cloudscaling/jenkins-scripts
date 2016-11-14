@@ -6,7 +6,7 @@ my_dir="$(dirname $my_file)"
 source $my_dir/../functions
 source $my_dir/../functions-openstack
 
-VERSION=${VERSION:-"cloud:trusty-liberty"}
+VERSION=${VERSION:-"XXX-liberty"}
 VERSION=${VERSION#*-}
 
 auth_ip=`get_machine_ip keystone`

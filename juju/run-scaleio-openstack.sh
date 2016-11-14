@@ -21,6 +21,9 @@ AZ=`juju-status | grep -Po " availability-zone=.*[ $]*" | cut -d '=' -f 2`
 echo "INFO: Availability zone of this deployment is $AZ"
 export AZ
 
+SERIES=${SERIES:-trusty}
+VERSION=${VERSION:-"cloud:$SERIES-liberty"}
+
 trap 'catch_errors $LINENO' ERR EXIT
 
 function catch_errors() {

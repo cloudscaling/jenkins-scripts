@@ -7,14 +7,13 @@ source $my_dir/../functions
 
 deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
-  JUJU_REPO="local:trusty"
+  JUJU_REPO="local:$SERIES"
 else
   # deploy_from=charmstore
   JUJU_REPO="cs:~cloudscaling"
 fi
 
 BUNDLE="$my_dir/openstack-scaleio-amazon.yaml"
-VERSION=${VERSION:-"cloud:trusty-liberty"}
 echo "---------------------------------------------------- From: $JUJU_REPO  Version: $VERSION"
 
 # ---------------------------------------- pre-deployment stage start
@@ -42,6 +41,7 @@ create_eth1 $m2
 
 # change bundles' variables
 echo "INFO: Change OpenStack version in bundle to $VERSION"
+sed -i -e "s/%SERIES%/$SERIES/m" $BUNDLE
 sed -i -e "s/%VERSION%/$VERSION/m" $BUNDLE
 sed -i -e "s/%JUJU_REPO%/$JUJU_REPO/m" $BUNDLE
 

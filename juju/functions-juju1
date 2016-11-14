@@ -5,6 +5,11 @@ fjmy_dir="$(dirname $fjmy_file)"
 source $fjmy_dir/functions-juju
 
 function juju-bootstrap() {
+  if [[ "$SERIES" != 'trusty' ]] ; then
+    echo "ERROR: Juju version 1 supports only trusty deployments."
+    return 1
+  fi
+
   juju bootstrap
   juju-deploy juju-gui --to 0
   juju-expose juju-gui
