@@ -201,16 +201,20 @@ function upgrade_kernel() {
 }
 
 function fix_kernel_drivers() {
+  local updated_machines=""
   for machine in $@ ; do
     echo "INFO: check machine $machine"
     if ! check_kernel $machine ; then
       upgrade_kernel $machine
+      updated_machines="$updated_machines $machine"
     else
       echo "INFO: driver for kernel $kernel found on ftp.emc.com"
     fi
   done
 
-  wait_for_machines $@
+  if [[ -n "$updated_machines" ]] ; then
+    wait_for_machines $updates_machines
+  fi
 }
 
 function cleanup_environment() {
