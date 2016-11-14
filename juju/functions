@@ -77,7 +77,7 @@ function wait_for_machines() {
     echo "Waiting for machine: $machine"
     local fail=0
     while ! output=`juju-ssh $machine "sudo apt-get install -fy joe" 2>/dev/null` ; do
-      if ((fail >= 30)); then
+      if ((fail >= 60)); then
         echo "ERROR: Machine $machine did not up."
         echo $output
         exit 1
@@ -138,10 +138,11 @@ function create_machine() {
     for (( i=0; i<sds_disks_count; ++i )) ; do da=(${da[@]-} ebs-ssd,100G) ; done
     disks="${da[@]}"
 
-    juju-add-machine $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" --disks "$disks" 2>&1 | awk '{print $3}'
+    juju-add-machine $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" --disks "$disks" 2>&1 | tail -1 | awk '{print $3}'
   else
-    juju-add-machine $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" 2>&1 | awk '{print $3}'
+    juju-add-machine $az_opts --constraints "$additional_constraints instance-type=$instance_type root-disk=40G" 2>&1 | tail -1 | awk '{print $3}'
   fi
+  # NOTE: 'tail -1' is needed here for enabled debug mode. in this mode there are several lines in output but we need only last.
 }
 
 function apply_developing_puppets() {
