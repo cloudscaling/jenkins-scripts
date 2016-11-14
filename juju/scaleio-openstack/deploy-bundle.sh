@@ -53,7 +53,7 @@ sed -i -e "s/%JUJU_REPO%/$JUJU_REPO/m" $BUNDLE
 
 # script needs to change directory to local charms repository
 cd juju-scaleio
-juju-deploy $BUNDLE
+juju-deploy-bundle $BUNDLE
 
 echo "INFO: Wait for services start: $(date)"
 wait_absence_status_for_services "executing|blocked|waiting"

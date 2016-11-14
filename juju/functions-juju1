@@ -20,6 +20,10 @@ function juju-destroy-environment() {
   juju destroy-environment -y amazon
 }
 
+function juju-deploy-bundle() {
+  juju-deployer -c "$@"
+}
+
 function juju-set() {
   juju set "$@"
 }

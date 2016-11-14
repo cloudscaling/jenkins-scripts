@@ -16,6 +16,10 @@ function juju-destroy-environment() {
   juju destroy-controller  -y --destroy-all-models amazon
 }
 
+function juju-deploy-bundle() {
+  juju-deploy "$@"
+}
+
 function juju-set() {
   juju config "$@"
 }
