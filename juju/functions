@@ -77,7 +77,7 @@ function wait_for_machines() {
     echo "Waiting for machine: $machine"
     local fail=0
     while ! output=`juju-ssh $machine "sudo apt-get install -fy joe" 2>/dev/null` ; do
-      if ((fail >= 12)); then
+      if ((fail >= 30)); then
         echo "ERROR: Machine $machine did not up."
         echo $output
         exit 1

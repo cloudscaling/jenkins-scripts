@@ -7,6 +7,7 @@ source $fjmy_dir/functions-juju
 function juju-bootstrap() {
   juju bootstrap --bootstrap-series=$SERIES aws amazon
   juju-deploy juju-gui
+  sleep 30
   juju-expose juju-gui
   juju-status
 }
