@@ -51,3 +51,6 @@ function get_machine_ip() {
   juju status $service --format tabular | grep "$service/0" | awk '{print $7}'
 }
 
+function juju-get-machines() {
+  juju status --format json | jq .machines | jq keys | tail -n +2 | head -n -1 | sed -e "s/[\",]//g"
+}

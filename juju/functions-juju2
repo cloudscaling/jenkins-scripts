@@ -47,3 +47,6 @@ function get_machine_ip() {
   juju status $service --format tabular | grep "$service/" | head -1 | awk '{print $5}'
 }
 
+function juju-get-machines() {
+  juju machines | awk '/started/{print $1}'
+}
