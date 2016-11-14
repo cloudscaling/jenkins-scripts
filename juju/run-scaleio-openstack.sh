@@ -22,7 +22,9 @@ echo "INFO: Availability zone of this deployment is $AZ"
 export AZ
 
 SERIES=${SERIES:-trusty}
+export SERIES
 VERSION=${VERSION:-"cloud:$SERIES-liberty"}
+export VERSION
 
 trap 'catch_errors $LINENO' ERR EXIT
 
