@@ -69,7 +69,7 @@ services:
     to:
       - "4"
   mysql:
-    charm: "cs:trusty/mysql"
+    charm: "cs:trusty/percona-cluster"
     num_units: 1
     to:
       - "4"

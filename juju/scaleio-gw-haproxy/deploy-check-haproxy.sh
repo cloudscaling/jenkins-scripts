@@ -39,7 +39,7 @@ juju-deploy cs:rabbitmq-server --to $m4
 juju-set rabbitmq-server "source=$os_source"
 
 echo "Deploy mysql"
-juju-deploy cs:mysql --to $m4
+juju-deploy cs:percona-cluster mysql --to $m4
 
 echo "Deploy SDC"
 juju-deploy --repository juju-scaleio local:scaleio-sdc --to $m1

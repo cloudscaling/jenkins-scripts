@@ -65,7 +65,7 @@ juju-deploy cs:rabbitmq-server --to $m4
 juju-set rabbitmq-server "source=$VERSION"
 
 echo "INFO: Deploy mysql"
-juju-deploy cs:mysql --to $m4
+juju-deploy cs:percona-cluster mysql --to $m4
 
 echo "INFO: Deploy SDC"
 juju-deploy ${params}scaleio-sdc --to $m1
