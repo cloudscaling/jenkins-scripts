@@ -49,7 +49,7 @@ create_eth1 $m2
 echo "INFO: Change OpenStack version in bundle to $VERSION"
 sed -i -e "s/%SERIES%/$SERIES/m" $BUNDLE
 sed -i -e "s/%VERSION%/$VERSION/m" $BUNDLE
-sed -i -e "s/%JUJU_REPO%/$JUJU_REPO/m" $BUNDLE
+sed -i -e "s|%JUJU_REPO%|$JUJU_REPO|m" $BUNDLE
 
 # script needs to change directory to local charms repository
 cd juju-scaleio
