@@ -16,7 +16,7 @@ function juju-destroy-environment() {
 }
 
 function juju-set() {
-  juju-set "$@"
+  juju set "$@"
 }
 
 function juju-remove-service() {
@@ -39,6 +39,6 @@ function get_machine() {
 
 function get_machine_ip() {
   local service=$1
-  uju status $service --format tabular | grep "$service/0" | awk '{print $7}'
+  juju status $service --format tabular | grep "$service/0" | awk '{print $7}'
 }
 
