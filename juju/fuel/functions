@@ -100,7 +100,11 @@ function remove_node_service() {
     mch=${machines[$node]}
     name=fuel-node${mch}
     echo "Remove EMC packages from machine $node/$#"
-    juju-ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*' &>/dev/null
+    if ! output=`juju-ssh $mch 'sudo truncate --size 0 /etc/environment && sudo apt-get purge -qqyf emc-scaleio-*'` ; then
+      echo "ERROR: Can't remove EMC packages from machine $node/$#"
+      echo "$output"
+      return 1
+    fi
     echo "Remove service ${name} from machine $node/$#"
     juju-remove-service ${name}
   done
