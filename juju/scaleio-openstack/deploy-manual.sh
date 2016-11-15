@@ -122,7 +122,7 @@ juju-add-relation "nova-compute:ephemeral-backend" "scaleio-openstack:ephemeral-
 
 
 echo "INFO: Wait for services start: $(date)"
-wait_absence_status_for_services "executing|blocked|waiting|allocating"
+wait_absence_status_for_services "executing|blocked|waiting|allocating" 45
 echo "INFO: Wait for services end: $(date)"
 
 # check for errors
