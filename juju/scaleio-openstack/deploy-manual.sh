@@ -5,9 +5,9 @@ my_dir="$(dirname $my_file)"
 
 source $my_dir/../functions
 
+jver="$(juju-version)"
 deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
-  jver="$(juju-version)"
   if [[ "$jver" == 1 ]] ; then
     params="--repository juju-scaleio local:"
   else
@@ -64,18 +64,6 @@ echo "INFO: Deploy keystone"
 juju-deploy cs:keystone --to $m2
 juju-set keystone "admin-password=password" "debug=true" "openstack-origin=$VERSION"
 juju-expose keystone
-
-if [[ "$(juju-version)" == '2' ]] ; then
-  # Juju 2.0 registers services with private ips (using new modern tool 'network-get public')
-  ip=`get-machine-ip-by-number $m1`
-  juju config cinder os-public-hostname=$ip
-  ip=`get-machine-ip-by-number $m5`
-  juju config nova-cloud-controller os-public-hostname=$ip
-  ip=`get-machine-ip-by-number $m3`
-  juju config glance os-public-hostname=$ip
-  ip=`get-machine-ip-by-number $m2`
-  juju config keystone os-public-hostname=$ip
-fi
 
 echo "INFO: Deploy rabbit mq"
 juju-deploy cs:rabbitmq-server --to $m4
@@ -143,6 +131,22 @@ if juju-status | grep "current" | grep error ; then
   echo "ERROR: Some services went to error state"
   juju-ssh 0 sudo grep Error /var/log/juju/all-machines.log 2>/dev/null
   exit 1
+fi
+
+if [[ "$jver" == 2 ]] ; then
+  # Juju 2.0 registers services with private ips (using new modern tool 'network-get public')
+  echo "INFO: HACK: Reconfigure public endpoints for OpenStack $(date)"
+  ip=`get-machine-ip-by-number $m1`
+  juju config cinder os-public-hostname=$ip
+  ip=`get-machine-ip-by-number $m5`
+  juju config nova-cloud-controller os-public-hostname=$ip
+  ip=`get-machine-ip-by-number $m3`
+  juju config glance os-public-hostname=$ip
+  ip=`get-machine-ip-by-number $m2`
+  juju config keystone os-public-hostname=$ip
+  echo "INFO: Wait for services start: $(date)"
+  wait_absence_status_for_services "executing|blocked|waiting|allocating" 10
+  echo "INFO: Wait for services end: $(date)"
 fi
 
 echo "INFO: Waiting for all services up"
