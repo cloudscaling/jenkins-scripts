@@ -17,12 +17,8 @@ function get_provisioning_type() {
 }
 
 echo "INFO: Master MDM found at $master_mdm"
-auth_ip=`get_machine_ip keystone`
-export OS_AUTH_URL=http://$auth_ip:5000/v2.0
-export OS_USERNAME=admin
-export OS_TENANT_NAME=admin
-export OS_PROJECT_NAME=admin
-export OS_PASSWORD=password
+
+source $WORKSPACE/stackrc
 
 create_virtualenv
 run_os_checks exec_on_mdm get_provisioning_type

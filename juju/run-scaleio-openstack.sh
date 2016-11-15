@@ -60,6 +60,7 @@ if (( errors > 0 )) ; then
   exit $errors
 fi
 
+create_stackrc
 $my_dir/scaleio-openstack/check-openstack.sh
 
 if [[ "$CHECK_EXISTING_CLUSTER_FEATURE" == 'true' ]] ; then

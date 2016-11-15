@@ -7,7 +7,7 @@ source $my_dir/../functions
 
 deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
-  jver="$(juju --version | cut -d . -f 1)"
+  jver="$(juju-version)"
   if [[ "$jver" == 1 ]] ; then
     params="--repository juju-scaleio local:"
   else
@@ -40,6 +40,7 @@ create_eth1 $m1
 create_eth1 $m2
 
 echo "INFO: Deploy cinder"
+
 juju-deploy cs:cinder --to $m1
 juju-set cinder "block-device=None" "debug=true" "glance-api-version=2" "openstack-origin=$VERSION" "overwrite=true"
 juju-expose cinder
@@ -63,6 +64,18 @@ echo "INFO: Deploy keystone"
 juju-deploy cs:keystone --to $m2
 juju-set keystone "admin-password=password" "debug=true" "openstack-origin=$VERSION"
 juju-expose keystone
+
+if [[ "$(juju-version)" == '2' ]] ; then
+  # Juju 2.0 registers services with private ips (using new modern tool 'network-get public')
+  ip=`get-machine-ip-by-number $m1`
+  juju config cinder os-public-hostname=$ip
+  ip=`get-machine-ip-by-number $m5`
+  juju config nova-cloud-controller os-public-hostname=$ip
+  ip=`get-machine-ip-by-number $m3`
+  juju config glance os-public-hostname=$ip
+  ip=`get-machine-ip-by-number $m2`
+  juju config keystone os-public-hostname=$ip
+fi
 
 echo "INFO: Deploy rabbit mq"
 juju-deploy cs:rabbitmq-server --to $m4

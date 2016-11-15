@@ -7,7 +7,7 @@ source $my_dir/../functions
 
 deploy_from=${1:-github}   # Place where to get ScaleIO charms - github or charmstore
 if [[ "$deploy_from" == github ]] ; then
-  jver="$(juju --version | cut -d . -f 1)"
+  jver="$(juju-version)"
   if [[ "$jver" == 1 ]] ; then
     JUJU_REPO="local:$SERIES"
   else

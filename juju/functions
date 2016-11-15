@@ -236,3 +236,12 @@ function create_eth1() {
   echo "INFO: creating additional network interface on node: $node"
   juju-ssh $node "sudo apt-get -fy install uml-utilities >/dev/null ; sudo ip tuntap add dev eth1 mode tap ; sudo ip link set dev eth1 up ; ifconfig" 2>/dev/null
 }
+
+function create_stackrc() {
+  auth_ip=`get_machine_ip keystone`
+  echo "export OS_AUTH_URL=http://$auth_ip:5000/v2.0" > $WORKSPACE/stackrc
+  echo "export OS_USERNAME=admin" > $WORKSPACE/stackrc
+  echo "export OS_TENANT_NAME=admin" > $WORKSPACE/stackrc
+  echo "export OS_PROJECT_NAME=admin" > $WORKSPACE/stackrc
+  echo "export OS_PASSWORD=password" > $WORKSPACE/stackrc
+}

@@ -17,11 +17,7 @@ juju-ssh $keystone_machine "auth_ip=$auth_ip bash -e __setup_cloud_accounts.sh" 
 nova_api_machine=`get_machine nova-cloud-controller`
 filters=`juju-ssh $nova_api_machine "sudo grep scheduler_default_filters /etc/nova/nova.conf | cut -d '=' -f 2" 2>/dev/null`
 
-export OS_AUTH_URL=http://$auth_ip:5000/v2.0
-export OS_USERNAME=admin
-export OS_TENANT_NAME=admin
-export OS_PROJECT_NAME=admin
-export OS_PASSWORD=password
+create_stackrc
 
 create_virtualenv
 image_id=`create_image`

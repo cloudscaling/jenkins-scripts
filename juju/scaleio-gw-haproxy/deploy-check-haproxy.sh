@@ -93,12 +93,8 @@ fi
 echo "Waiting for all services up"
 sleep 60
 
-auth_ip=`get_machine_ip keystone`
-export OS_AUTH_URL=http://$auth_ip:5000/v2.0
-export OS_USERNAME=admin
-export OS_TENANT_NAME=admin
-export OS_PROJECT_NAME=admin
-export OS_PASSWORD=password
+create_stackrc
+source $WORKSPACE/stackrc
 
 # check installed cloud
 create_virtualenv
