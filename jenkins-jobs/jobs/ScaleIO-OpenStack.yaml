@@ -104,3 +104,29 @@
       - archive:
           artifacts: 'logs/**'
           allow-empty: true
+
+- job:
+    name: ScaleIO-Juju2-OpenStack-Newton
+    description: "Deploys ScaleIO cluster(manual, from github/codedellemc) with OpenStack(Newton), on 16.04, Juju 2.0, and use puppets from github. Then checks it"
+    defaults: global
+    node: fuel-ci-slave
+    parameters:
+      - bool:
+          name: CLEAN_ENV
+          default: true
+    scm:
+      - emc-juju-scaleio
+      - jenkins-scripts
+    triggers:
+      - timed: "H 1 * * 0"
+    builders:
+      - shell: |
+          #!/bin/bash -e
+          export SERIES='xenial'
+          export VERSION="cloud:$SERIES-newton"
+          export PUPPET_DEV_MODE=true
+          ./jenkins-scripts/juju/run-scaleio-openstack.sh deploy-manual.sh github
+    publishers:
+      - archive:
+          artifacts: 'logs/**'
+          allow-empty: true
