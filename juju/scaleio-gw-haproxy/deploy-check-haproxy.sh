@@ -156,12 +156,18 @@ function check_volume_creation() {
 
 trap 'catch_errors $LINENO' ERR
 
+function save_logs() {
+  $my_dir/../save_logs.sh
+  $my_dir/../scaleio-openstack/save_logs.sh
+}
+
 function catch_errors() {
   local exit_code=$?
   echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
   trap - ERR
 
-  $my_dir/save_logs.sh
+  save_logs
+
   exit $exit_code
 }
 
@@ -215,7 +221,7 @@ deactivate
 
 trap - ERR
 
-$my_dir/../scaleio-openstack/save_logs.sh
+save_logs
 
 if [[ $ret != 0 ]] ; then
   echo "FINISH: Errors occured during the test."

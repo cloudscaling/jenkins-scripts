@@ -4,19 +4,9 @@ my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 source $my_dir/../functions
 
-echo "--------------------------------------------------- Save LOGS ---"
-
-# save status to file
 log_dir=$WORKSPACE/logs
-rm -rf $log_dir
-mkdir $log_dir
-juju-status > $log_dir/juju_status.log
-juju-ssh 0 sudo cat /var/log/juju/all-machines.log > $log_dir/all-machines.log 2>/dev/null
 
-for mch in $(juju-get-machines) ; do
-  mkdir -p $log_dir/$mch
-  juju-ssh $mch sudo cat /var/log/juju/machine-$mch.log > $log_dir/$mch/juju-machine-$mch.log 2>/dev/null
-done
+echo "--------------------------------------------------- Save OpenStack LOGS ---"
 
 # try to save logs from cinder and nova nodes
 function save_logs() {

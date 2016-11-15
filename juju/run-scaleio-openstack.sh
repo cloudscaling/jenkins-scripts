@@ -7,6 +7,10 @@ script_params="$@"
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+log_dir=$WORKSPACE/logs
+rm -rf $log_dir
+mkdir $log_dir
+
 source $my_dir/functions
 source $my_dir/scaleio/static-checks
 
@@ -33,6 +37,7 @@ function catch_errors() {
   echo "Line: $1  Error=$exit_code  Command: '$(eval echo $BASH_COMMAND)'"
   trap - ERR EXIT
 
+  $my_dir/save_logs.sh
   $my_dir/scaleio-openstack/save_logs.sh
 
   if [[ $CLEAN_ENV != 'false' ]] ; then

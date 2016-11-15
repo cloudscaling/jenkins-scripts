@@ -9,6 +9,10 @@ fi
 my_file="$(readlink -e "$0")"
 my_dir="$(dirname $my_file)"
 
+log_dir=$WORKSPACE/logs
+rm -rf $log_dir
+mkdir $log_dir
+
 source $my_dir/functions
 
 SERIES=${SERIES:-trusty}
@@ -25,9 +29,7 @@ export AZ
 trap 'catch_errors $LINENO' ERR
 
 function save_logs() {
-  # save status to file
-  juju-status > logs/juju_status.log
-  juju-ssh 0 sudo cat /var/log/juju/all-machines.log > logs/all-machines.log 2>/dev/null
+  $my_dir/save_logs.sh
 }
 
 function catch_errors() {

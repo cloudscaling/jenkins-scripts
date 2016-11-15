@@ -58,3 +58,8 @@ function get_machine_ip() {
 function juju-get-machines() {
   juju status --format json | jq .machines | jq keys | tail -n +2 | head -n -1 | sed -e "s/[\",]//g"
 }
+
+function get-machine-ip-by-number() {
+  echo "ERROR: get-machine-ip-by-number for juju 1.0 is not implemented"
+  exit 100
+}
