@@ -31,7 +31,7 @@
           allow-empty: 'true'
 
 - project:
-   name: ScaleIO-OpenStack
+   name: ScaleIO-Juju-OpenStack
    os_ver:
     - Juno:
        version: 'cloud:trusty-juno'
@@ -46,7 +46,7 @@
        version: 'cloud:trusty-mitaka'
        time: "H 23 * * 6"
    jobs:
-    - 'ScaleIO-OpenStack-{os_ver}'
+    - 'ScaleIO-Juju-OpenStack-{os_ver}'
 
 
 - job:
