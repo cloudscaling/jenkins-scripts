@@ -117,7 +117,7 @@ function wait_image() {
     if [[ "$status" == "$wait_status" || "$status" == 'active' ]]; then
       break
     fi
-    if [[ "$status" == "error" || -z "$status" ]]; then
+    if [[ "$status" == "error" || "$status" == "deleted" || -z "$status" ]]; then
       echo '' >> errors
       echo 'ERROR: Image creation error' >> errors
       openstack image show $image_id >> errors
