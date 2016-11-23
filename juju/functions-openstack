@@ -162,6 +162,8 @@ function create_image() {
     fi
   fi
   image_id=`echo "$output" | awk '/ id /{print $4}'`
+  echo "INFO: Cirros image information"
+  openstack image show $image_id
 
   deactivate_venv
   echo $image_id
@@ -623,7 +625,9 @@ function check_instance_snapshot() {
     nova delete $instance_id >/dev/null
     return 1
   fi
-  echo "INFO: Image created successfully"
+  echo "INFO: Image created successfully. Image info:"
+  openstack image show $simage_id
+  openstack volume list
 
   echo "INFO: Create instance from created image"
   local iname="from_snapshot"
