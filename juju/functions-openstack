@@ -162,8 +162,6 @@ function create_image() {
     fi
   fi
   image_id=`echo "$output" | awk '/ id /{print $4}'`
-  echo "INFO: Cirros image information"
-  openstack image show $image_id
 
   deactivate_venv
   echo $image_id
@@ -249,6 +247,8 @@ function run_os_checks() {
   set +e
 
   activate_venv
+  echo "INFO: Cirros image information"
+  openstack image show $image_id
   local ret=0
   check_cinder_simple_volume || ret=1
   echo ''
