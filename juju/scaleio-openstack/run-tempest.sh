@@ -18,6 +18,7 @@ nova_api_machine=`get_machine nova-cloud-controller`
 filters=`juju-ssh $nova_api_machine "sudo grep scheduler_default_filters /etc/nova/nova.conf | cut -d '=' -f 2" 2>/dev/null`
 
 create_stackrc
+source $WORKSPACE/stackrc
 
 create_virtualenv
 image_id=`create_image`
