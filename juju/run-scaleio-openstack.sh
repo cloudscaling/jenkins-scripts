@@ -54,6 +54,9 @@ echo "--------------------------------------------- Run deploy script: $inner_sc
 $my_dir/scaleio-openstack/$inner_script $script_params
 
 master_mdm=`get_master_mdm`
+echo "INFO: ScaleIO version is:"
+juju-ssh $master_mdm "scli --version"
+
 cluster_mode=`juju-get scaleio-mdm cluster-mode`
 errors=0
 check-cluster "juju-ssh" $master_mdm $cluster_mode || ((++errors))
