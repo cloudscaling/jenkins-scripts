@@ -80,6 +80,7 @@ if [[ "$RUN_TEMPEST" == 'true' ]] ; then
   $my_dir/scaleio-openstack/run-tempest.sh
 fi
 
+$my_dir/save_logs.sh
 $my_dir/scaleio-openstack/save_logs.sh
 
 if [[ $CLEAN_ENV != 'false' ]] ; then
