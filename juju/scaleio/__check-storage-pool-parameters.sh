@@ -81,7 +81,7 @@ if juju-status | grep "current" | grep -q error ; then
   mdm_unit=`juju-status | grep "scaleio-mdm/" | sed "s/[:\r]//" | sed -e 's/^[[:space:]]*//'`
   mdm_unit_log_name="unit-${mdm_unit//\//-}"
   echo "INFO: Checking file /var/log/juju/$mdm_unit_log_name on machine 0"
-  log_items=`juju-ssh 0 sudo cat "/var/log/juju/$mdm_unit_log_name" 2>/dev/null`
+  log_items=`juju-ssh 0 "sudo cat /var/log/juju/$mdm_unit_log_name" 2>/dev/null`
   error_status='Error: MDM failed command.  Status: This operation is only allowed when there are no devices in the Storage Pool. Please remove all devices from the Storage Pool.'
   if ! echo "$log_items" | grep -q "$error_status" ; then
     (( ++ret ))
