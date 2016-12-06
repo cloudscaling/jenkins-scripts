@@ -1,22 +1,49 @@
 
-How to prepare stand:
-1. Deploy ubuntu server 14.04 or higher
-2. Enable firewall with allowing ssh ports
-3. create jenkins user
-4. add key of master jenkins server into jenkins's user authorized_keys file (~/.ssh/authorized_keys)
-5. Prepare SW:
+How to prepare jenkin slave:
+
+1. Prepare Server
+  - Deploy ubuntu server 14.04 or higher
+  - Enable firewall with allowing ssh ports
+
+2. Prepare SW:
     apt-get install -y git qemu-kvm
-    su jenkins
-    mkdir ~/fuel_ci
-    cd ~/fuel_ci
-    git clone https://github.com/cloudscaling/fuel-kvm
-    git clone https://github.com/cloudscaling/jenkins-scripts
-    cp jenkins-scripts/fuel/provision_fuel.sh ./
-    cp jenkins-scripts/fuel/cleanup_env.sh ./
-6. Download MOS iso file into ~/fuel_ci/.
-   Names are expected as 'MirantisOpenStack-x.y.iso', e.g. MirantisOpenStack-8.0.iso
-7. Allow jenkins user to run deploy of env, add to sudoers fiel:
-jenkins ALL=(ALL) NOPASSWD: /home/jenkins/fuel_ci/provision_fuel.sh
-jenkins ALL=(ALL) NOPASSWD: /home/jenkins/fuel_ci/cleanup_env.sh
-Defaults!/home/jenkins/fuel_ci/provision_fuel.sh env_keep+="FUEL_*"
-Defaults!/home/jenkins/fuel_ci/cleanup_env.sh env_keep+="FUEL_*"
+
+3. Prepare jenkins user to access from Jenkins master server:
+  - Create jenkins user with certificate authentication only
+  - Add the pub-key of master jenkins server into jenkins's user authorized_keys file (/home/jenkins/.ssh/authorized_keys)
+
+4. Allow ssh to skip cert-check and don't save host signatures in the known host file:
+  Example of ssh config:
+    cat /home/jenkins/.ssh/config
+    Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile=/dev/null
+
+5. Download Mirantis OpenStack (MOS) iso files into /home/jenkins/iso folder,
+  Files can be found at the official site: https://www.mirantis.com/software/openstack/download/
+  Exmaple of the dir content:
+  ls /home/jenkins/iso/
+  MirantisOpenStack-6.1.iso  MirantisOpenStack-7.0.iso  MirantisOpenStack-8.0.iso  MirantisOpenStack-9.0.iso
+
+6. Allow jenkins user to run deploy under privileged user, add to sudoers file:
+
+  # FUEL CI
+  jenkins ALL=(ALL) NOPASSWD: /home/jenkins/workspace/*/jenkins-scripts/fuel/provision_fuel.sh
+  jenkins ALL=(ALL) NOPASSWD: /home/jenkins/workspace/*/jenkins-scripts/fuel/cleanup_env.sh
+  Defaults!/home/jenkins/workspace/*/jenkins-scripts/fuel/provision_fuel.sh env_keep+="WORKSPACE FUEL_*"
+  Defaults!/home/jenkins/workspace/*/jenkins-scripts/fuel/cleanup_env.sh env_keep+="WORKSPACE FUEL_*"
+
+  # TRIPLEO CI
+  jenkins ALL=(ALL) NOPASSWD:SETENV: /home/jenkins/workspace/*/redhat-kvm/deploy_all.sh
+  jenkins ALL=(ALL) NOPASSWD:SETENV: /home/jenkins/workspace/*/redhat-kvm/clean_env.sh
+
+7. On the Jenkins master add new builder, with options:
+  - limit number of executor processess with reasonable number, e.g. 3 for the server with 128GB RAM, 32 logical CPUs and a RAID on 2 SSD disks.
+  - root of remote filesystem: /home/jenkins
+  - The way to run jenkins slave agent: Launch jenkins via execution of command on the master:
+    ssh -v jenkins@158.69.124.47 'cd ~ && wget http://52.15.65.240:8080/jnlpJars/slave.jar && java -jar ~/slave.jar'
+    (put your real IP/name of jenkins slave server)
+    In unkonw reason the the other ways didn't work in our case.
+  - In case if you want to restrict what jons should be run on the slave use 'Job restriction', e.g. by Job name matching to a regular expression ('ScaleIO-Fuel-CI.*' for example)
+  -
+  
