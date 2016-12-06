@@ -7,7 +7,7 @@ if [ -z "$localrc_file" ] ; then
 fi
 
 test_suite=$2
-if [ -z "$localrc_file" ] ; then
+if [ -z "$test_suite" ] ; then
   echo "ERROR: second argument is absent. It should be a name of test_suite"
   exit 1
 fi
