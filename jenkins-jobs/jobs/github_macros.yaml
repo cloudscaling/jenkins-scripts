@@ -14,12 +14,12 @@
           wipe-workspace: true
           skip-tag: true
 
-# Private repository in Cloudscaling github
+# Repository in Cloudscaling github
 - scm:
     name: cspgithub
     scm:
       - git:
-          url: 'ssh://{repo}.github.com/cloudscaling/{repo}.git'
+          url: 'https://github.com/cloudscaling/{repo}.git'
           basedir: '{repo}'
           branches:
             - '*/master'
