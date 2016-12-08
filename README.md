@@ -10,12 +10,17 @@ Right now scripts are used by Jenkins - http://52.15.65.240:8080/
 
 These scripts need next slaves:
 
-- slave with one executor to run Juju 1.25 jobs and Devstack jobs. This slave should be configured to access Amazon cloud under user 'jenkins'.
-In common case this slave is a jenkins master machine
+- Slave with one executor to run Juju 1.25 jobs and Devstack jobs.
+  This slave should be configured to access Amazon cloud under user 'jenkins'.
+  In common case this slave is the jenkins master itself.
 
-- slave with one or more executors ti run Juju 2.0 jobs and resource-consuming jobs (Fuel and TripleO CI's). This slave should be configured to Amazon cloud as well and have some additional configuration:
+- Slave with one or more executors to run Juju 2.0 jobs and resource-consuming jobs (Fuel and TripleO CI's).
+  It should be configured to access Amazon cloud as well and to run KVM virtual machines.
+  It should be able to run at least 6 VM with configuration 2 cpu, 8GB of RAM, 2x100GB disks.
+  How to prepare it is described below.
 
-How to prepare such jenkin slave:
+
+###How to prepare jenkin slave for resource-consuming jobs:
 
 1. Prepare Server
   - Deploy ubuntu server 14.04 or higher
@@ -59,7 +64,7 @@ How to prepare such jenkin slave:
   - In case if you want to restrict what jobs should be run on the slave use 'Job restriction', e.g. by Job name matching to a regular expression ('ScaleIO-Fuel-CI.*' for example)
 
 
-## Folder of this repository
+## Folder descriptions
 
 ### 'jenkins-jobs' folder
 
@@ -115,25 +120,25 @@ subunit2jenkins.py - python script to convert result for jenkins graphs
 Files to help deploy and check full Fuel deployment.
 It supports versions: 6.1, 7.0, 8.0, 9.0
 These scripts need some VM images to run deployemnt.
-You need to download Mirantis OpenStack (MOS) iso files into /home/jenkins/iso folder,
+You need to download Mirantis OpenStack (MOS) iso files into /home/jenkins/iso folder (on a slave),
 Files can be found at the official site: https://www.mirantis.com/software/openstack/download/
 Exmaple of the dir content: MirantisOpenStack-6.1.iso MirantisOpenStack-7.0.iso MirantisOpenStack-8.0.iso MirantisOpenStack-9.0.iso
 
 ```
 run-scaleio.sh - runs Fuel deployment and runs script that passed as a first argument
-check-openstack.sh
-check-openstack-stub.sh
-cleanup_env.sh
-fuel-utils
-prepare_plugin.sh
-provision_fuel.sh
-run-os-task.sh
-set_network_parameters.py
-set_node_network.py
-set_node_volumes_layout.py
-set_plugin_parameters.py
-test-cluster.sh
-test-cluster-stub.sh
+check-openstack.sh          - runs OpenStack tests
+check-openstack-stub.sh     - copies scripts on fuel slave nodes (first controller) and run it there
+cleanup_env.sh              - helping script to cleanup deployed Fuel environment
+fuel-utils                  - utilities to configure Fuel testing environment
+prepare_plugin.sh           - it is run on Fuel mster node, it downloads, builds and installs the plugin
+provision_fuel.sh           - prepares ssh-keys to access Fuel master node
+run-os-task.sh              - helping scrpt to tune flavors, etc (not used now)
+set_network_parameters.py   - helping script to modify yaml-fiel with Fuel network parameters
+set_node_network.py         - helping script to modify yaml-file with Fuel assigned networks 
+set_node_volumes_layout.py  - helping script to modify yaml-file with Fuel slave nodes volume layout
+set_plugin_parameters.py    - helping script to modify yaml-file with plugin settings
+test-cluster.sh             - main script that contains main test workflow, it is run on Fuel master node
+test-cluster-stub.sh        - helping script that copies test-cluster.sh from Jenkins node to Fuel master and run it there
 
 
 ### 'tripleo' folder
