@@ -178,10 +178,10 @@ function check_kernel() {
   kernel=`echo $kernel | sed 's/\r//'`
 
   rm -f index.html
-  wget -t 2 -T 30 -q "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/
+  wget -t 2 -T 30 -q "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.11000.174/
   if grep -q $kernel index.html ; then
     rm -f index.html
-    wget -t 2 -T 30 -q "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.5014.0/${kernel}/
+    wget -t 2 -T 30 -q "--ftp-user=QNzgdxXix" "--ftp-password=Aw3wFAwAq3" ftp://ftp.emc.com/Ubuntu/2.0.11000.174/${kernel}/
     if grep -q 'scini.tar' index.html && grep -q 'xcache.tar' index.html  ; then
       rm -f index.html
       return 0
