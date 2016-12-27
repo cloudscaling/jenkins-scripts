@@ -14,10 +14,6 @@ SCP="scp -i kp $SSH_OPTS"
 rm -f *.xml
 echo "running tests"
 echo -------------------------------------------------------------------------- $(date)
-$SSH "sudo pip install openstacksdk"
-$SSH "echo \"-e git+https://github.com/openstack/ec2-api.git#egg=ec2_api\" >> /opt/stack/tempest/requirements.txt"
-$SSH "echo \"-e git+https://github.com/openstack/gce-api.git#egg=gce_api\" >> /opt/stack/tempest/requirements.txt"
-$SSH "echo \"google-api-python-client\" >> /opt/stack/tempest/requirements.txt"
 $SSH "cd /opt/stack/tempest; tox -eall-plugin -- $test_suite --concurrency=$concurrency"
 exit_code=$?
 echo -------------------------------------------------------------------------- $(date)
