@@ -165,7 +165,7 @@ function apply_developing_puppets() {
       juju-ssh $mch "sudo git clone -q https://github.com/codedellemc/puppet-scaleio-openstack /etc/puppet/modules/scaleio_openstack" 2>/dev/null
     fi
     for dep in puppetlabs-firewall puppetlabs-stdlib puppetlabs-inifile ; do
-      juju-ssh $mch "sudo puppet module install $dep || /bin/true" &>>$logf
+      juju-ssh $mch "sudo puppet module install $dep" &>>$logf
     done
   done
 }
