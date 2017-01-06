@@ -35,6 +35,15 @@
       - bool:
           name: CLEAN_ENV
           default: true
+      - choice:
+          name: SCALEIO_VERSION
+          description: "Version of ScaleIO"
+          choices:
+            - '2.0.7536.0'
+            - '2.0.12000.122'
+            - '2.0.11000.174'
+            - '2.0.10000.2072'
+            - '2.0.7120.0'
     scm:
       - jenkins-scripts
       - redhat-kvm
