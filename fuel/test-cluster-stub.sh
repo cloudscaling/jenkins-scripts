@@ -17,7 +17,7 @@ if [[ "$PLUGIN_VERSION" == "auto" ]]; then
     "6.1" | "7.0")
       plugin_tag="fuel-package-v2"
       ;;
-    "8.0" | "9.0")
+    "8.0" | "9.0" | "10.0")
       plugin_tag="master"
       ;;
     *)
