@@ -118,7 +118,7 @@ subunit2jenkins.py - python script to convert result for jenkins graphs
 ### 'fuel' folder
 
 Files to help deploy and check full Fuel deployment.
-It supports versions: 6.1, 7.0, 8.0, 9.0
+It supports versions: 6.1, 7.0, 8.0, 9.0, 10.0
 These scripts need some VM images to run deployemnt.
 You need to download Mirantis OpenStack (MOS) iso files into /home/jenkins/iso folder (on a slave),
 Files can be found at the official site: https://www.mirantis.com/software/openstack/download/

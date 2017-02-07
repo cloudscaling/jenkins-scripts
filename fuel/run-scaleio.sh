@@ -12,7 +12,7 @@ if [ -z "$inner_script" ] ; then
 fi
 
 clean_env=${CLEAN_ENV:-'auto'}
-fuel_version=${FUEL_VERSION:-'9.0'}
+fuel_version=${FUEL_VERSION:-'10.0'}
 fuel_nodes=${FUEL_NODES:-6}
 
 function save_logs() {
