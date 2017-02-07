@@ -39,7 +39,7 @@ def main(args):
                 ip_ranges.append(ip_addresses)
             network['ip_ranges'] = ip_ranges
 
-            if args.fuel_version not in ['8.0.0','9.0.0','10.0.0', '10.0.0b1']:
+            if args.fuel_version not in ['8.0.0','9.0.0','10.0.0']:
                 change_parameter(network['meta'], 'cidr', network_prefix)
 
     with open(args.config_file, 'w') as stream:

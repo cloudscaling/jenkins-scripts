@@ -104,7 +104,7 @@ function list_online_nodes() {
   local env=$1
   local role=${2:-""}
   local role_regexp=""
-  if [[ "$env" == "None" && "9.0.0 10.0.0 10.0.0b1" =~ "$fuel_version" ]] ; then
+  if [[ "$env" == "None" && "9.0.0 10.0.0" =~ "$fuel_version" ]] ; then
     env=""
   fi
   if [ -n "$role" ] ; then
@@ -180,10 +180,10 @@ fuel_nodes=${FUEL_NODES:-6}
 hyper_converged_deployment=${FUEL_HYPER_CONVERGED:-'yes'}
 sds_on_controller=${FUEL_SDS_ON_CONTROLLER:-'yes'}
 
-fuel_version=$(fuel --version 2>&1 | grep -o '[0-9]\.[0-9]\.[0-9]')
+fuel_version=$(fuel --version 2>&1 | grep -o '\([0-9]\)\+\.\([0-9]\)\+\.\([0-9]\)\+')
 env_name="emc"
 device_paths="/dev/vdb,/dev/vdc"
-if [[  "8.0.0 9.0.0 10.0.0 10.0.0b1" =~ "$fuel_version" ]]; then
+if [[  "8.0.0 9.0.0 10.0.0" =~ "$fuel_version" ]]; then
     ha_mode_opts=''
 else
     ha_mode_opts='--mode ha'
