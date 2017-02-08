@@ -46,12 +46,20 @@ function add_node() {
     fuel $node_opts --network --upload || fail "Failed to upload node  ${node_id} network settings"
 }
 
+function fuel_tasks() {
+  if [[ "10.0.0" =~ "$fuel_version" ]] ; then
+    fuel2 task list
+  else
+    fuel task
+  fi
+}
+
 function wait_running_tasks() {
     tries=${1:-360}
     pause_time=${2:-30}
     ((count=0))
     while(($count < $tries)); do
-        if [[ -z "`fuel task | grep 'running'`" ]]; then
+        if [[ -z "`fuel_tasks | grep 'running'`" ]]; then
             return 0
         fi
         ((count++))
@@ -64,7 +72,7 @@ function wait_running_tasks() {
 
 function check_failed_tasks() {
     local env_num=$1
-    local failed_tasks=`fuel task | grep -i 'error\|fail'`
+    local failed_tasks=`fuel_tasks | grep -i 'error\|fail'`
     if [[ ! -z "$failed_tasks" ]]; then
         echo $failed_tasks
         fail "Failed to execute task $failed_tasks for env $env_num"
