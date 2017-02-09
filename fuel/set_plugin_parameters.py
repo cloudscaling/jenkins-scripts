@@ -39,6 +39,8 @@ def main(args):
         set_parameter(scaleio_config, 'hyper_converged_deployment', args.hyper_converged_deployment)
     if args.fuel_version in ['9.0.0', '10.0.0']:
         set_parameter(scaleio_config, 'use_scaleio_for_glance', not args.disable_scaleio_for_glance)
+    if args.pkg_ftp is not None:
+        set_parameter(scaleio_config, 'pkg_ftp', args.pkg_ftp)
     with open(args.config_file, 'w') as stream:
         stream.write(yaml.dump(config, default_flow_style=False))
 
@@ -61,6 +63,7 @@ if __name__ == "__main__":
     parser.add_argument('--cached_storage_pools', dest='cached_storage_pools', type=str, default=None)
     parser.add_argument('--disable_scaleio_for_glance', dest='disable_scaleio_for_glance', action='store_true')
     parser.add_argument('--disable_hyper_converged_deploy', dest='hyper_converged_deployment', action='store_false')
+    parser.add_argument('--pkg_ftp', dest='pkg_ftp', type=str, default='ftp://QNzgdxXix:Aw3wFAwAq3@ftp.emc.com/Ubuntu/2.0.12000.122')
 
     main(parser.parse_args())
 
